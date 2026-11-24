@@ -1,0 +1,136 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmPipe 
+   Caption         =   "Труба"
+   ClientHeight    =   3015
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   10965
+   OleObjectBlob   =   "frmPipe.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmPipe"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean
+Private mCode As String
+
+Public Sub ShowFor(ByVal targetCell As Range, Optional ByVal code As String = "PIPE_SMLS")
+Dim ws As Worksheet, r As Long
+On Error GoTo fail
+Set mTarget = targetCell
+Set ws = targetCell.Worksheet
+r = targetCell.row
+mCode = code
+mLoading = True
+Me.Caption = TypeField(mCode, 2)
+Me.lblND1.Caption = TypeField(mCode, 4) & " /"
+Me.lblND2.Caption = TypeField(mCode, 5)
+FillFromTable Me.cboSteel, "tSteels", 1
+RefillGroups
+FillList Me.cboD, BaseValues(mCode, 1, 0, Empty, 0, Empty)
+SelIf Me.cboD, NumTxt0(ws.Cells(r, col("D")).Value)
+mLoading = False
+RefillS
+Me.cboS.Enabled = (Me.cboD.ListIndex >= 0)
+SelIf Me.cboS, NumTxt0(ws.Cells(r, col("S")).Value)
+SelIf Me.cboGroup, CStr(ws.Cells(r, col("Группа")).Value)
+SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+Preview
+Me.show vbModal
+Exit Sub
+fail:
+MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Sub RefillGroups()
+Dim allowed As String, r As Long, g As String
+Select Case mCode
+Case "PIPE_SMLS_CD": allowed = "|Б|В|Г|Д|Е|"
+Case "PIPE_WELD": allowed = "|А|Б|В|Д|"
+Case Else: allowed = "|А|Б|В|Г|Д|"
+End Select
+Me.cboGroup.Clear
+For r = 1 To SprRows("tGroups")
+g = Trim$(CStr(SprVal("tGroups", r, 1)))
+If Len(g) > 0 Then
+If InStr(allowed, "|" & g & "|") > 0 Then Me.cboGroup.AddItem g
+End If
+Next r
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+Dim i As Long
+If Len(v) = 0 Then cbo.ListIndex = -1: Exit Sub
+For i = 0 To cbo.ListCount - 1
+If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+Next i
+cbo.ListIndex = -1
+End Sub
+
+Private Sub RefillS()
+Dim cur As String
+cur = Me.cboS.Value
+mLoading = True
+If Me.cboD.ListIndex >= 0 Then
+FillList Me.cboS, BaseValues(mCode, 2, 1, CDbl(Me.cboD.Value), 0, Empty)
+Else
+Me.cboS.Clear
+End If
+SelIf Me.cboS, cur
+mLoading = False
+End Sub
+
+Private Sub cboD_Change()
+If mLoading Then Exit Sub
+RefillS
+Me.cboS.Enabled = (Me.cboD.ListIndex >= 0)
+Preview
+End Sub
+
+Private Sub cboS_Change()
+If mLoading Then Exit Sub
+Preview
+End Sub
+
+Private Sub cboGroup_Change()
+If mLoading Then Exit Sub
+Preview
+End Sub
+
+Private Sub cboSteel_Change()
+If mLoading Then Exit Sub
+Preview
+End Sub
+
+Private Sub Preview()
+If Me.cboD.ListIndex < 0 Or Me.cboS.ListIndex < 0 _
+Or Me.cboGroup.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+Me.lblPreview.Caption = "— выберите все параметры —"
+Else
+Me.lblPreview.Caption = PipeDes(mCode, CDbl(Me.cboD.Value), _
+CDbl(Me.cboS.Value), Me.cboGroup.Value, Me.cboSteel.Value)
+End If
+End Sub
+
+Private Sub btnOK_Click()
+If Me.cboD.ListIndex < 0 Or Me.cboS.ListIndex < 0 _
+Or Me.cboGroup.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+MsgBox "Выберите D, s, группу и марку стали.", vbExclamation
+Exit Sub
+End If
+WritePipeEx mTarget, mCode, CDbl(Me.cboD.Value), CDbl(Me.cboS.Value), _
+Me.cboGroup.Value, Me.cboSteel.Value
+Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+Unload Me
+End Sub
+

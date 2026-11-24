@@ -1,0 +1,652 @@
+Attribute VB_Name = "modSpecExport"
+Option Explicit
+
+Private Const SRC_FIRST As String = "л01.С"
+Private Const SRC_CONT As String = "л02.С"
+Private Const FORM_SHEET As String = "Штамп спецификации"
+Private Const MEASURE_SHEET As String = "_measure_tmp"
+Private Const ROW_PT As Double = 22.25
+Private Const CIPHER_ROW As Long = 30
+Private Const CIPHER_COL As Long = 17
+
+Private mCS(8) As Long
+Private mCE(8) As Long
+Private mTop() As Long
+Private mBot() As Long
+Private mTotal As Long
+Private mLastRow As Long
+Private mColL As Long
+Private mColR As Long
+Private mIsFirst As Boolean
+Private mStep As String
+
+' ==================== ГЕОМЕТРИЯ ====================
+Private Sub SetLayout(ByVal isFirst As Boolean)
+    Dim cs As Variant, ce As Variant
+    Dim ts As Variant, bs As Variant
+    Dim i As Long, nSimple As Long, n As Long
+
+    mIsFirst = isFirst
+
+    If isFirst Then
+        cs = Array(7, 8, 9, 10, 14, 18, 19, 20, 22)
+        ce = Array(7, 8, 9, 13, 17, 18, 19, 21, 24)
+        ts = Array(16, 18, 20, 21, 23, 24, 26)
+        bs = Array(17, 19, 20, 22, 23, 25, 26)
+        nSimple = 13
+        mTotal = 20
+        mLastRow = 26
+        mColL = 7
+        mColR = 24
+    Else
+        cs = Array(4, 5, 6, 7, 11, 15, 16, 17, 18)
+        ce = Array(4, 5, 6, 10, 14, 15, 16, 17, 19)
+        ts = Array(24, 26, 27, 28, 30, 31, 32, 33)
+        bs = Array(25, 26, 27, 29, 30, 31, 32, 34)
+        nSimple = 21
+        mTotal = 29
+        mLastRow = 34
+        mColL = 4
+        mColR = 19
+    End If
+
+    For i = 0 To 8
+        mCS(i) = cs(i)
+        mCE(i) = ce(i)
+    Next i
+
+    ReDim mTop(1 To mTotal)
+    ReDim mBot(1 To mTotal)
+    For i = 1 To nSimple
+        mTop(i) = i + 2
+        mBot(i) = i + 2
+    Next i
+    For i = 0 To UBound(ts)
+        n = nSimple + 1 + i
+        mTop(n) = ts(i)
+        mBot(n) = bs(i)
+    Next i
+End Sub
+
+Private Sub VerifyLayout(ByVal ws As Worksheet)
+    Dim sig As String, expect As String
+    If mIsFirst Then
+        sig = ws.Cells(2, 10).MergeArea.Address
+        expect = "$J$2:$M$2"
+    Else
+        sig = ws.Cells(2, 7).MergeArea.Address
+        expect = "$G$2:$J$2"
+    End If
+    If sig <> expect Then
+        Err.Raise vbObjectError + 514, "VerifyLayout", _
+            "Лист '" & ws.Name & "': объединение заголовка = " & sig & _
+            ", ожидалось " & expect & "."
+    End If
+End Sub
+
+' ==================== ОСНОВНАЯ ====================
+Public Sub СформироватьСпецификацию()
+    Dim wsFirst As Worksheet, wsCont As Worksheet, wsForm As Worksheet
+    Dim wsDst As Worksheet, wsFirstResult As Worksheet, wsM As Worksheet
+    Dim wbOut As Workbook
+    Dim aNaim() As String, aTip() As String, aEdiz() As String
+    Dim aPrim() As String
+    Dim aKol() As Double, aMass() As Double
+    Dim aW() As Double, aD() As Double, aT() As Double, aP() As Double
+    Dim nPos As Long, nm As Long
+    Dim ord() As Long
+    Dim mKey As Object
+    Dim mNaim() As String, mTip() As String, mEdiz() As String
+    Dim mPrim() As String, mKol() As Double, mMass() As Double
+    Dim i As Long, j As Long, idx As Long, lr As Long
+    Dim lines As Long, pageN As Long, placed As Long, skipped As Long
+    Dim sKey As String, ok As Boolean
+    Dim cipher As String, fPath As String
+    Dim scr As Boolean, al As Boolean
+    Dim errNum As Long, errDesc As String
+
+    mStep = "старт"
+    scr = Application.ScreenUpdating
+    al = Application.DisplayAlerts
+
+    Set wsFirst = SheetByName(SRC_FIRST)
+    Set wsCont = SheetByName(SRC_CONT)
+    Set wsForm = SheetByName(FORM_SHEET)
+    If wsFirst Is Nothing Then
+        MsgBox "Лист-шаблон '" & SRC_FIRST & "' не найден.", vbExclamation
+        Exit Sub
+    End If
+    If wsCont Is Nothing Then
+        MsgBox "Лист-шаблон '" & SRC_CONT & "' не найден.", vbExclamation
+        Exit Sub
+    End If
+    If wsForm Is Nothing Then
+        MsgBox "Лист '" & FORM_SHEET & "' не найден.", vbExclamation
+        Exit Sub
+    End If
+
+    On Error GoTo fin
+
+    mStep = "чтение шифра"
+    cipher = Trim$(CStr(wsForm.Cells(CIPHER_ROW, CIPHER_COL).Value))
+
+    mStep = "сбор позиций"
+    nPos = GatherAllPositions(aNaim, aTip, aEdiz, aKol, aMass, aPrim, aW, aD, aT, aP)
+    If nPos = 0 Then
+        MsgBox "Позиции не найдены.", vbInformation
+        Exit Sub
+    End If
+
+    mStep = "сортировка"
+    ReDim ord(1 To nPos)
+    For i = 1 To nPos
+        ord(i) = i
+    Next i
+    SortIndex ord, nPos, aW, aD, aT, aP
+
+    mStep = "суммирование"
+    Set mKey = CreateObject("Scripting.Dictionary")
+    ReDim mNaim(1 To nPos)
+    ReDim mTip(1 To nPos)
+    ReDim mEdiz(1 To nPos)
+    ReDim mPrim(1 To nPos)
+    ReDim mKol(1 To nPos)
+    ReDim mMass(1 To nPos)
+    nm = 0
+    For i = 1 To nPos
+        idx = ord(i)
+        sKey = aNaim(idx) & Chr$(1) & aTip(idx) & Chr$(1) & aEdiz(idx) & _
+               Chr$(1) & CStr(aMass(idx)) & Chr$(1) & aPrim(idx)
+        If mKey.exists(sKey) Then
+            j = mKey(sKey)
+            mKol(j) = mKol(j) + aKol(idx)
+        Else
+            nm = nm + 1
+            mKey.Add sKey, nm
+            mNaim(nm) = aNaim(idx)
+            mTip(nm) = aTip(idx)
+            mEdiz(nm) = aEdiz(idx)
+            mPrim(nm) = aPrim(idx)
+            mKol(nm) = aKol(idx)
+            mMass(nm) = aMass(idx)
+        End If
+    Next i
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+    mStep = "создание измерителя"
+    Set wsM = MakeMeasureSheet()
+
+    mStep = "очистка старых результатов в сводной"
+    DeleteResultSheets wsFirst
+
+    mStep = "создание книги и первого листа"
+    SetLayout True
+    Set wsDst = CopySheetTo(wsFirst, Nothing, "л1")
+    Set wbOut = wsDst.Parent
+    VerifyLayout wsDst
+    Set wsFirstResult = wsDst
+    ClearArea wsDst
+    ActivateMeasure wsM
+
+    lr = 1
+    pageN = 1
+    placed = 0
+    skipped = 0
+
+    For i = 1 To nm
+        ok = True
+        mStep = "позиция " & i & ": измерение на " & wsDst.Name
+        lines = LinesNeeded(wsDst, wsM, mNaim(i), mTip(i), mPrim(i))
+        If lr + lines - 1 > mTotal Then
+            If lr = 1 And Not mIsFirst Then
+                ok = False
+            Else
+                mStep = "позиция " & i & ": дооформление " & wsDst.Name
+                FinishSheet wsDst, lr
+                pageN = pageN + 1
+                mStep = "позиция " & i & ": новый лист л" & pageN
+                SetLayout False
+                Set wsDst = CopySheetTo(wsCont, wbOut, "л" & CStr(pageN))
+                VerifyLayout wsDst
+                ClearArea wsDst
+                FillSmallStamp wsDst, cipher
+                ActivateMeasure wsM
+                lr = 1
+                mStep = "позиция " & i & ": повторное измерение"
+                lines = LinesNeeded(wsDst, wsM, mNaim(i), mTip(i), mPrim(i))
+                If lines > mTotal Then ok = False
+            End If
+        End If
+        If ok Then
+            mStep = "позиция " & i & ": заполнение lr=" & lr & " lines=" & lines & _
+                    " на " & wsDst.Name
+            FillPosition wsDst, lr, lines, mNaim(i), mTip(i), mEdiz(i), _
+                         mKol(i), mMass(i), mPrim(i)
+            lr = lr + lines
+            placed = placed + 1
+        Else
+            skipped = skipped + 1
+        End If
+    Next i
+
+    mStep = "дооформление последнего листа"
+    FinishSheet wsDst, lr
+
+    mStep = "удаление измерителя"
+    KillMeasureSheet wsM
+    Set wsM = Nothing
+
+    mStep = "перенос штампа"
+    modStampTransfer.ПеренестиШтамп wsFirstResult
+
+    mStep = "номера листов в большом штампе"
+    SetBigStampNumbers wsFirstResult
+
+    mStep = "сохранение книги"
+    fPath = OutFolder() & SafeFileName(cipher) & ".xlsx"
+    wbOut.SaveAs fileName:=fPath, FileFormat:=51
+
+    Application.DisplayAlerts = al
+    Application.ScreenUpdating = scr
+    wbOut.Activate
+    wsFirstResult.Activate
+
+    MsgBox "Готово. Листов: " & pageN & vbCrLf & _
+           "Размещено позиций: " & placed & " из " & nm & vbCrLf & _
+           "Не размещено: " & skipped & vbCrLf & vbCrLf & _
+           "Файл: " & fPath, vbInformation
+    Exit Sub
+
+fin:
+    errNum = Err.Number
+    errDesc = Err.Description
+    On Error Resume Next
+    KillMeasureSheet wsM
+    Application.DisplayAlerts = al
+    Application.ScreenUpdating = scr
+    On Error GoTo 0
+    MsgBox "Ошибка " & errNum & vbCrLf & _
+           "ШАГ: " & mStep & vbCrLf & vbCrLf & errDesc, vbExclamation
+End Sub
+
+' ==================== ШТАМПЫ ====================
+Private Sub SetBigStampNumbers(ByVal ws As Worksheet)
+    ws.Cells(36, 23).Formula = "=SHEET()"
+    ws.Cells(36, 24).Formula = "=SHEETS()"
+End Sub
+
+Private Sub FillSmallStamp(ByVal ws As Worksheet, ByVal cipher As String)
+    ws.Cells(36, 14).Value = cipher
+    ws.Cells(38, 19).Formula = "=SHEET()"
+End Sub
+
+Private Function SafeFileName(ByVal s As String) As String
+    Dim bad As Variant, i As Long
+    s = Replace(s, vbLf, " ")
+    s = Replace(s, vbCr, " ")
+    s = Trim$(s)
+    bad = Array("/", "\", ":", "*", "?", """", "<", ">", "|")
+    For i = LBound(bad) To UBound(bad)
+        s = Replace(s, CStr(bad(i)), "_")
+    Next i
+    Do While Len(s) > 0
+        If Right$(s, 1) = "." Or Right$(s, 1) = " " Then
+            s = Left$(s, Len(s) - 1)
+        Else
+            Exit Do
+        End If
+    Loop
+    If Len(s) = 0 Then s = "Спецификация"
+    If Len(s) > 150 Then s = Left$(s, 150)
+    SafeFileName = s
+End Function
+
+Private Function OutFolder() As String
+    Dim p As String
+    p = ThisWorkbook.Path
+    If Len(p) = 0 Then
+        p = Environ$("USERPROFILE") & "\Documents"
+    End If
+    If Right$(p, 1) <> "\" Then p = p & "\"
+    OutFolder = p
+End Function
+
+' ==================== ЛИСТЫ ====================
+Private Function SheetByName(ByVal nm As String) As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(nm)
+    On Error GoTo 0
+    Set SheetByName = ws
+End Function
+
+' wbDst = Nothing -> создаётся НОВАЯ книга с одной копией
+Private Function CopySheetTo(ByVal wsSrc As Worksheet, ByVal wbDst As Workbook, _
+    ByVal nm As String) As Worksheet
+
+    Dim vis As Long
+    Dim wsNew As Worksheet, ws As Worksheet
+    Dim before As Object
+    Dim errNum As Long, errDesc As String
+
+    vis = wsSrc.Visible
+    On Error GoTo eh
+    If vis <> xlSheetVisible Then wsSrc.Visible = xlSheetVisible
+
+    If wbDst Is Nothing Then
+        wsSrc.Copy
+        Set wsNew = ActiveWorkbook.Worksheets(1)
+    Else
+        Set before = CreateObject("Scripting.Dictionary")
+        For Each ws In wbDst.Worksheets
+            before.Add ws.Name, True
+        Next ws
+        wsSrc.Copy After:=wbDst.Worksheets(wbDst.Worksheets.Count)
+        For Each ws In wbDst.Worksheets
+            If Not before.exists(ws.Name) Then
+                Set wsNew = ws
+                Exit For
+            End If
+        Next ws
+    End If
+
+    wsSrc.Visible = vis
+
+    If wsNew Is Nothing Then
+        Err.Raise vbObjectError + 513, "CopySheetTo", "Лист-копия не определён."
+    End If
+
+    wsNew.Visible = xlSheetVisible
+    wsNew.Name = nm
+    Set CopySheetTo = wsNew
+    Exit Function
+
+eh:
+    errNum = Err.Number
+    errDesc = Err.Description
+    On Error Resume Next
+    wsSrc.Visible = vis
+    On Error GoTo 0
+    Err.Raise errNum, "CopySheetTo", errDesc
+End Function
+
+Private Sub DeleteResultSheets(ByVal wsGuard As Worksheet)
+    Dim ws As Worksheet
+    Dim targets As Collection
+    Dim k As Long, i As Long, vis As Long
+    Dim nm As String, hit As Boolean
+    Dim errNum As Long, errDesc As String
+
+    Set targets = New Collection
+    For Each ws In ThisWorkbook.Worksheets
+        nm = ws.Name
+        If nm <> SRC_FIRST And nm <> SRC_CONT And nm <> MEASURE_SHEET Then
+            hit = False
+            For k = 1 To 200
+                If nm = "л" & CStr(k) Then
+                    hit = True
+                    Exit For
+                End If
+            Next k
+            If hit Then targets.Add nm
+        End If
+    Next ws
+    If targets.Count = 0 Then Exit Sub
+
+    vis = wsGuard.Visible
+    On Error GoTo eh
+    If vis <> xlSheetVisible Then wsGuard.Visible = xlSheetVisible
+    For i = 1 To targets.Count
+        ThisWorkbook.Worksheets(targets(i)).Delete
+    Next i
+    wsGuard.Visible = vis
+    Exit Sub
+
+eh:
+    errNum = Err.Number
+    errDesc = Err.Description
+    On Error Resume Next
+    wsGuard.Visible = vis
+    On Error GoTo 0
+    Err.Raise errNum, "DeleteResultSheets", errDesc
+End Sub
+
+Private Function MakeMeasureSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    ThisWorkbook.Worksheets(MEASURE_SHEET).Delete
+    On Error GoTo 0
+    Set ws = ThisWorkbook.Worksheets.Add
+    ws.Name = MEASURE_SHEET
+    ws.Visible = xlSheetVisible
+    ws.Cells.Font.Name = "Times New Roman"
+    ws.Cells.Font.Size = 11
+    ws.Cells.WrapText = True
+    ws.Cells.VerticalAlignment = xlTop
+    Set MakeMeasureSheet = ws
+End Function
+
+Private Sub ActivateMeasure(ByVal wsM As Worksheet)
+    If wsM Is Nothing Then Exit Sub
+    ThisWorkbook.Activate
+    wsM.Activate
+End Sub
+
+Private Sub KillMeasureSheet(ByVal ws As Worksheet)
+    If ws Is Nothing Then Exit Sub
+    On Error Resume Next
+    ws.Delete
+    On Error GoTo 0
+End Sub
+
+Private Sub ClearArea(ByVal ws As Worksheet)
+    ws.Range(ws.Cells(3, mColL), ws.Cells(mLastRow, mColR)).ClearContents
+End Sub
+
+Private Sub FinishSheet(ByVal ws As Worksheet, ByVal lrFrom As Long)
+    Dim i As Long, g As Long
+    For i = lrFrom To mTotal
+        For g = 0 To 8
+            MergeGrp ws, mTop(i), mBot(i), g
+        Next g
+    Next i
+End Sub
+
+' ==================== СБОР ====================
+Private Function GatherAllPositions( _
+    ByRef aNaim() As String, ByRef aTip() As String, ByRef aEdiz() As String, _
+    ByRef aKol() As Double, ByRef aMass() As Double, ByRef aPrim() As String, _
+    ByRef aW() As Double, ByRef aD() As Double, ByRef aT() As Double, _
+    ByRef aP() As Double) As Long
+
+    Dim ws As Worksheet, r As Long, h As Long, n As Long
+    Set ws = modLayout.ShSv()
+    ReDim aNaim(1 To 10000)
+    ReDim aTip(1 To 10000)
+    ReDim aEdiz(1 To 10000)
+    ReDim aPrim(1 To 10000)
+    ReDim aKol(1 To 10000)
+    ReDim aMass(1 To 10000)
+    ReDim aW(1 To 10000)
+    ReDim aD(1 To 10000)
+    ReDim aT(1 To 10000)
+    ReDim aP(1 To 10000)
+    n = 0
+    For r = 1 To modLayout.LastUsedRow()
+        h = modLayout.HdrOf(r)
+        If h > 0 And r > h Then
+            If Len(Trim$(CStr(ws.Cells(r, modLayout.col("Наименование")).Value))) > 0 Then
+                n = n + 1
+                aNaim(n) = CStr(ws.Cells(r, modLayout.col("Наименование")).Value)
+                aTip(n) = CStr(ws.Cells(r, modLayout.col("Опросной лист")).Value)
+                aEdiz(n) = CStr(ws.Cells(r, modLayout.col("Ед.изм.")).Value)
+                aPrim(n) = CStr(ws.Cells(r, modLayout.col("Примечание")).Value)
+                aKol(n) = ToNumDbl(ws.Cells(r, modLayout.col("Кол-во")).Value)
+                aMass(n) = ToNumDbl(ws.Cells(r, modLayout.col("Масса 1 ед")).Value)
+                aW(n) = modLayout.GetSortWeight(r)
+                aD(n) = modLayout.GetSortDia(r)
+                aT(n) = modLayout.GetSortThk(r)
+                aP(n) = modLayout.GetSortPn(r)
+            End If
+        End If
+    Next r
+    GatherAllPositions = n
+End Function
+
+Private Function ToNumDbl(ByVal v As Variant) As Double
+    If isEmpty(v) Then
+        ToNumDbl = 0
+    ElseIf IsNumeric(v) Then
+        ToNumDbl = CDbl(v)
+    Else
+        ToNumDbl = 0
+    End If
+End Function
+
+' ==================== СОРТИРОВКА ====================
+Private Sub SortIndex(ByRef ord() As Long, ByVal n As Long, _
+    ByRef aW() As Double, ByRef aD() As Double, _
+    ByRef aT() As Double, ByRef aP() As Double)
+
+    Dim i As Long, j As Long, t As Long
+    For i = 1 To n - 1
+        For j = i + 1 To n
+            If ComesBefore(ord(j), ord(i), aW, aD, aT, aP) Then
+                t = ord(i)
+                ord(i) = ord(j)
+                ord(j) = t
+            End If
+        Next j
+    Next i
+End Sub
+
+Private Function ComesBefore(ByVal i As Long, ByVal j As Long, _
+    ByRef aW() As Double, ByRef aD() As Double, _
+    ByRef aT() As Double, ByRef aP() As Double) As Boolean
+
+    If aW(i) <> aW(j) Then
+        ComesBefore = (aW(i) < aW(j))
+        Exit Function
+    End If
+    If aD(i) <> aD(j) Then
+        ComesBefore = (aD(i) > aD(j))
+        Exit Function
+    End If
+    If aT(i) <> aT(j) Then
+        ComesBefore = (aT(i) > aT(j))
+        Exit Function
+    End If
+    If aP(i) <> aP(j) Then
+        ComesBefore = (aP(i) > aP(j))
+        Exit Function
+    End If
+    ComesBefore = (i < j)
+End Function
+
+' ==================== ИЗМЕРЕНИЕ ====================
+Private Function LinesNeeded(ByVal wsDst As Worksheet, ByVal wsM As Worksheet, _
+    ByVal naim As String, ByVal tip As String, ByVal prim As String) As Long
+
+    Dim h As Double, n As Long
+
+    wsM.Range("A1:C1").ClearContents
+
+    SetColWidthPts wsM, 1, GroupWidthPts(wsDst, 1)
+    SetColWidthPts wsM, 2, GroupWidthPts(wsDst, 2)
+    SetColWidthPts wsM, 3, GroupWidthPts(wsDst, 8)
+
+    wsM.Cells(1, 1).Value = naim
+    wsM.Cells(1, 2).Value = tip
+    wsM.Cells(1, 3).Value = prim
+
+    wsM.Rows(1).AutoFit
+    h = wsM.Rows(1).RowHeight
+
+    If h <= 0 Then
+        LinesNeeded = 1
+        Exit Function
+    End If
+
+    n = -Int(-(h - 0.5) / ROW_PT)
+    If n < 1 Then n = 1
+    LinesNeeded = n
+End Function
+
+Private Function GroupWidthPts(ByVal wsDst As Worksheet, ByVal gi As Long) As Double
+    Dim c As Long, w As Double
+    w = 0
+    For c = mCS(gi) To mCE(gi)
+        w = w + wsDst.Columns(c).Width
+    Next c
+    GroupWidthPts = w
+End Function
+
+Private Sub SetColWidthPts(ByVal ws As Worksheet, ByVal col As Long, ByVal targetPts As Double)
+    Dim k As Long, cur As Double
+    If targetPts <= 0 Then Exit Sub
+    ws.Columns(col).ColumnWidth = 10
+    For k = 1 To 12
+        cur = ws.Columns(col).Width
+        If cur <= 0 Then Exit For
+        If Abs(cur - targetPts) < 0.3 Then Exit For
+        ws.Columns(col).ColumnWidth = ws.Columns(col).ColumnWidth * targetPts / cur
+    Next k
+End Sub
+
+' ==================== ЗАПОЛНЕНИЕ ====================
+Private Sub FillPosition(ByVal ws As Worksheet, ByVal lr As Long, ByVal lines As Long, _
+    ByVal naim As String, ByVal tip As String, ByVal ediz As String, _
+    ByVal kol As Double, ByVal mass As Double, ByVal prim As String)
+
+    Dim tr As Long, br As Long, g As Long
+    tr = mTop(lr)
+    br = mBot(lr + lines - 1)
+
+    For g = 0 To 8
+        MergeGrp ws, tr, br, g
+    Next g
+
+    ws.Cells(tr, mCS(1)).Value = naim
+    ws.Cells(tr, mCS(2)).Value = tip
+    ws.Cells(tr, mCS(5)).Value = ediz
+    If kol <> 0 Then ws.Cells(tr, mCS(6)).Value = kol
+    If mass <> 0 Then ws.Cells(tr, mCS(7)).Value = mass
+    ws.Cells(tr, mCS(8)).Value = prim
+
+    With ws.Range(ws.Cells(tr, mColL), ws.Cells(br, mColR))
+        .Font.Name = "Times New Roman"
+        .Font.Size = 11
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+    End With
+
+    With ws.Cells(tr, mCS(1))
+        .WrapText = True
+        .HorizontalAlignment = xlLeft
+        .VerticalAlignment = xlCenter
+    End With
+    With ws.Cells(tr, mCS(2))
+        .WrapText = True
+    End With
+    With ws.Cells(tr, mCS(8))
+        .WrapText = True
+    End With
+    With ws.Cells(tr, mCS(5))
+        .WrapText = False
+    End With
+    With ws.Cells(tr, mCS(6))
+        .WrapText = False
+    End With
+    With ws.Cells(tr, mCS(7))
+        .WrapText = False
+    End With
+End Sub
+
+Private Sub MergeGrp(ByVal ws As Worksheet, ByVal tr As Long, ByVal br As Long, ByVal gi As Long)
+    Dim r As Range
+    Set r = ws.Cells(tr, mCS(gi)).Resize(br - tr + 1, mCE(gi) - mCS(gi) + 1)
+    If r.Cells.Count > 1 Then r.Merge
+End Sub
+

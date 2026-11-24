@@ -1,0 +1,333 @@
+Attribute VB_Name = "modDB"
+Option Explicit
+
+' ================== НАСТРОЙКИ ==================
+Private Const BASE_DIR_DEFAULT As String = "\Базы_для_сводной_таблицы\"
+Private Const SETTINGS_SH As String = "Настройки"
+Private Const SETTINGS_CELL As String = "B1"
+Private Const DIRECT_FILE As String = "direct.xlsx"
+Private Const DIRECT_SHEET As String = "Справочники"
+
+' ================== КЭШ ==================
+Private mData As Object      ' ключ -> массив (1..строк, 1..колонок)
+Private mRows As Object      ' ключ -> строк
+Private mCols As Object      ' ключ -> колонок
+Private mWhen As Object      ' ключ -> когда загружено
+Private mFileT As Object     ' ключ -> дата файла при загрузке
+Private mFull As Object      ' ключ -> полный путь
+Private mTypeRow As Object   ' код типа -> номер строки в tTypes
+
+' Активная база элементов (копия массива только при переключении таблицы)
+Private mArr As Variant
+Private mArrKey As String
+Private mArrRows As Long
+
+Private Sub EnsureCache()
+    If mData Is Nothing Then
+        Set mData = CreateObject("Scripting.Dictionary")
+        Set mRows = CreateObject("Scripting.Dictionary")
+        Set mCols = CreateObject("Scripting.Dictionary")
+        Set mWhen = CreateObject("Scripting.Dictionary")
+        Set mFileT = CreateObject("Scripting.Dictionary")
+        Set mFull = CreateObject("Scripting.Dictionary")
+    End If
+End Sub
+
+Private Function TKey(ByVal f As String, ByVal sh As String, ByVal t As String) As String
+    TKey = LCase$(f) & "|" & LCase$(sh) & "|" & LCase$(t)
+End Function
+
+' ================== ПУТЬ К БАЗАМ ==================
+Public Function basePath() As String
+    Dim ws As Worksheet, s As String
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(SETTINGS_SH)
+    On Error GoTo 0
+    If Not ws Is Nothing Then s = Trim$(CStr(ws.Range(SETTINGS_CELL).Value))
+    If Len(s) > 0 Then
+        If Right$(s, 1) <> "\" Then s = s & "\"
+        basePath = s
+    Else
+        basePath = ThisWorkbook.Path & BASE_DIR_DEFAULT
+    End If
+End Function
+
+' ================== ЗАГРУЗКА ОДНОЙ ТАБЛИЦЫ ==================
+Private Function FindOpenBook(ByVal sPath As String) As Workbook
+    Dim w As Workbook
+    For Each w In Application.Workbooks
+        If StrComp(w.FullName, sPath, vbTextCompare) = 0 Then
+            Set FindOpenBook = w
+            Exit Function
+        End If
+    Next w
+End Function
+
+Private Sub LoadTable(ByVal fName As String, ByVal shName As String, ByVal tName As String)
+    Dim k As String, sPath As String
+    Dim wb As Workbook, ws As Worksheet, lo As ListObject
+    Dim wasOpen As Boolean, arr As Variant, one() As Variant
+    Dim nr As Long, nc As Long
+    Dim scr As Boolean, alerts As Boolean
+    Dim errN As Long, errD As String
+
+    k = TKey(fName, shName, tName)
+    sPath = basePath() & fName
+
+    If Dir(sPath) = "" Then
+        Err.Raise vbObjectError + 10, , "Не найден файл:" & vbCrLf & sPath
+    End If
+
+    ' Если файл уже открыт пользователем — читаем его, но НЕ закрываем и окно не скрываем
+    Set wb = FindOpenBook(sPath)
+    wasOpen = Not wb Is Nothing
+
+    scr = Application.ScreenUpdating
+    alerts = Application.DisplayAlerts
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    On Error GoTo cleanup
+
+    If Not wasOpen Then
+        Set wb = Application.Workbooks.Open(sPath, ReadOnly:=True, UpdateLinks:=0, _
+                                            AddToMru:=False, Notify:=False, _
+                                            IgnoreReadOnlyRecommended:=True)
+    End If
+
+    Set ws = Nothing
+    On Error Resume Next
+    Set ws = wb.Worksheets(shName)
+    On Error GoTo cleanup
+    If ws Is Nothing Then Err.Raise vbObjectError + 1, , _
+        "В файле «" & fName & "» нет листа «" & shName & "»."
+
+    Set lo = Nothing
+    On Error Resume Next
+    Set lo = ws.ListObjects(tName)
+    On Error GoTo cleanup
+    If lo Is Nothing Then Err.Raise vbObjectError + 2, , _
+        "На листе «" & shName & "» нет таблицы «" & tName & "»."
+
+    nc = lo.ListColumns.Count
+    nr = lo.ListRows.Count
+    If nr > 0 Then
+        arr = lo.DataBodyRange.Value          ' ОДНО обращение вместо тысяч
+        If Not IsArray(arr) Then
+            ReDim one(1 To 1, 1 To 1)
+            one(1, 1) = arr
+            arr = one
+        End If
+    Else
+        ReDim one(1 To 1, 1 To nc)
+        arr = one
+    End If
+
+cleanup:
+    errN = Err.Number: errD = Err.Description
+    If Not wb Is Nothing Then
+        If Not wasOpen Then
+            wb.Saved = True                   ' чтобы не было запроса на сохранение
+            wb.Close SaveChanges:=False
+        End If
+    End If
+    Application.ScreenUpdating = scr
+    Application.DisplayAlerts = alerts
+    If errN <> 0 Then Err.Raise errN, , errD
+
+    EnsureCache
+    mData(k) = arr
+    mRows(k) = nr
+    mCols(k) = nc
+    mWhen(k) = Now
+    mFull(k) = sPath
+    On Error Resume Next
+    mFileT(k) = FileDateTime(sPath)
+    On Error GoTo 0
+    If mArrKey = k Then mArrKey = ""          ' активный массив устарел
+End Sub
+
+' ================== ДОСТУП К СПРАВОЧНИКАМ ==================
+Public Function SprRows(ByVal tName As String) As Long
+    Dim k As String
+    k = TKey(DIRECT_FILE, DIRECT_SHEET, tName)
+    EnsureCache
+    If Not mData.exists(k) Then LoadTable DIRECT_FILE, DIRECT_SHEET, tName
+    SprRows = mRows(k)
+End Function
+
+Public Function SprVal(ByVal tName As String, ByVal r As Long, ByVal c As Long) As Variant
+    Dim k As String, a As Variant
+    k = TKey(DIRECT_FILE, DIRECT_SHEET, tName)
+    EnsureCache
+    If Not mData.exists(k) Then LoadTable DIRECT_FILE, DIRECT_SHEET, tName
+    a = mData(k)
+    SprVal = a(r, c)
+End Function
+
+Public Function TypeRow(ByVal code As String) As Long
+    Dim r As Long, s As String
+    EnsureCache
+    If mTypeRow Is Nothing Then
+        Set mTypeRow = CreateObject("Scripting.Dictionary")
+        For r = 1 To SprRows("tTypes")
+            s = Trim$(CStr(SprVal("tTypes", r, 1)))
+            If Len(s) > 0 Then mTypeRow(s) = r
+        Next r
+    End If
+    If Not mTypeRow.exists(code) Then _
+        Err.Raise vbObjectError + 3, , "В tTypes нет строки с кодом «" & code & "»."
+    TypeRow = mTypeRow(code)
+End Function
+
+' ================== ДОСТУП К БАЗАМ ЭЛЕМЕНТОВ ==================
+Public Sub UseBase(ByVal code As String)
+    Dim r As Long, k As String, f As String, sh As String, t As String
+    r = TypeRow(code)
+    f = Trim$(CStr(SprVal("tTypes", r, 8)))
+    sh = Trim$(CStr(SprVal("tTypes", r, 9)))
+    t = Trim$(CStr(SprVal("tTypes", r, 7)))
+    If Len(f) = 0 Or f = "-" Then _
+        Err.Raise vbObjectError + 4, , "У типа «" & code & "» не задан файл базы."
+    k = TKey(f, sh, t)
+    If k = mArrKey Then Exit Sub
+    EnsureCache
+    If Not mData.exists(k) Then LoadTable f, sh, t
+    mArr = mData(k)
+    mArrKey = k
+    mArrRows = mRows(k)
+End Sub
+
+Public Function BVal(ByVal r As Long, ByVal c As Long) As Variant
+    BVal = mArr(r, c)
+End Function
+
+Public Function BRows() As Long
+    BRows = mArrRows
+End Function
+
+' ================== СБРОС / ЗАГРУЗКА ==================
+Public Sub СброситьКэшБаз()
+    Set mData = Nothing
+    Set mRows = Nothing
+    Set mCols = Nothing
+    Set mWhen = Nothing
+    Set mFileT = Nothing
+    Set mFull = Nothing
+    Set mTypeRow = Nothing
+    mArrKey = ""
+    mArrRows = 0
+    mArr = Empty
+End Sub
+
+' Имя сохранено для совместимости с ЭтаКнига
+Public Sub CloseAllBases()
+    СброситьКэшБаз
+End Sub
+
+Public Sub ЗагрузитьБазы()
+    Dim r As Long, i As Long, code As String, f As String, nr As Long
+    Dim msg As String, nOk As Long, nErr As Long, total As Long, t0 As Double
+    Dim ev As Boolean, sn As Variant
+    ev = Application.EnableEvents
+    t0 = Timer
+    On Error GoTo fin
+    Application.EnableEvents = False
+    СброситьКэшБаз
+    msg = "Папка баз: " & basePath() & vbCrLf & vbCrLf
+
+    sn = Array("tTypes", "tD", "tGroups", "tSteels")
+    For i = 0 To UBound(sn)
+        On Error Resume Next
+        nr = SprRows(CStr(sn(i)))
+        If Err.Number <> 0 Then
+            msg = msg & CStr(sn(i)) & " -> ОШИБКА: " & Err.Description & vbCrLf
+            Err.Clear
+            nErr = nErr + 1
+        Else
+            msg = msg & CStr(sn(i)) & " -> " & nr & " строк" & vbCrLf
+            nOk = nOk + 1
+            total = total + nr
+        End If
+        On Error GoTo fin
+    Next i
+    msg = msg & vbCrLf
+
+    For r = 1 To SprRows("tTypes")
+        code = Trim$(CStr(SprVal("tTypes", r, 1)))
+        f = Trim$(CStr(SprVal("tTypes", r, 8)))
+        If Len(code) > 0 Then
+            If Len(f) = 0 Or f = "-" Then
+                msg = msg & code & " -> без файла (пропущен)" & vbCrLf
+            Else
+                On Error Resume Next
+                UseBase code
+                If Err.Number <> 0 Then
+                    msg = msg & code & " -> ОШИБКА: " & Err.Description & vbCrLf
+                    Err.Clear
+                    nErr = nErr + 1
+                Else
+                    msg = msg & code & " -> " & BRows() & " строк" & vbCrLf
+                    nOk = nOk + 1
+                    total = total + BRows()
+                End If
+                On Error GoTo fin
+            End If
+        End If
+    Next r
+
+    msg = msg & vbCrLf & "Таблиц загружено: " & nOk & ", ошибок: " & nErr
+    msg = msg & vbCrLf & "Строк в памяти: " & total
+    msg = msg & vbCrLf & "Время загрузки: " & Format(Timer - t0, "0.0") & " с"
+fin:
+    Application.EnableEvents = ev
+    If Err.Number <> 0 Then msg = msg & vbCrLf & "СБОЙ: " & Err.Description
+    MsgBox msg, IIf(nErr > 0, vbExclamation, vbInformation), "Загрузка баз"
+End Sub
+
+Public Sub ОбновитьБазы()
+    ЗагрузитьБазы
+End Sub
+
+' ================== ОТЧЁТ О СВЕЖЕСТИ ==================
+Public Sub ПроверитьБазы()
+    Dim r As Long, code As String, f As String, sh As String, t As String
+    Dim k As String, msg As String, ft As Date
+    On Error GoTo fail
+    EnsureCache
+    msg = "Папка баз: " & basePath() & vbCrLf & vbCrLf
+    For r = 1 To SprRows("tTypes")
+        code = Trim$(CStr(SprVal("tTypes", r, 1)))
+        f = Trim$(CStr(SprVal("tTypes", r, 8)))
+        sh = Trim$(CStr(SprVal("tTypes", r, 9)))
+        t = Trim$(CStr(SprVal("tTypes", r, 7)))
+        If Len(code) > 0 Then
+            If Len(f) = 0 Or f = "-" Then
+                msg = msg & code & ": без файла" & vbCrLf
+            Else
+                k = TKey(f, sh, t)
+                If mData.exists(k) Then
+                    msg = msg & code & ": " & mRows(k) & " строк, загружено " & Format(mWhen(k), "hh:nn:ss")
+                    On Error Resume Next
+                    ft = FileDateTime(mFull(k))
+                    If Err.Number <> 0 Then
+                        msg = msg & " | файл недоступен"
+                        Err.Clear
+                    ElseIf ft > mWhen(k) Then
+                        msg = msg & " | ФАЙЛ НОВЕЕ (" & Format(ft, "dd.mm hh:nn") & ") — обновите"
+                    Else
+                        msg = msg & " | актуально"
+                    End If
+                    On Error GoTo fail
+                    msg = msg & vbCrLf
+                Else
+                    msg = msg & code & ": не загружено" & vbCrLf
+                End If
+            End If
+        End If
+    Next r
+    MsgBox msg, vbInformation, "Состояние баз"
+    Exit Sub
+fail:
+    MsgBox msg & vbCrLf & "ОШИБКА: " & Err.Description, vbExclamation
+End Sub
+

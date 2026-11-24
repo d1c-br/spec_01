@@ -1,0 +1,110 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmSupportHB 
+   Caption         =   "Опора типа ХБ"
+   ClientHeight    =   4020
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   6555
+   OleObjectBlob   =   "frmSupportHB.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmSupportHB"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, r As Long
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+    Me.Caption = "Опора типа ХБ"
+    Me.cboSteel.Clear
+    Me.cboSteel.AddItem "20"
+    Me.cboSteel.AddItem "09Г2С"
+    Me.cboSteel.AddItem "ВСт3пс"
+    FillList Me.cboD, BaseValues("SUP_HB", 1, 0, Empty, 0, Empty)
+    SelIf Me.cboD, NumTxt0(ws.Cells(r, col("D")).Value)
+    SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+    mLoading = False
+    RefillExec
+    mLoading = True
+    SelIf Me.cboExec, CStr(ws.Cells(r, col("Исполн")).Value)
+    If Me.cboExec.ListIndex < 0 And Me.cboExec.ListCount > 0 Then Me.cboExec.ListIndex = 0
+    mLoading = False
+    Preview
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Sub RefillExec()
+    Dim cur As String, dVal As Double
+    cur = Me.cboExec.Value
+    mLoading = True
+    Me.cboExec.Clear
+    If Me.cboD.ListIndex >= 0 Then
+        dVal = CDbl(Me.cboD.Value)
+        Dim execs As Variant, i As Long
+        execs = Array("А", "Б", "В", "Г")
+        For i = 0 To UBound(execs)
+            If BaseValues("SUP_HB", 3, 1, dVal, 3, execs(i)).Count > 0 Then Me.cboExec.AddItem execs(i)
+        Next i
+    End If
+    SelIf Me.cboExec, cur
+    Me.cboExec.Enabled = (Me.cboD.ListIndex >= 0)
+    mLoading = False
+End Sub
+
+Private Sub cboD_Change()
+    If Not mLoading Then RefillExec: Preview
+End Sub
+
+Private Sub cboExec_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboSteel_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub Preview()
+    If Me.cboD.ListIndex < 0 Or Me.cboExec.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+        Me.lblPreview.Caption = "— выберите параметры —"
+        Exit Sub
+    End If
+    Me.lblPreview.Caption = SupportDes("SUP_HB", CDbl(Me.cboD.Value), Me.cboExec.Value, Me.cboSteel.Value, False)
+End Sub
+
+Private Sub btnOK_Click()
+    If Me.cboD.ListIndex < 0 Or Me.cboExec.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+        MsgBox "Выберите D, исполнение и сталь.", vbExclamation
+        Exit Sub
+    End If
+    WriteSupport mTarget, "SUP_HB", CDbl(Me.cboD.Value), Me.cboExec.Value, Me.cboSteel.Value, _
+                 False, False, False, False
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+

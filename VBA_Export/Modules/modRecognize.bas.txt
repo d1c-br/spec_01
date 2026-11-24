@@ -1,0 +1,407 @@
+Attribute VB_Name = "modRecognize"
+Option Explicit
+
+Public Function RecognizeAndWrite(ByVal tgt As Range, ByVal txt As String) As Boolean
+Dim sFull As String, core As String, stl As String, podk As Boolean
+Dim parts() As String, segA As String, segB As String, segBr As String
+Dim dMain As Double, thk As Double, ang As Double, dBr As Double, lenMm As Double
+Dim grp As String, upl As String, grk As String, typ As String, exec As String
+Dim posA As Long, posB As Long, supCode As String, baseExec As String
+Dim isFixed As Boolean, isWelded As Boolean, isHole As Boolean, isWaste As Boolean
+Dim isTurn As Boolean, iTyp As Long
+Dim vals As Collection
+Dim pipeCode As String, armCode As String
+Dim vLines() As String, line1 As String, posDN As Long, posPN As Long, i As Long
+Dim dnStr As String, pnStr As String, ch As String
+Dim vKl As String, vTFrom As String, vTTo As String, vKorp As String
+Dim vKlim As String, vSred As String, vUpl As String
+Dim vJoin As String, vThread As String, vDir As String, sTmp As String
+Dim li As Long, s As String
+Dim zpFlag As String, zpExec As String, zpSt As String, zfFlag As String, zfSt As String
+Dim ofFlag As String, ofTyp As String, prFlag As String, prTyp As String
+Dim shFlag As String, gFlag As String
+Dim params As String
+sFull = Replace(Trim$(txt), vbCrLf, vbLf)
+sFull = Trim$(sFull)
+RecognizeAndWrite = False
+On Error GoTo fail
+' === ТРУБА (три типа) ===
+If Left$(sFull, 6) = "Труба " Then
+If InStr(sFull, "ГОСТ 8734") > 0 Then
+pipeCode = "PIPE_SMLS_CD"
+ElseIf InStr(sFull, "ГОСТ 10704") > 0 Then
+pipeCode = "PIPE_WELD"
+Else
+pipeCode = "PIPE_SMLS"
+End If
+posA = InStr(sFull, " / ")
+If posA = 0 Then Exit Function
+segA = Left$(sFull, posA - 1): segB = Mid$(sFull, posA + 3)
+core = Mid$(segA, 7)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+parts = Split(core, "х"): If UBound(parts) <> 1 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+parts = Split(segB, " "): If UBound(parts) < 1 Then Exit Function
+grp = parts(0): stl = parts(1)
+WritePipeEx tgt, pipeCode, dMain, thk, grp, stl
+RecognizeAndWrite = True
+' === ОТВОД ===
+ElseIf Left$(sFull, 6) = "Отвод " Then
+core = Mid$(sFull, 7)
+podk = (Left$(core, 2) = "П ")
+If podk Then core = Mid$(core, 3)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+stl = SteelFromCore(core): core = StripSteel(core, stl)
+parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
+ang = ToNum(parts(0))
+parts = Split(parts(1), "х"): If UBound(parts) <> 1 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+WriteElbow tgt, dMain, thk, ang, stl, podk
+RecognizeAndWrite = True
+' === ТРОЙНИК ===
+ElseIf Left$(sFull, 8) = "Тройник " Then
+core = Mid$(sFull, 9)
+podk = (Left$(core, 2) = "П ")
+If podk Then core = Mid$(core, 3)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+stl = SteelFromCore(core): core = StripSteel(core, stl)
+If InStr(core, "-") > 0 Then
+parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
+segA = parts(0): segBr = parts(1)
+parts = Split(segBr, "х"): If UBound(parts) <> 1 Then Exit Function
+dBr = ToNum(parts(0))
+Else
+segA = core: dBr = 0
+End If
+parts = Split(segA, "х"): If UBound(parts) <> 1 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+If dBr = 0 Then dBr = dMain
+WriteTee tgt, dMain, thk, dBr, stl, podk
+RecognizeAndWrite = True
+' === ПЕРЕХОД ===
+ElseIf Left$(sFull, 8) = "Переход " Then
+core = Mid$(sFull, 9)
+podk = (Left$(core, 2) = "П ")
+If podk Then core = Mid$(core, 3)
+lenMm = 0
+posA = InStr(core, ", L=")
+If posA > 0 Then
+lenMm = ToNum(Replace(Mid$(core, posA + 4), "мм", ""))
+core = Left$(core, posA - 1)
+End If
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+stl = SteelFromCore(core): core = StripSteel(core, stl)
+parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
+segA = parts(0): segBr = parts(1)
+parts = Split(segA, "х"): If UBound(parts) <> 1 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+parts = Split(segBr, "х"): If UBound(parts) <> 1 Then Exit Function
+dBr = ToNum(parts(0))
+If lenMm = 0 Then
+Set vals = TransValues(6, dMain, thk, dBr, TransAutoT1(dMain, thk, dBr))
+If vals.Count <> 1 Then Exit Function
+lenMm = CDbl(vals(1))
+End If
+WriteTrans tgt, dMain, thk, dBr, TransAutoT1(dMain, thk, dBr), lenMm, stl, podk
+RecognizeAndWrite = True
+' === ФЛАНЕЦ ===
+ElseIf Left$(sFull, 7) = "Фланец " Then
+core = Mid$(sFull, 8)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+parts = Split(core, "-"): If UBound(parts) <> 6 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+typ = parts(2): upl = parts(4)
+stl = Mid$(parts(5), 4): grk = parts(6)
+WriteFlange tgt, dMain, thk, typ, upl, stl, grk
+RecognizeAndWrite = True
+' === ЗАГЛУШКА (все три типа) ===
+ElseIf Left$(sFull, 8) = "Заглушка" Then
+If InStr(sFull, "ГОСТ Р 71797") > 0 Then
+isTurn = (InStr(sFull, "поворотная") > 0)
+If isTurn Then
+core = Mid$(sFull, InStr(sFull, "поворотная") + 11)
+Else
+core = Mid$(sFull, InStr(sFull, "хвостовиком") + 12)
+End If
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+parts = Split(core, "-"): If UBound(parts) <> 3 Then Exit Function
+iTyp = CLng(parts(0)): dMain = ToNum(parts(1)): thk = ToNum(parts(2)): stl = parts(3)
+WriteBlindInt tgt, iTyp, dMain, thk, stl, isTurn
+ElseIf InStr(sFull, "ГОСТ 34785") > 0 Then
+core = Mid$(sFull, 10)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+parts = Split(core, "-"): If UBound(parts) <> 5 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+upl = parts(2): stl = Mid$(parts(4), 4): grk = parts(5)
+WriteBlindFl tgt, dMain, thk, upl, stl, grk
+Else
+core = Mid$(sFull, 10)
+podk = (Left$(core, 2) = "П ")
+If podk Then core = Mid$(core, 3)
+posB = InStr(core, " ГОСТ"): If posB = 0 Then Exit Function
+core = Left$(core, posB - 1)
+stl = SteelFromCore(core): core = StripSteel(core, stl)
+parts = Split(core, "х"): If UBound(parts) <> 1 Then Exit Function
+dMain = ToNum(parts(0)): thk = ToNum(parts(1))
+WriteCap tgt, dMain, thk, stl, podk
+End If
+RecognizeAndWrite = True
+' === КРАН ШАРОВОЙ МУФТОВЫЙ ===
+ElseIf InStr(1, sFull, "Кран шаровой муфтовый", vbTextCompare) > 0 Then
+vLines = Split(sFull, vbLf)
+line1 = vLines(0)
+posDN = InStr(line1, "DN")
+If posDN = 0 Then Exit Function
+dnStr = ""
+For i = posDN + 2 To Len(line1)
+If Mid$(line1, i, 1) >= "0" And Mid$(line1, i, 1) <= "9" Then
+dnStr = dnStr & Mid$(line1, i, 1)
+Else
+Exit For
+End If
+Next i
+If Len(dnStr) = 0 Then Exit Function
+dMain = CDbl(dnStr)
+posPN = InStr(line1, "PN")
+If posPN = 0 Then Exit Function
+pnStr = ""
+For i = posPN + 2 To Len(line1)
+ch = Mid$(line1, i, 1)
+If (ch >= "0" And ch <= "9") Or ch = "," Or ch = "." Then
+pnStr = pnStr & ch
+Else
+Exit For
+End If
+Next i
+If Len(pnStr) = 0 Then Exit Function
+thk = CDbl(pnStr) * 10
+vKl = "A": vTFrom = "": vTTo = "": vKorp = "сталь 20": vKlim = "У1": vSred = ""
+vJoin = "резьбовой": vThread = "": vDir = "внутренняя"
+For li = 0 To UBound(vLines)
+If InStr(1, vLines(li), "Тип присоединения", vbTextCompare) > 0 Then
+If InStr(1, vLines(li), "под приварку", vbTextCompare) > 0 Then
+vJoin = "под приварку": vThread = "": vDir = ""
+Else
+vJoin = "резьбовой"
+posA = InStr(1, vLines(li), "резьбовой ", vbTextCompare)
+sTmp = Mid$(vLines(li), posA + 10)
+posB = InStr(sTmp, " (")
+If posB > 0 Then vThread = Left$(sTmp, posB - 1) Else vThread = sTmp
+If Right$(vThread, 1) = "." Then vThread = Left$(vThread, Len(vThread) - 1)
+If InStr(1, vLines(li), "наружная", vbTextCompare) > 0 Then vDir = "наружная" Else vDir = "внутренняя"
+End If
+End If
+If InStr(1, vLines(li), "Класс герметичности", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Класс герметичности")
+vKl = Trim$(Mid$(vLines(li), posA + 19))
+If InStr(vKl, " по") > 0 Then vKl = Left$(vKl, InStr(vKl, " по") - 1)
+End If
+If InStr(1, vLines(li), "Температура рабочей среды", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "от")
+posB = InStr(vLines(li), "до")
+If posA > 0 And posB > 0 Then
+vTFrom = Trim$(Mid$(vLines(li), posA + 2, posB - posA - 2))
+vTTo = Trim$(Mid$(vLines(li), posB + 2))
+If InStr(vTTo, "°") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "°") - 1)
+ElseIf posB > 0 Then
+vTTo = Trim$(Mid$(vLines(li), posB + 2))
+If InStr(vTTo, "°") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "°") - 1)
+End If
+End If
+If InStr(1, vLines(li), "Материал корпуса", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Материал корпуса")
+vKorp = Trim$(Mid$(vLines(li), posA + 18))
+If InStr(vKorp, ".") > 0 Then vKorp = Left$(vKorp, InStr(vKorp, ".") - 1)
+End If
+If InStr(1, vLines(li), "Климатическое исполнение", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Климатическое исполнение")
+vKlim = Trim$(Mid$(vLines(li), posA + 24))
+If InStr(vKlim, " по") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " по") - 1)
+End If
+If InStr(1, vLines(li), "Рабочая среда", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Рабочая среда")
+vSred = Trim$(Mid$(vLines(li), posA + 15))
+If InStr(vSred, ".") > 0 Then vSred = Left$(vSred, InStr(vSred, ".") - 1)
+End If
+Next li
+params = vKl & "|" & vTFrom & "|" & vTTo & "|" & vKorp & "|" & vKlim & "|" & vSred & "|" & vJoin & "|" & vThread & "|" & vDir
+WriteValveM tgt, dMain, thk, vKl, vTFrom, vTTo, vKorp, vKlim, vSred, params
+RecognizeAndWrite = True
+' === КРАН ФЛАНЦЕВЫЙ / ЗАДВИЖКА (многострочные, с комплектом) ===
+ElseIf InStr(1, sFull, "Кран шаровой фланцевый", vbTextCompare) > 0 _
+Or InStr(1, sFull, "Задвижка клиновая фланцевая", vbTextCompare) > 0 Then
+If InStr(1, sFull, "Задвижка", vbTextCompare) > 0 Then armCode = "GATE_VALVE_FL" Else armCode = "VALVE"
+vLines = Split(sFull, vbLf)
+line1 = vLines(0)
+posDN = InStr(line1, "DN")
+If posDN = 0 Then Exit Function
+dnStr = ""
+For i = posDN + 2 To Len(line1)
+If Mid$(line1, i, 1) >= "0" And Mid$(line1, i, 1) <= "9" Then
+dnStr = dnStr & Mid$(line1, i, 1)
+Else
+Exit For
+End If
+Next i
+If Len(dnStr) = 0 Then Exit Function
+dMain = CDbl(dnStr)
+posPN = InStr(line1, "PN")
+If posPN = 0 Then Exit Function
+pnStr = ""
+For i = posPN + 2 To Len(line1)
+ch = Mid$(line1, i, 1)
+If (ch >= "0" And ch <= "9") Or ch = "," Or ch = "." Then
+pnStr = pnStr & ch
+Else
+Exit For
+End If
+Next i
+If Len(pnStr) = 0 Then Exit Function
+thk = CDbl(pnStr) * 10
+vKl = "A": vTFrom = "": vTTo = "": vKorp = "сталь 20": vKlim = "У1": vSred = "": vUpl = "B-B"
+For li = 0 To UBound(vLines)
+If InStr(1, vLines(li), "Класс герметичности", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Класс герметичности")
+vKl = Trim$(Mid$(vLines(li), posA + 19))
+If InStr(vKl, " по") > 0 Then vKl = Left$(vKl, InStr(vKl, " по") - 1)
+End If
+If InStr(1, vLines(li), "Температура рабочей среды", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "от")
+posB = InStr(vLines(li), "до")
+If posA > 0 And posB > 0 Then
+vTFrom = Trim$(Mid$(vLines(li), posA + 2, posB - posA - 2))
+vTTo = Trim$(Mid$(vLines(li), posB + 2))
+If InStr(vTTo, "°") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "°") - 1)
+ElseIf posB > 0 Then
+vTTo = Trim$(Mid$(vLines(li), posB + 2))
+If InStr(vTTo, "°") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "°") - 1)
+End If
+End If
+If InStr(1, vLines(li), "Материал корпуса", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Материал корпуса")
+vKorp = Trim$(Mid$(vLines(li), posA + 18))
+If InStr(vKorp, ".") > 0 Then vKorp = Left$(vKorp, InStr(vKorp, ".") - 1)
+End If
+If InStr(1, vLines(li), "Климатическое исполнение", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Климатическое исполнение")
+vKlim = Trim$(Mid$(vLines(li), posA + 24))
+If InStr(vKlim, " по") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " по") - 1)
+End If
+If InStr(1, vLines(li), "Рабочая среда", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "Рабочая среда")
+vSred = Trim$(Mid$(vLines(li), posA + 15))
+If InStr(vSred, ".") > 0 Then vSred = Left$(vSred, InStr(vSred, ".") - 1)
+End If
+If InStr(1, vLines(li), "Уплотнительная поверхность", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), " - ")
+If posA > 0 Then
+vUpl = Trim$(Mid$(vLines(li), posA + 3))
+If InStr(vUpl, ".") > 0 Then vUpl = Left$(vUpl, InStr(vUpl, ".") - 1)
+End If
+End If
+Next li
+zpFlag = "0": zpExec = "Поворотная заглушка": zpSt = "20"
+zfFlag = "0": zfSt = "20"
+ofFlag = "0": ofTyp = "11"
+prFlag = "0": prTyp = "СНП"
+shFlag = "0": gFlag = "0"
+On Error Resume Next
+For li = 0 To UBound(vLines)
+s = vLines(li)
+If InStr(1, s, "Заглушкой", vbTextCompare) > 0 And InStr(s, "71797") > 0 Then
+zpFlag = "1"
+If InStr(1, s, "хвостовиком", vbTextCompare) > 0 Then
+zpExec = "Заглушка с хвостовиком"
+Else
+zpExec = "Поворотная заглушка"
+End If
+posA = InStr(1, s, "из стали", vbTextCompare)
+If posA > 0 Then
+zpSt = Trim$(Mid$(s, posA + 8))
+If InStr(zpSt, ".") > 0 Then zpSt = Left$(zpSt, InStr(zpSt, ".") - 1)
+If InStr(zpSt, ";") > 0 Then zpSt = Left$(zpSt, InStr(zpSt, ";") - 1)
+End If
+End If
+If InStr(1, s, "Заглушкой", vbTextCompare) > 0 And InStr(s, "34785") > 0 Then
+zfFlag = "1"
+posA = InStr(1, s, "из стали", vbTextCompare)
+If posA > 0 Then
+zfSt = Trim$(Mid$(s, posA + 8))
+If InStr(zfSt, ".") > 0 Then zfSt = Left$(zfSt, InStr(zfSt, ".") - 1)
+If InStr(zfSt, ";") > 0 Then zfSt = Left$(zfSt, InStr(zfSt, ";") - 1)
+End If
+End If
+If InStr(1, s, "фланц", vbTextCompare) > 0 And InStr(s, "33259") > 0 Then
+ofFlag = "1"
+posA = InStr(1, s, "типа", vbTextCompare)
+If posA > 0 Then
+ofTyp = Trim$(Mid$(s, posA + 4))
+If InStr(ofTyp, " ") > 0 Then ofTyp = Left$(ofTyp, InStr(ofTyp, " ") - 1)
+End If
+End If
+If InStr(1, s, "Прокладками", vbTextCompare) > 0 Then
+prFlag = "1"
+posA = InStr(1, s, "Прокладками", vbTextCompare)
+prTyp = Trim$(Mid$(s, posA + 11))
+If InStr(prTyp, " ") > 0 Then prTyp = Left$(prTyp, InStr(prTyp, " ") - 1)
+End If
+If InStr(1, s, "Шпильками", vbTextCompare) > 0 Then shFlag = "1"
+If InStr(1, s, "Гайками", vbTextCompare) > 0 Then gFlag = "1"
+Next li
+On Error GoTo 0
+params = vKl & "|" & vTFrom & "|" & vTTo & "|" & vKorp & "|" & vKlim & "|" & vSred & "|" & vUpl & "|" & _
+zpFlag & "|" & zpExec & "|" & zpSt & "|" & _
+zfFlag & "|" & zfSt & "|" & _
+ofFlag & "|" & ofTyp & "|" & _
+prFlag & "|" & prTyp & "|" & _
+shFlag & "|" & gFlag
+WriteValveEx tgt, armCode, dMain, thk, vKl, vTFrom, vTTo, vKorp, vKlim, vSred, vUpl, params
+RecognizeAndWrite = True
+' === ОПОРА ===
+ElseIf Left$(sFull, 6) = "Опора " Then
+isFixed = (InStr(sFull, "(в комплекте с упором)") > 0)
+posB = InStr(sFull, "-ОСТ"): If posB = 0 Then Exit Function
+core = Mid$(sFull, 7, posB - 7)
+parts = Split(core, "-"): If UBound(parts) <> 3 Then Exit Function
+dMain = ToNum(parts(0)): typ = parts(1): exec = parts(2): stl = parts(3)
+Select Case typ
+Case "ВП": supCode = "SUP_VP"
+Case "ТО": supCode = "SUP_TO"
+Case "ХБ": supCode = "SUP_HB"
+Case "КП": supCode = "SUP_KP"
+Case "КХ": supCode = "SUP_KH"
+Case Else: Exit Function
+End Select
+isWaste = (Right$(exec, 1) = "в")
+If isWaste Then exec = Left$(exec, Len(exec) - 1)
+isHole = (Right$(exec, 1) = "О")
+If isHole Then exec = Left$(exec, Len(exec) - 1)
+isWelded = (InStr(exec, "С") > 0)
+baseExec = Replace(exec, "С", "")
+WriteSupport tgt, supCode, dMain, baseExec, stl, isWelded, isHole, isWaste, isFixed
+RecognizeAndWrite = True
+End If
+Exit Function
+fail:
+RecognizeAndWrite = False
+End Function
+
+Private Function ToNum(ByVal txtVal As String) As Double
+    ToNum = CDbl(Replace(Trim$(txtVal), ",", "."))
+End Function
+
+Private Function SteelFromCore(ByVal coreTxt As String) As String
+    If Right$(coreTxt, 6) = "-09Г2С" Then SteelFromCore = "09Г2С" Else SteelFromCore = "20"
+End Function
+
+Private Function StripSteel(ByVal coreTxt As String, ByVal stl As String) As String
+    If stl <> "20" Then StripSteel = Left$(coreTxt, Len(coreTxt) - 6) Else StripSteel = coreTxt
+End Function
+

@@ -1,0 +1,67 @@
+Attribute VB_Name = "modStampTransfer"
+Option Explicit
+
+Private Const FORM_SHEET As String = "Штамп спецификации"
+Private Const STAMP_RANGE As String = "G27:X40"
+
+' Переносит ТОЛЬКО значения ячеек.
+' Форматирование, объединения, высоты строк — не трогаются вообще.
+Public Sub ПеренестиШтамп(ByVal wsDst As Worksheet)
+    Dim wsForm As Worksheet
+    Dim c As Range, maF As Range, maT As Range, tc As Range
+    Dim seen As Object
+    Dim nCells As Long
+    Dim sSkip As String, sDiff As String
+    Dim msg As String
+
+    If wsDst Is Nothing Then Exit Sub
+            If wsDst.Cells(27, 7).MergeArea.Address <> "$G$27:$I$40" Then
+        MsgBox "Лист '" & wsDst.Name & "' не является первым листом спецификации " & _
+               "(нет объединения G27:I40). Перенос штампа отменён.", vbExclamation
+        Exit Sub
+    End If
+
+    On Error Resume Next
+    Set wsForm = ThisWorkbook.Worksheets(FORM_SHEET)
+    On Error GoTo 0
+    If wsForm Is Nothing Then
+        MsgBox "Лист '" & FORM_SHEET & "' не найден — штамп не перенесён.", vbExclamation
+        Exit Sub
+    End If
+
+    Set seen = CreateObject("Scripting.Dictionary")
+
+    For Each c In wsForm.Range(STAMP_RANGE).Cells
+        Set maF = c.MergeArea
+        If c.Address = maF.Cells(1, 1).Address Then
+            If Not seen.exists(maF.Address) Then
+                seen.Add maF.Address, True
+                Set tc = wsDst.Cells(maF.row, maF.Column)
+                Set maT = tc.MergeArea
+                If tc.Address <> maT.Cells(1, 1).Address Then
+                    sSkip = sSkip & maF.Address(False, False) & vbCrLf
+                Else
+                    If maT.Address <> maF.Address Then
+                        sDiff = sDiff & maF.Address(False, False) & " -> " & _
+                                maT.Address(False, False) & vbCrLf
+                    End If
+                    tc.Value = c.Value
+                    nCells = nCells + 1
+                End If
+            End If
+        End If
+    Next c
+
+    msg = ""
+    If Len(sSkip) > 0 Then
+        msg = msg & "Пропущено (на шаблоне это часть объединения):" & vbCrLf & sSkip & vbCrLf
+    End If
+    If Len(sDiff) > 0 Then
+        msg = msg & "Геометрия формы и шаблона различается:" & vbCrLf & sDiff & vbCrLf
+    End If
+    If Len(msg) > 0 Then
+        MsgBox "Штамп перенесён (значений: " & nCells & ")." & vbCrLf & vbCrLf & msg & _
+               "Приведите объединения формы в соответствие с «л01.С».", vbExclamation
+    End If
+End Sub
+

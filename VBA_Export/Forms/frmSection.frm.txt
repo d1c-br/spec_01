@@ -1,0 +1,153 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmSection 
+   Caption         =   "Участок"
+   ClientHeight    =   3420
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   16155
+   OleObjectBlob   =   "frmSection.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmSection"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mSec As Long
+
+Private Const PREF_STATE As String = "Состояние среды: "
+Private Const PREF_CATG As String = "Категория по ГОСТ 32569-2013: "
+Private Const PREF_CATTR As String = "Категория по ТР ТС 032/2013: "
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, s As Long
+    On Error GoTo fail
+    s = SecOfRow(targetCell.row)
+    If s = 0 Then Err.Raise vbObjectError + 60, , "Ячейка не относится к описанию участка."
+    mSec = s
+    Set ws = ShSv()
+    Me.txtMark.Value = CStr(ws.Cells(s, 1).Value)
+    Me.txtProduct.Value = CStr(ws.Cells(s, 2).Value)
+    Me.txtStart.Value = CStr(ws.Cells(s + 1, 2).Value)
+    Me.txtEnd.Value = CStr(ws.Cells(s + 2, 2).Value)
+    Me.txtTw.Value = NumStr(ws.Cells(s, 4).Value)
+    Me.txtTd.Value = NumStr(ws.Cells(s + 1, 4).Value)
+    Me.txtPw.Value = NumStr(ws.Cells(s + 2, 4).Value)
+    Me.txtPd.Value = NumStr(ws.Cells(s + 3, 4).Value)
+    FillCombo Me.cboTestMed, "гидр.,пневм."
+    SelIf Me.cboTestMed, CStr(ws.Cells(s + 2, 5).Value)
+    FillCombo Me.cboTightMed, "пневм.,(не проводить)"
+    SelIf Me.cboTightMed, TightFromCell(ws.Cells(s + 2, 7).Value)
+    FillCombo Me.cboState, "ж,г,ГЖ"
+    SelIf Me.cboState, AfterColon(ws.Cells(s, 8).Value)
+    Me.txtCatG.Value = AfterColon(ws.Cells(s + 1, 8).Value)
+    Me.txtCatTR.Value = AfterColon(ws.Cells(s + 2, 8).Value)
+    FillCombo Me.cboIns, "Без изоляции,Изоляция,Изоляция с электрообогревом,Изоляция с парообогревом"
+    SelIf Me.cboIns, CStr(ws.Cells(s + 3, 8).Value)
+    UpdatePLabels
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму участка: " & Err.Description, vbExclamation
+End Sub
+
+Private Sub FillCombo(ByVal cbo As Object, ByVal items As String)
+    Dim arr As Variant, i As Long
+    cbo.Clear
+    arr = Split(items, ",")
+    For i = 0 To UBound(arr)
+        cbo.AddItem arr(i)
+    Next i
+End Sub
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Function NumStr(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumStr = CStr(CDbl(v)) Else NumStr = ""
+End Function
+
+Private Function AfterColon(ByVal v As Variant) As String
+    Dim s As String, p As Long
+    s = CStr(v)
+    p = InStr(s, ": ")
+    If p > 0 Then AfterColon = Mid$(s, p + 2) Else AfterColon = s
+End Function
+
+Private Function TightFromCell(ByVal v As Variant) As String
+    If Trim$(CStr(v)) = "пневм." Then TightFromCell = "пневм." Else TightFromCell = "(не проводить)"
+End Function
+
+Private Sub PutNum(ByVal rng As Range, ByVal txt As String)
+    If Len(Trim$(txt)) = 0 Or Not IsNumeric(Trim$(txt)) Then
+        ClearCell rng
+    Else
+        rng.Value = CDbl(Trim$(txt))
+    End If
+End Sub
+
+Private Sub UpdatePLabels()
+    Dim pd As String, pw As String, medOk As Boolean, tightOk As Boolean
+    pd = Trim$(Me.txtPd.Value): pw = Trim$(Me.txtPw.Value)
+    medOk = (Me.cboTestMed.ListIndex >= 0) And Len(pd) > 0 And IsNumeric(pd)
+    tightOk = (Me.cboTightMed.Value = "пневм.") And Len(pw) > 0 And IsNumeric(pw)
+    If medOk Then
+        Me.lblP1.Caption = Format(CDbl(pd) * 1.43, "0.00")
+        Me.lblP2.Caption = Format(CDbl(pd), "0.00")
+    Else
+        Me.lblP1.Caption = "": Me.lblP2.Caption = ""
+    End If
+    If tightOk Then Me.lblP3.Caption = Format(CDbl(pw), "0.00") Else Me.lblP3.Caption = ""
+End Sub
+
+Private Sub cboTestMed_Change()
+    UpdatePLabels
+End Sub
+
+Private Sub cboTightMed_Change()
+    UpdatePLabels
+End Sub
+
+Private Sub txtPd_Change()
+    UpdatePLabels
+End Sub
+
+Private Sub txtPw_Change()
+    UpdatePLabels
+End Sub
+
+Private Sub btnOK_Click()
+    Dim ws As Worksheet, s As Long
+    Set ws = ShSv(): s = mSec
+    If Len(Me.txtMark.Value) > 0 Then ws.Cells(s, 1).Value = Me.txtMark.Value Else ClearCell ws.Cells(s, 1)
+    If Len(Me.txtProduct.Value) > 0 Then ws.Cells(s, 2).Value = Me.txtProduct.Value Else ClearCell ws.Cells(s, 2)
+    If Len(Me.txtStart.Value) > 0 Then ws.Cells(s + 1, 2).Value = Me.txtStart.Value Else ClearCell ws.Cells(s + 1, 2)
+    If Len(Me.txtEnd.Value) > 0 Then ws.Cells(s + 2, 2).Value = Me.txtEnd.Value Else ClearCell ws.Cells(s + 2, 2)
+    PutNum ws.Cells(s, 4), Me.txtTw.Value
+    PutNum ws.Cells(s + 1, 4), Me.txtTd.Value
+    PutNum ws.Cells(s + 2, 4), Me.txtPw.Value
+    PutNum ws.Cells(s + 3, 4), Me.txtPd.Value
+    If Me.cboTestMed.ListIndex >= 0 Then ws.Cells(s + 2, 5).Value = Me.cboTestMed.Value Else ClearCell ws.Cells(s + 2, 5)
+    If Me.cboTightMed.Value = "пневм." Then ws.Cells(s + 2, 7).Value = "пневм." Else ClearCell ws.Cells(s + 2, 7)
+    If Len(Me.cboState.Value) > 0 Then ws.Cells(s, 8).Value = PREF_STATE & Me.cboState.Value Else ClearCell ws.Cells(s, 8)
+    If Len(Trim$(Me.txtCatG.Value)) > 0 Then ws.Cells(s + 1, 8).Value = PREF_CATG & Trim$(Me.txtCatG.Value) Else ClearCell ws.Cells(s + 1, 8)
+    If Len(Trim$(Me.txtCatTR.Value)) > 0 Then ws.Cells(s + 2, 8).Value = PREF_CATTR & Trim$(Me.txtCatTR.Value) Else ClearCell ws.Cells(s + 2, 8)
+    If Me.cboIns.ListIndex >= 0 Then ws.Cells(s + 3, 8).Value = Me.cboIns.Value Else ClearCell ws.Cells(s + 3, 8)
+    SetTestFormulas s
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+
+Private Sub ClearCell(ByVal rng As Range)
+    rng.MergeArea.ClearContents
+End Sub
+

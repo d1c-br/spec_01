@@ -1,0 +1,695 @@
+Attribute VB_Name = "modWordStamp"
+Option Explicit
+
+Private Const TEMPLATE_SUBFOLDER As String = "Шаблоны_конечных_файлов"
+Private Const TEMPLATE_NAME As String = "Шаблон.С.docx"
+
+#If VBA7 Then
+    Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+#Else
+    Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+#End If
+
+Type SpecItem
+    NameText As String
+    QuizSheet As String
+    UnitText As String
+    QtySum As Double
+    HasQty As Boolean
+    UnitMassText As String
+    NoteText As String
+    SortWeight As Double
+    SortDia As Double
+    SortThk As Double
+    SortPn As Double
+    OrigIndex As Long
+End Type
+
+' ==================== ШТАМП В КОЛОНТИТУЛЕ WORD ====================
+
+Public Sub ExportStampOnlyToWord()
+    Dim tplPath As String, outPath As String, cipher As String
+    Dim wdApp As Object, wdDoc As Object
+    Dim namesArr() As String, tagsArr() As String, cnt As Long
+    Dim i As Long, valText As String, hasRange As Boolean
+
+    tplPath = GetTemplatePath()
+    If Len(Dir$(tplPath)) = 0 Then
+        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
+        Exit Sub
+    End If
+
+    ReDim namesArr(1 To 1)
+    ReDim tagsArr(1 To 1)
+    cnt = 0
+
+    ' При необходимости оставьте здесь свой точный список AddPair из рабочей версии
+    AddPair namesArr, tagsArr, cnt, "Штамп_Шифр", "[ШИФР]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_договор", "[Договор]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_объект", "[Объект]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_содержание", "[Содержание]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_стадия", "[Ст]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_организация", "[Организация]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_разраб", "[Разработал]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_пров", "[Проверил]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец", "[Глав.спец.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд", "[Нач.отд.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр", "[Н.контр.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_гип", "[ГИП]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_разраб_ф", "[Разработал_]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_пров_ф", "[Проверил_]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец_ф", "[Глав.спец._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд_ф", "[Нач.отд._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр_ф", "[Н.контр._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_гип_ф", "[ГИП_]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_д1", "[д1]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д2", "[д2]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д3", "[д3]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
+
+    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
+    If Len(cipher) = 0 Then cipher = "Спецификация"
+    outPath = OutFolder() & SafeFileName(cipher) & ".docx"
+
+    On Error GoTo ErrStampHandler
+    Set wdApp = CreateWordWithRetry()
+    wdApp.DisplayAlerts = 0
+    wdApp.Visible = False
+
+    Set wdDoc = OpenDocWithRetry(wdApp, tplPath)
+
+    ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
+
+    SaveDocWithRetry wdDoc, outPath
+    wdApp.Visible = True
+    On Error Resume Next
+    wdDoc.Activate
+    Exit Sub
+
+ErrStampHandler:
+    If Err.Number <> 0 Then
+        MsgBox "Ошибка при переносе штампа (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
+    End If
+    On Error Resume Next
+    If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
+    If Not wdApp Is Nothing Then wdApp.Quit
+End Sub
+
+Private Sub ApplyStampTagsToWord(ByVal wdDoc As Object, ByRef namesArr() As String, _
+                               ByRef tagsArr() As String, ByVal cnt As Long)
+    Dim i As Long, valText As String, hasRange As Boolean
+    For i = 1 To cnt
+        If Len(tagsArr(i)) > 0 And Len(namesArr(i)) > 0 Then
+            hasRange = TryReadRangeText(namesArr(i), valText)
+            If hasRange Then
+                ReplaceTagInHeadersAndTables wdDoc, tagsArr(i), valText
+            End If
+        End If
+    Next i
+End Sub
+
+' ==================== ОСНОВНАЯ ТАБЛИЦА + ШТАМП ====================
+
+Public Sub ExportSpecToWord()
+    Dim tplPath As String, outPath As String, cipher As String
+    Dim wdApp As Object, wdDoc As Object, tbl As Object
+    Dim items() As SpecItem, itemCnt As Long
+    Dim namesArr() As String, tagsArr() As String, cnt As Long
+
+    tplPath = GetTemplatePath()
+    If Len(Dir$(tplPath)) = 0 Then
+        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
+        Exit Sub
+    End If
+
+    CollectAndAggregateSpec items, itemCnt
+    If itemCnt > 1 Then
+        SortSpecItems items, itemCnt
+    End If
+
+    BuildStampPairs namesArr, tagsArr, cnt
+    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
+    If Len(cipher) = 0 Then cipher = "Спецификация"
+    outPath = OutFolder() & SafeFileName(cipher) & ".docx"
+
+    On Error GoTo ErrSpecHandler
+    Set wdApp = CreateWordWithRetry()
+    wdApp.DisplayAlerts = 0
+    wdApp.Visible = False
+
+    Set wdDoc = OpenDocWithRetry(wdApp, tplPath)
+    If wdDoc.Tables.Count = 0 Then
+        Err.Raise vbObjectError + 101, "ExportSpecToWord", "В документе шаблона не найдена таблица спецификации."
+    End If
+
+    ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
+
+    Set tbl = wdDoc.Tables(1)
+    FillWordSpecTable tbl, items, itemCnt
+
+    SaveDocWithRetry wdDoc, outPath
+    wdApp.Visible = True
+    On Error Resume Next
+    wdDoc.Activate
+    Exit Sub
+
+ErrSpecHandler:
+    If Err.Number <> 0 Then
+        MsgBox "Ошибка при формировании спецификации в Word (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
+    End If
+    On Error Resume Next
+    If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
+    If Not wdApp Is Nothing Then wdApp.Quit
+End Sub
+
+Public Sub ExportStampAndSpecToWord()
+    ExportSpecToWord
+End Sub
+
+Private Sub BuildStampPairs(ByRef namesArr() As String, ByRef tagsArr() As String, ByRef cnt As Long)
+    ReDim namesArr(1 To 1)
+    ReDim tagsArr(1 To 1)
+    cnt = 0
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_Шифр", "[ШИФР]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_договор", "[Договор]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_объект", "[Объект]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_содержание", "[Содержание]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_стадия", "[Ст]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_организация", "[Организация]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_разраб", "[Разработал]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_пров", "[Проверил]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец", "[Глав.спец.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд", "[Нач.отд.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр", "[Н.контр.]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_гип", "[ГИП]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_разраб_ф", "[Разработал_]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_пров_ф", "[Проверил_]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец_ф", "[Глав.спец._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд_ф", "[Нач.отд._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр_ф", "[Н.контр._]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_гип_ф", "[ГИП_]"
+
+    AddPair namesArr, tagsArr, cnt, "Штамп_д1", "[д1]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д2", "[д2]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д3", "[д3]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
+    AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
+
+End Sub
+
+Private Sub CollectAndAggregateSpec(ByRef items() As SpecItem, ByRef itemCnt As Long)
+    Dim ws As Worksheet
+    Dim r As Long, lastR As Long, h As Long, mk As String
+    Dim cName As Long, cQuiz As Long, cUnit As Long, cQty As Long, cMass1 As Long, cNote As Long
+    Dim nm As String, qz As String, un As String, m1 As String, nt As String
+    Dim qtyVal As Double, hasQ As Boolean
+    Dim idx As Long, foundIdx As Long
+
+    itemCnt = 0
+    Set ws = ThisWorkbook.Worksheets("Сводная")
+    lastR = ws.Cells.Find(What:="*", LookIn:=xlFormulas, SearchOrder:=xlByRows, SearchDirection:=xlPrevious).row
+    If lastR < 1 Then Exit Sub
+
+    For r = 1 To lastR
+        mk = UCase$(Trim$(CStr(ws.Cells(r, 9).Value)))
+        If mk = "HDR" Then
+            h = r
+            FindSpecColumns ws, h, cName, cQuiz, cUnit, cQty, cMass1, cNote
+        ElseIf mk <> "SEC" And mk <> "GAP" And h > 0 And r > h Then
+            If cName > 0 Then
+                nm = CStr(ws.Cells(r, cName).Value)
+                If Len(nm) > 0 Then
+                    qz = ReadColStr(ws, r, cQuiz)
+                    un = ReadColStr(ws, r, cUnit)
+                    m1 = ReadColStr(ws, r, cMass1)
+                    nt = ReadColStr(ws, r, cNote)
+                    ReadColQty ws, r, cQty, qtyVal, hasQ
+
+                    foundIdx = FindMatchingSpecItem(items, itemCnt, nm, qz, un, m1, nt)
+                    If foundIdx > 0 Then
+                        If hasQ Then
+                            items(foundIdx).QtySum = items(foundIdx).QtySum + qtyVal
+                            items(foundIdx).HasQty = True
+                        End If
+                    Else
+                        itemCnt = itemCnt + 1
+                        If itemCnt = 1 Then
+                            ReDim items(1 To 32)
+                        ElseIf itemCnt > UBound(items) Then
+                            ReDim Preserve items(1 To UBound(items) * 2)
+                        End If
+
+                        idx = itemCnt
+                        items(idx).NameText = nm
+                        items(idx).QuizSheet = qz
+                        items(idx).UnitText = un
+                        items(idx).QtySum = IIf(hasQ, qtyVal, 0#)
+                        items(idx).HasQty = hasQ
+                        items(idx).UnitMassText = m1
+                        items(idx).NoteText = nt
+                        items(idx).SortWeight = GetWeightSafe(r)
+                        items(idx).SortDia = GetDiaSafe(r)
+                        items(idx).SortThk = GetThkSafe(r)
+                        items(idx).SortPn = GetPnSafe(r)
+                        items(idx).OrigIndex = idx
+                    End If
+                End If
+            End If
+        End If
+    Next r
+End Sub
+
+Private Sub FindSpecColumns(ByVal ws As Worksheet, ByVal hdrRow As Long, _
+                            ByRef cName As Long, ByRef cQuiz As Long, ByRef cUnit As Long, _
+                            ByRef cQty As Long, ByRef cMass1 As Long, ByRef cNote As Long)
+    Dim c As Long, hTxt As String
+    cName = 0: cQuiz = 0: cUnit = 0: cQty = 0: cMass1 = 0: cNote = 0
+
+    For c = 1 To 40
+        If c <> 9 Then
+            hTxt = Trim$(CStr(ws.Cells(hdrRow, c).Value))
+            Select Case hTxt
+                Case "Наименование": If cName = 0 Then cName = c
+                Case "Опросной лист", "Опросный лист": If cQuiz = 0 Then cQuiz = c
+                Case "Ед. изм.": If cUnit = 0 Then cUnit = c
+                Case "Кол-во": If cQty = 0 Then cQty = c
+                Case "Масса 1 ед": If cMass1 = 0 Then cMass1 = c
+                Case "Примечание": If cNote = 0 Then cNote = c
+            End Select
+        End If
+    Next c
+
+    If cName = 0 Then cName = 2
+    If cQuiz = 0 Then cQuiz = 3
+    If cUnit = 0 Then cUnit = 4
+    If cQty = 0 Then cQty = 5
+    If cMass1 = 0 Then cMass1 = 6
+    If cNote = 0 Then cNote = 8
+End Sub
+
+Private Function ReadColStr(ByVal ws As Worksheet, ByVal r As Long, ByVal c As Long) As String
+    If c <= 0 Then Exit Function
+    ReadColStr = CStr(ws.Cells(r, c).Value)
+End Function
+
+Private Sub ReadColQty(ByVal ws As Worksheet, ByVal r As Long, ByVal c As Long, _
+                       ByRef outQty As Double, ByRef outHasQty As Boolean)
+    Dim v As Variant, s As String
+    outQty = 0#
+    outHasQty = False
+    If c <= 0 Then Exit Sub
+
+    v = ws.Cells(r, c).Value
+    If isEmpty(v) Then Exit Sub
+    If IsNumeric(v) Then
+        outQty = CDbl(v)
+        outHasQty = True
+        Exit Sub
+    End If
+
+    s = Trim$(Replace(CStr(v), ",", "."))
+    If Len(s) > 0 And IsNumeric(s) Then
+        outQty = CDbl(s)
+        outHasQty = True
+    End If
+End Sub
+
+Private Function FindMatchingSpecItem(ByRef items() As SpecItem, ByVal itemCnt As Long, _
+                                      ByVal nm As String, ByVal qz As String, _
+                                      ByVal un As String, ByVal m1 As String, _
+                                      ByVal nt As String) As Long
+    Dim i As Long
+    For i = 1 To itemCnt
+        If StrComp(items(i).NameText, nm, vbBinaryCompare) = 0 Then
+            If StrComp(items(i).QuizSheet, qz, vbBinaryCompare) = 0 Then
+                If StrComp(items(i).UnitText, un, vbBinaryCompare) = 0 Then
+                    If StrComp(items(i).UnitMassText, m1, vbBinaryCompare) = 0 Then
+                        If StrComp(items(i).NoteText, nt, vbBinaryCompare) = 0 Then
+                            FindMatchingSpecItem = i
+                            Exit Function
+                        End If
+                    End If
+                End If
+            End If
+        End If
+    Next i
+    FindMatchingSpecItem = 0
+End Function
+
+Private Function GetWeightSafe(ByVal r As Long) As Double
+    GetWeightSafe = 999999#
+    On Error Resume Next
+    GetWeightSafe = modLayout.GetSortWeight(r)
+    If Err.Number <> 0 Then Err.Clear: GetWeightSafe = 999999#
+    On Error GoTo 0
+End Function
+
+Private Function GetDiaSafe(ByVal r As Long) As Double
+    GetDiaSafe = 0#
+    On Error Resume Next
+    GetDiaSafe = modLayout.GetSortDia(r)
+    If Err.Number <> 0 Then Err.Clear: GetDiaSafe = 0#
+    On Error GoTo 0
+End Function
+
+Private Function GetThkSafe(ByVal r As Long) As Double
+    GetThkSafe = 0#
+    On Error Resume Next
+    GetThkSafe = modLayout.GetSortThk(r)
+    If Err.Number <> 0 Then Err.Clear: GetThkSafe = 0#
+    On Error GoTo 0
+End Function
+
+Private Function GetPnSafe(ByVal r As Long) As Double
+    GetPnSafe = 0#
+    On Error Resume Next
+    GetPnSafe = modLayout.GetSortPn(r)
+    If Err.Number <> 0 Then Err.Clear: GetPnSafe = 0#
+    On Error GoTo 0
+End Function
+
+Private Function SpecItemComesBefore(ByRef a As SpecItem, ByRef b As SpecItem) As Boolean
+    If a.SortWeight <> b.SortWeight Then
+        SpecItemComesBefore = (a.SortWeight < b.SortWeight)
+        Exit Function
+    End If
+    If a.SortDia <> b.SortDia Then
+        SpecItemComesBefore = (a.SortDia > b.SortDia)
+        Exit Function
+    End If
+    If a.SortThk <> b.SortThk Then
+        SpecItemComesBefore = (a.SortThk > b.SortThk)
+        Exit Function
+    End If
+    If a.SortPn <> b.SortPn Then
+        SpecItemComesBefore = (a.SortPn > b.SortPn)
+        Exit Function
+    End If
+    SpecItemComesBefore = (a.OrigIndex < b.OrigIndex)
+End Function
+
+Private Sub SortSpecItems(ByRef items() As SpecItem, ByVal itemCnt As Long)
+    Dim i As Long, j As Long, tmp As SpecItem
+    For i = 1 To itemCnt - 1
+        For j = i + 1 To itemCnt
+            If SpecItemComesBefore(items(j), items(i)) Then
+                tmp = items(i)
+                items(i) = items(j)
+                items(j) = tmp
+            End If
+        Next j
+    Next i
+End Sub
+
+Private Sub FillWordSpecTable(ByVal tbl As Object, ByRef items() As SpecItem, ByVal itemCnt As Long)
+    Dim dataStartRow As Long, neededRowCount As Long
+    Dim i As Long, rowIdx As Long
+    Dim qtyStr As String
+
+    dataStartRow = 2
+    If tbl.Rows.Count < dataStartRow Then
+        tbl.Rows.Add
+    End If
+
+    neededRowCount = dataStartRow + itemCnt - 1
+    If neededRowCount < dataStartRow Then neededRowCount = dataStartRow
+
+    Do While tbl.Rows.Count < neededRowCount
+        tbl.Rows.Add
+    Loop
+
+    Do While tbl.Rows.Count > neededRowCount And tbl.Rows.Count > dataStartRow
+        tbl.Rows(tbl.Rows.Count).Delete
+    Loop
+
+    For i = 1 To itemCnt
+        rowIdx = dataStartRow + i - 1
+        If items(i).HasQty Then
+            qtyStr = FormatNumberClean(items(i).QtySum)
+        Else
+            qtyStr = ""
+        End If
+
+        ' 1: Позиция — не заполняем
+        ' 2: Наименование, техническая характеристика
+        SetWordCellValueSafe tbl, rowIdx, 2, items(i).NameText
+        ' 3: Тип, марка, обозначение документа опросного листа
+        SetWordCellValueSafe tbl, rowIdx, 3, items(i).QuizSheet
+        ' 4: Код продукции — не заполняем
+        ' 5: Поставщик — не заполняем
+        ' 6: Единица измерения
+        SetWordCellValueSafe tbl, rowIdx, 6, items(i).UnitText
+        ' 7: Количество
+        SetWordCellValueSafe tbl, rowIdx, 7, qtyStr
+        ' 8: Масса одной единицы
+        SetWordCellValueSafe tbl, rowIdx, 8, items(i).UnitMassText
+        ' 9: Примечание
+        SetWordCellValueSafe tbl, rowIdx, 9, items(i).NoteText
+    Next i
+End Sub
+
+Private Sub SetWordCellValueSafe(ByVal tbl As Object, ByVal r As Long, ByVal c As Long, ByVal valStr As String)
+    Dim clRng As Object
+    On Error Resume Next
+    If c > tbl.Columns.Count Then Exit Sub
+    Set clRng = tbl.cell(r, c).Range
+    If clRng Is Nothing Then Exit Sub
+    If clRng.Characters.Count > 1 Then
+        clRng.MoveEnd unit:=1, Count:=-1
+    End If
+    clRng.Text = valStr
+    On Error GoTo 0
+End Sub
+
+' ==================== ЗАМЕНА МЕТОК В КОЛОНТИТУЛАХ WORD ====================
+
+Private Sub ReplaceTagInHeadersAndTables(ByVal wdDoc As Object, ByVal findText As String, ByVal replText As String)
+    Const wdHeaderFooterFirstPage As Long = 2
+    Const wdHeaderFooterPrimary As Long = 1
+
+    Dim sec As Object
+    On Error Resume Next
+    For Each sec In wdDoc.Sections
+        ProcessSingleHeader sec.Headers(wdHeaderFooterFirstPage), findText, replText
+        ProcessSingleHeader sec.Headers(wdHeaderFooterPrimary), findText, replText
+    Next sec
+    On Error GoTo 0
+End Sub
+
+Private Sub ProcessSingleHeader(ByVal hf As Object, ByVal findText As String, ByVal replText As String)
+    Dim shp As Object
+
+    If hf Is Nothing Then Exit Sub
+    On Error Resume Next
+    If Not hf.exists Then Exit Sub
+
+    For Each shp In hf.Shapes
+        If shp.HasTextFrame Then
+            If shp.TextFrame.HasText Then
+                ReplaceInStoryRange shp.TextFrame.TextRange, findText, replText
+            End If
+        End If
+    Next shp
+
+    ReplaceInStoryRange hf.Range, findText, replText
+    On Error GoTo 0
+End Sub
+
+Private Sub ReplaceInStoryRange(ByVal storyRng As Object, ByVal findText As String, ByVal replText As String)
+    Dim tbl As Object, rw As Object, cl As Object
+    Dim cellTxt As String
+
+    If storyRng Is Nothing Then Exit Sub
+    On Error Resume Next
+
+    For Each tbl In storyRng.Tables
+        For Each rw In tbl.Rows
+            For Each cl In rw.Cells
+                cellTxt = CleanWordCellText(cl.Range.Text)
+                If InStr(1, cellTxt, findText, vbBinaryCompare) > 0 Then
+                    cl.Range.Text = Replace(cellTxt, findText, replText, 1, -1, vbBinaryCompare)
+                End If
+            Next cl
+        Next rw
+    Next tbl
+
+    With storyRng.Find
+        .ClearFormatting
+        .Replacement.ClearFormatting
+        .Text = findText
+        .Replacement.Text = replText
+        .Forward = True
+        .Wrap = 1
+        .Format = False
+        .MatchCase = True
+        .MatchWholeWord = False
+        .Execute Replace:=2
+    End With
+    On Error GoTo 0
+End Sub
+
+Private Function CleanWordCellText(ByVal rawText As String) As String
+    Dim s As String
+    s = rawText
+    Do While Len(s) > 0 And (Right$(s, 1) = Chr$(7) Or Right$(s, 1) = vbCr Or Right$(s, 1) = vbLf)
+        s = Left$(s, Len(s) - 1)
+    Loop
+    CleanWordCellText = s
+End Function
+
+' ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+Private Function GetTemplatePath() As String
+    GetTemplatePath = ThisWorkbook.Path & "\" & TEMPLATE_SUBFOLDER & "\" & TEMPLATE_NAME
+End Function
+
+Private Sub AddPair(ByRef namesArr() As String, ByRef tagsArr() As String, _
+                    ByRef cnt As Long, ByVal nmRange As String, ByVal tagWord As String)
+    cnt = cnt + 1
+    If cnt > UBound(namesArr) Then
+        ReDim Preserve namesArr(1 To cnt + 16)
+        ReDim Preserve tagsArr(1 To cnt + 16)
+    End If
+    namesArr(cnt) = Trim$(nmRange)
+    tagsArr(cnt) = Trim$(tagWord)
+End Sub
+
+Private Function TryReadRangeText(ByVal nmRange As String, ByRef outText As String) As Boolean
+    Dim nm As Name
+    Dim rng As Range
+
+    outText = ""
+    On Error Resume Next
+    Set nm = ThisWorkbook.names(nmRange)
+    If Not nm Is Nothing Then
+        Set rng = nm.RefersToRange
+    End If
+    If rng Is Nothing Then
+        Set rng = ThisWorkbook.Range(nmRange)
+    End If
+    If rng Is Nothing Then Exit Function
+    outText = Trim$(CStr(rng.Cells(1, 1).Text))
+    If Err.Number <> 0 Then
+        Err.Clear
+        Exit Function
+    End If
+    On Error GoTo 0
+
+    TryReadRangeText = True
+End Function
+
+Private Function TryGetNamedRangeText(ByRef namesArr() As String, ByRef tagsArr() As String, _
+                                      ByVal cnt As Long, ByVal targetTag As String) As String
+    Dim i As Long, txt As String
+    For i = 1 To cnt
+        If UCase$(tagsArr(i)) = UCase$(targetTag) Then
+            If TryReadRangeText(namesArr(i), txt) Then
+                TryGetNamedRangeText = txt
+            End If
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Function CreateWordWithRetry() As Object
+    Dim attempt As Long, appObj As Object
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        Set appObj = CreateObject("Word.Application")
+        If Err.Number = 0 And Not appObj Is Nothing Then
+            On Error GoTo 0
+            Set CreateWordWithRetry = appObj
+            Exit Function
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 150
+    Next attempt
+    Err.Raise -2147418110, "CreateWordWithRetry", "Не удалось запустить Word."
+End Function
+
+Private Function OpenDocWithRetry(ByVal wdApp As Object, ByVal filePath As String) As Object
+    Dim attempt As Long, docObj As Object
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        Set docObj = wdApp.Documents.Open(fileName:=filePath, ReadOnly:=False)
+        If Err.Number = 0 And Not docObj Is Nothing Then
+            On Error GoTo 0
+            Set OpenDocWithRetry = docObj
+            Exit Function
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 150
+    Next attempt
+    Err.Raise -2147418110, "OpenDocWithRetry", "Не удалось открыть документ в Word."
+End Function
+
+Private Sub SaveDocWithRetry(ByVal wdDoc As Object, ByVal outPath As String)
+    Dim attempt As Long
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        wdDoc.SaveAs2 fileName:=outPath
+        If Err.Number = 0 Then
+            On Error GoTo 0
+            Exit Sub
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 150
+    Next attempt
+    Err.Raise -2147418110, "SaveDocWithRetry", "Не удалось сохранить документ Word."
+End Sub
+
+Private Function FormatNumberClean(ByVal d As Double) As String
+    If Abs(d - Round(d, 0)) < 0.00000001 Then
+        FormatNumberClean = CStr(CLng(Round(d, 0)))
+    Else
+        FormatNumberClean = CStr(Round(d, 4))
+    End If
+End Function
+
+Private Function OutFolder() As String
+    Dim p As String
+    p = ThisWorkbook.Path
+    If Len(p) = 0 Then p = Environ$("USERPROFILE") & "\Documents"
+    If Right$(p, 1) <> "\" Then p = p & "\"
+    OutFolder = p
+End Function
+
+Private Function SafeFileName(ByVal s As String) As String
+    Dim bad As Variant, i As Long
+    s = Replace(Replace(Trim$(s), vbLf, " "), vbCr, " ")
+    bad = Array("/", "\", ":", "*", "?", """", "<", ">", "|")
+    For i = LBound(bad) To UBound(bad)
+        s = Replace(s, CStr(bad(i)), "_")
+    Next i
+    If Len(s) = 0 Then s = "Документ"
+    If Len(s) > 150 Then s = Left$(s, 150)
+    SafeFileName = s
+End Function
+

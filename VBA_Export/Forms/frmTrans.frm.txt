@@ -1,0 +1,235 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmTrans 
+   Caption         =   "Переход"
+   ClientHeight    =   3420
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   10965
+   OleObjectBlob   =   "frmTrans.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmTrans"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean, mLMultiple As Boolean
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, r As Long
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+    Me.Caption = TypeField("TRANS", 2)
+    Me.lblGost.Caption = TypeField("TRANS", 4)
+    FillFromTable Me.cboSteel, "tSteels", 1
+    FillList Me.cboD, TransValues(1, Empty, Empty, Empty, Empty)
+    SelIf Me.cboD, NumTxt0(ws.Cells(r, col("D")).Value)
+    mLoading = False
+    RefillT
+    SelIf Me.cboT, NumTxt0(ws.Cells(r, col("S")).Value)
+    RefillD1
+    SelIf Me.cboD1, NumTxt0(ws.Cells(r, col("D2")).Value)
+    ShowT1
+    RefillL True
+    SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+    If Len(Trim$(CStr(ws.Cells(r, col("Тип")).Value))) = 0 Then
+        Me.chkPodk.Value = True
+    Else
+        Me.chkPodk.Value = (CStr(ws.Cells(r, col("Подк")).Value) = "П")
+    End If
+    Preview
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Sub RefillT()
+    Dim cur As String
+    cur = Me.cboT.Value
+    mLoading = True
+    If Me.cboD.ListIndex >= 0 Then
+        FillList Me.cboT, TransValues(2, CDbl(Me.cboD.Value), Empty, Empty, Empty)
+    Else
+        FillList Me.cboT, TransValues(2, Empty, Empty, Empty, Empty)
+    End If
+    SelIf Me.cboT, cur
+    mLoading = False
+End Sub
+
+Private Sub RefillD1()
+    Dim cur As String
+    cur = Me.cboD1.Value
+    mLoading = True
+    If Me.cboD.ListIndex >= 0 And Me.cboT.ListIndex >= 0 Then
+        FillList Me.cboD1, TransValues(3, CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), Empty, Empty)
+    Else
+        FillList Me.cboD1, TransValues(3, Empty, Empty, Empty, Empty)
+    End If
+    SelIf Me.cboD1, cur
+    mLoading = False
+End Sub
+
+Private Sub ShowT1()
+    If Me.cboD.ListIndex >= 0 And Me.cboT.ListIndex >= 0 And Me.cboD1.ListIndex >= 0 Then
+        On Error Resume Next
+        Me.lblT1.Caption = NumTxt(TransAutoT1(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value)))
+        On Error GoTo 0
+    Else
+        Me.lblT1.Caption = ""
+    End If
+End Sub
+
+Private Sub RefillL(Optional ByVal restoreSelection As Boolean = False)
+    Dim sheetL As String, T1 As Double, c As Collection, cnt As Long
+    sheetL = NumTxt0(mTarget.Worksheet.Cells(mTarget.row, col("Длина")).Value)
+    mLoading = True
+    If Me.cboD.ListIndex >= 0 And Me.cboT.ListIndex >= 0 And Me.cboD1.ListIndex >= 0 Then
+        On Error Resume Next
+        T1 = TransAutoT1(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value))
+        On Error GoTo 0
+        If Err.Number = 0 Then
+            Set c = TransValues(6, CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value), T1)
+            cnt = c.Count
+            If cnt = 1 Then
+                Me.cboL.Visible = False
+                Me.lblLVal.Visible = True
+                Me.lblLVal.Caption = NumTxt(c(1))
+                mLMultiple = False
+            Else
+                Me.cboL.Visible = True
+                Me.lblLVal.Visible = False
+                FillList Me.cboL, c
+                If restoreSelection Then SelIf Me.cboL, sheetL
+                mLMultiple = True
+            End If
+        Else
+            Me.cboL.Visible = False
+            Me.lblLVal.Visible = True
+            Me.lblLVal.Caption = ""
+            mLMultiple = False
+        End If
+    Else
+        Me.cboL.Visible = False
+        Me.lblLVal.Visible = True
+        Me.lblLVal.Caption = ""
+        mLMultiple = False
+    End If
+    mLoading = False
+End Sub
+
+Private Sub cboD_Change()
+    If mLoading Then Exit Sub
+    RefillT
+    RefillD1
+    ShowT1
+    RefillL
+    Preview
+End Sub
+
+Private Sub cboT_Change()
+    If mLoading Then Exit Sub
+    RefillD1
+    ShowT1
+    RefillL
+    Preview
+End Sub
+
+Private Sub cboD1_Change()
+    If mLoading Then Exit Sub
+    ShowT1
+    RefillL
+    Preview
+End Sub
+
+Private Sub cboL_Change()
+    If mLoading Then Exit Sub
+    Preview
+End Sub
+
+Private Sub cboSteel_Change()
+    If mLoading Then Exit Sub
+    Preview
+End Sub
+
+Private Sub chkPodk_Change()
+    If mLoading Then Exit Sub
+    Preview
+End Sub
+
+Private Sub Preview()
+    Dim T1 As Double, lVal As Variant
+    If Me.cboD.ListIndex < 0 Or Me.cboT.ListIndex < 0 Or Me.cboD1.ListIndex < 0 _
+       Or Me.cboSteel.ListIndex < 0 Then
+        Me.lblPreview.Caption = "— выберите параметры —"
+        Exit Sub
+    End If
+    On Error Resume Next
+    T1 = TransAutoT1(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value))
+    On Error GoTo 0
+    If Err.Number <> 0 Then
+        Me.lblPreview.Caption = "— нет такого перехода в базе —"
+        Exit Sub
+    End If
+    If mLMultiple Then
+        If Me.cboL.ListIndex < 0 Then
+            Me.lblPreview.Caption = "— выберите длину —"
+            Exit Sub
+        End If
+        lVal = CDbl(Me.cboL.Value)
+    Else
+        lVal = Empty
+    End If
+    Me.lblPreview.Caption = TransDes(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), _
+        CDbl(Me.cboD1.Value), T1, Me.cboSteel.Value, Me.chkPodk.Value, lVal, mLMultiple)
+End Sub
+
+Private Sub btnOK_Click()
+    Dim T1 As Double, lVal As Double
+    If Me.cboD.ListIndex < 0 Or Me.cboT.ListIndex < 0 Or Me.cboD1.ListIndex < 0 _
+       Or Me.cboSteel.ListIndex < 0 Then
+        MsgBox "Выберите D, T, D1 и марку стали.", vbExclamation
+        Exit Sub
+    End If
+    On Error Resume Next
+    T1 = TransAutoT1(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value))
+    On Error GoTo 0
+    If Err.Number <> 0 Then
+        MsgBox "Нет такого перехода в базе tTransitions.", vbExclamation
+        Exit Sub
+    End If
+    If mLMultiple Then
+        If Me.cboL.ListIndex < 0 Then
+            MsgBox "Выберите длину L.", vbExclamation
+            Exit Sub
+        End If
+        lVal = CDbl(Me.cboL.Value)
+    Else
+        lVal = CDbl(Me.lblLVal.Caption)
+    End If
+    WriteTrans mTarget, CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), _
+        CDbl(Me.cboD1.Value), T1, lVal, _
+        Me.cboSteel.Value, Me.chkPodk.Value
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+

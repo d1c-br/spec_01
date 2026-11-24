@@ -1,0 +1,211 @@
+Attribute VB_Name = "modTemp"
+Option Explicit
+
+Private Const TEMP_SHEET As String = "Временная база"
+Private Const TEMP_TABLE As String = "tTemp"
+Private mNames As Object
+Private mLoaded As Boolean
+
+Public Function TempAuthor() As String
+Dim s As String
+s = Trim$(Application.UserName)
+Select Case LCase$(s)
+Case "", "пользователь", "user", "admin", "administrator", "пользователь windows"
+s = ""
+End Select
+If Len(s) = 0 Then s = Trim$(Environ$("Username"))
+TempAuthor = s
+End Function
+
+Public Function TempFileTag() As String
+Dim s As String, i As Long, ch As String, res As String
+s = Trim$(Environ$("Username"))
+If Len(s) = 0 Then s = Trim$(Application.UserName)
+If Len(s) = 0 Then s = "user"
+For i = 1 To Len(s)
+ch = Mid$(s, i, 1)
+If InStr("\/:*?""<>| .,", ch) > 0 Then ch = "_"
+res = res & ch
+Next i
+If Len(res) = 0 Then res = "user"
+TempFileTag = res
+End Function
+
+Public Function TempFilePath() As String
+TempFilePath = basePath() & "temp_base_" & TempFileTag() & ".xlsx"
+End Function
+
+Public Function NormTempName(ByVal s As String) As String
+s = Replace(s, vbLf, " ")
+s = Replace(s, vbCr, " ")
+s = Replace(s, Chr$(160), " ")
+s = LCase$(Trim$(s))
+Do While InStr(s, "  ") > 0
+s = Replace(s, "  ", " ")
+Loop
+NormTempName = s
+End Function
+
+Public Function TempKey(ByVal nm As String, ByVal unit As String) As String
+TempKey = NormTempName(nm) & "|" & LCase$(Trim$(unit))
+End Function
+
+Public Sub СброситьКэшВремБазы()
+Set mNames = Nothing
+mLoaded = False
+End Sub
+
+Private Function FindOpenBookLocal(ByVal sPath As String) As Workbook
+Dim w As Workbook
+For Each w In Application.Workbooks
+If StrComp(w.FullName, sPath, vbTextCompare) = 0 Then
+Set FindOpenBookLocal = w
+Exit Function
+End If
+Next w
+End Function
+
+Private Sub EnsureNames()
+Dim sPath As String, wb As Workbook, ws As Worksheet, lo As ListObject
+Dim a As Variant, i As Long, nm As String, un As String
+Dim wasOpen As Boolean, scr As Boolean, ev As Boolean, al As Boolean
+If mLoaded Then Exit Sub
+Set mNames = CreateObject("Scripting.Dictionary")
+mLoaded = True
+sPath = TempFilePath()
+If Dir(sPath) = "" Then Exit Sub
+scr = Application.ScreenUpdating
+ev = Application.EnableEvents
+al = Application.DisplayAlerts
+On Error GoTo cleanup
+Application.ScreenUpdating = False
+Application.EnableEvents = False
+Application.DisplayAlerts = False
+Set wb = FindOpenBookLocal(sPath)
+wasOpen = Not wb Is Nothing
+If Not wasOpen Then
+Set wb = Application.Workbooks.Open(sPath, ReadOnly:=True, UpdateLinks:=0, AddToMru:=False)
+End If
+Set ws = wb.Worksheets(TEMP_SHEET)
+Set lo = ws.ListObjects(TEMP_TABLE)
+If lo.ListRows.Count > 0 Then
+a = lo.DataBodyRange.Value
+If IsArray(a) Then
+For i = 1 To UBound(a, 1)
+nm = Trim$(CStr(a(i, 1)))
+un = CStr(a(i, 3))
+If Len(nm) > 0 Then mNames(TempKey(nm, un)) = True
+Next i
+End If
+End If
+cleanup:
+If Not wb Is Nothing Then
+If Not wasOpen Then
+wb.Saved = True
+wb.Close SaveChanges:=False
+End If
+End If
+Application.ScreenUpdating = scr
+Application.EnableEvents = ev
+Application.DisplayAlerts = al
+Err.Clear
+End Sub
+
+Public Function TempContains(ByVal nm As String, ByVal unit As String) As Boolean
+EnsureNames
+If mNames Is Nothing Then Exit Function
+TempContains = mNames.exists(TempKey(nm, unit))
+End Function
+
+Public Function ДобавитьВоВременнуюБазу(ByVal nm As String, ByVal mass As Double, _
+ByVal unit As String, ByVal sec As String) As Boolean
+Dim sPath As String, wb As Workbook, ws As Worksheet, lo As ListObject, lr As ListRow
+Dim wasOpen As Boolean, created As Boolean
+Dim scr As Boolean, ev As Boolean, al As Boolean
+Dim errN As Long, errD As String
+scr = Application.ScreenUpdating
+ev = Application.EnableEvents
+al = Application.DisplayAlerts
+On Error GoTo fail
+sPath = TempFilePath()
+If Dir(basePath(), vbDirectory) = "" Then
+Err.Raise vbObjectError + 71, , "Не найдена папка баз:" & vbCrLf & basePath()
+End If
+Application.ScreenUpdating = False
+Application.EnableEvents = False
+Application.DisplayAlerts = False
+If Dir(sPath) = "" Then
+Set wb = Application.Workbooks.Add(xlWBATWorksheet)
+created = True
+Set ws = wb.Worksheets(1)
+ws.Name = TEMP_SHEET
+ws.Range("A1:I1").Value = Array("Наименование", "Масса 1 ед", "Ед.изм.", "Дата", _
+"Автор", "Участок", "Статус", "Комментарий админа", "Книга")
+Set lo = ws.ListObjects.Add(xlSrcRange, ws.Range("A1:I1"), , xlYes)
+lo.Name = TEMP_TABLE
+ws.Rows(1).Font.Bold = True
+ws.Columns("A").ColumnWidth = 70
+ws.Columns("B").ColumnWidth = 12
+ws.Columns("C").ColumnWidth = 9
+ws.Columns("D").ColumnWidth = 12
+ws.Columns("E").ColumnWidth = 22
+ws.Columns("F").ColumnWidth = 28
+ws.Columns("G").ColumnWidth = 14
+ws.Columns("H").ColumnWidth = 34
+ws.Columns("I").ColumnWidth = 30
+Else
+Set wb = FindOpenBookLocal(sPath)
+wasOpen = Not wb Is Nothing
+If Not wasOpen Then
+Set wb = Application.Workbooks.Open(sPath, UpdateLinks:=0, AddToMru:=False)
+End If
+If wb.ReadOnly Then Err.Raise vbObjectError + 72, , _
+"Файл временной базы открыт только для чтения (занят)." & vbCrLf & _
+"Закройте его и повторите."
+Set ws = wb.Worksheets(TEMP_SHEET)
+Set lo = ws.ListObjects(TEMP_TABLE)
+End If
+Set lr = lo.ListRows.Add
+lr.Range.Cells(1, 1).Value = nm
+lr.Range.Cells(1, 2).Value = mass
+lr.Range.Cells(1, 2).NumberFormat = "0.00"
+lr.Range.Cells(1, 3).Value = unit
+lr.Range.Cells(1, 4).Value = Date
+lr.Range.Cells(1, 4).NumberFormat = "dd.mm.yyyy"
+lr.Range.Cells(1, 5).Value = TempAuthor()
+lr.Range.Cells(1, 6).Value = sec
+lr.Range.Cells(1, 7).Value = "Новый"
+lr.Range.Cells(1, 9).Value = ThisWorkbook.Name
+lr.Range.Cells(1, 1).WrapText = True
+If created Then
+wb.SaveAs fileName:=sPath, FileFormat:=51
+Else
+wb.Save
+End If
+If Not wasOpen Then wb.Close SaveChanges:=False
+СброситьКэшВремБазы
+Application.ScreenUpdating = scr
+Application.EnableEvents = ev
+Application.DisplayAlerts = al
+ThisWorkbook.Activate
+ДобавитьВоВременнуюБазу = True
+Exit Function
+fail:
+errN = Err.Number: errD = Err.Description
+On Error Resume Next
+If Not wb Is Nothing Then
+If created Then
+wb.Close SaveChanges:=False
+ElseIf Not wasOpen Then
+wb.Saved = True
+wb.Close SaveChanges:=False
+End If
+End If
+Application.ScreenUpdating = scr
+Application.EnableEvents = ev
+Application.DisplayAlerts = al
+ThisWorkbook.Activate
+MsgBox "Не удалось записать во временную базу:" & vbCrLf & errD, vbExclamation
+ДобавитьВоВременнуюБазу = False
+End Function
+

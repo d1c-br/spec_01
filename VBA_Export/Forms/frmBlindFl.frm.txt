@@ -1,0 +1,118 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmBlindFl 
+   Caption         =   "Заглушка фланцевая"
+   ClientHeight    =   3120
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   10965
+   OleObjectBlob   =   "frmBlindFl.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmBlindFl"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, r As Long
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+    Me.Caption = TypeField("BLIND_FL", 2)
+    Me.lblGost.Caption = TypeField("BLIND_FL", 4)
+    FillFromTable Me.cboSteel, "tSteels", 1
+    Me.cboGrK.Clear
+    Me.cboGrK.AddItem "I": Me.cboGrK.AddItem "II": Me.cboGrK.AddItem "III"
+    Me.cboGrK.AddItem "IV": Me.cboGrK.AddItem "V"
+    Me.cboUpl.Clear
+    Me.cboUpl.AddItem "B": Me.cboUpl.AddItem "E": Me.cboUpl.AddItem "F"
+    FillList Me.cboDN, BaseValues("BLIND_FL", 1, 0, Empty, 0, Empty)
+    SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
+    mLoading = False
+    RefillPN
+    SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
+    SelIf Me.cboUpl, CStr(ws.Cells(r, col("УплПов")).Value)
+    SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+    SelIf Me.cboGrK, CStr(ws.Cells(r, col("ГрК")).Value)
+    Preview
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Sub RefillPN()
+    Dim cur As String
+    cur = Me.cboPN.Value
+    mLoading = True
+    If Me.cboDN.ListIndex >= 0 Then
+        FillList Me.cboPN, BaseValues("BLIND_FL", 2, 1, CDbl(Me.cboDN.Value), 0, Empty)
+    Else
+        FillList Me.cboPN, BaseValues("BLIND_FL", 2, 0, Empty, 0, Empty)
+    End If
+    SelIf Me.cboPN, cur
+    mLoading = False
+End Sub
+
+Private Sub cboDN_Change()
+    If Not mLoading Then RefillPN: Preview
+End Sub
+
+Private Sub cboPN_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboUpl_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboSteel_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboGrK_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub Preview()
+    If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Or Me.cboUpl.ListIndex < 0 _
+       Or Me.cboSteel.ListIndex < 0 Or Me.cboGrK.ListIndex < 0 Then
+        Me.lblPreview.Caption = "— выберите параметры —"
+    Else
+        Me.lblPreview.Caption = BlindFlDes(CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
+            Me.cboUpl.Value, 1, Me.cboSteel.Value, Me.cboGrK.Value)
+    End If
+End Sub
+
+Private Sub btnOK_Click()
+    If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Or Me.cboUpl.ListIndex < 0 _
+       Or Me.cboSteel.ListIndex < 0 Or Me.cboGrK.ListIndex < 0 Then
+        MsgBox "Выберите DN, PN, уплотн. пов., сталь и группу контроля.", vbExclamation
+        Exit Sub
+    End If
+    WriteBlindFl mTarget, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
+        Me.cboUpl.Value, Me.cboSteel.Value, Me.cboGrK.Value
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+

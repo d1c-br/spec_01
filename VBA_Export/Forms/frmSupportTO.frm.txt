@@ -1,0 +1,110 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmSupportTO 
+   Caption         =   "Опора типа ТО"
+   ClientHeight    =   4410
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   6555
+   OleObjectBlob   =   "frmSupportTO.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmSupportTO"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, r As Long
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+    Me.Caption = "Опора типа ТО"
+    Me.cboSteel.Clear
+    Me.cboSteel.AddItem "20"
+    Me.cboSteel.AddItem "09Г2С"
+    Me.cboSteel.AddItem "ВСт3пс"
+    FillList Me.cboD, BaseValues("SUP_TO", 1, 0, Empty, 0, Empty)
+    Me.cboExec.Clear
+    Me.cboExec.AddItem "А1"
+    Me.cboExec.AddItem "А2"
+    SelIf Me.cboD, NumTxt0(ws.Cells(r, col("D")).Value)
+    SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+    Dim execStr As String
+    execStr = CStr(ws.Cells(r, col("Исполн")).Value)
+    If Len(execStr) > 0 Then
+        If Right$(execStr, 1) = "О" Then
+            Me.chkHole.Value = True
+            SelIf Me.cboExec, Left$(execStr, Len(execStr) - 1)
+        Else
+            Me.chkHole.Value = False
+            SelIf Me.cboExec, execStr
+        End If
+    Else
+        Me.chkHole.Value = False
+        If Me.cboExec.ListCount > 0 Then Me.cboExec.ListIndex = 0
+    End If
+    mLoading = False
+    Preview
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Sub cboD_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboExec_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub cboSteel_Change()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub chkHole_Click()
+    If Not mLoading Then Preview
+End Sub
+
+Private Sub Preview()
+    If Me.cboD.ListIndex < 0 Or Me.cboExec.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+        Me.lblPreview.Caption = "— выберите параметры —"
+        Exit Sub
+    End If
+    Dim exec As String
+    exec = SupportExec(Me.cboExec.Value, False, Me.chkHole.Value, False)
+    Me.lblPreview.Caption = SupportDes("SUP_TO", CDbl(Me.cboD.Value), exec, Me.cboSteel.Value, False)
+End Sub
+
+Private Sub btnOK_Click()
+    If Me.cboD.ListIndex < 0 Or Me.cboExec.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+        MsgBox "Выберите D, исполнение и сталь.", vbExclamation
+        Exit Sub
+    End If
+    WriteSupport mTarget, "SUP_TO", CDbl(Me.cboD.Value), Me.cboExec.Value, Me.cboSteel.Value, _
+                 False, Me.chkHole.Value, False, False
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+

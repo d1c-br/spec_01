@@ -1,0 +1,182 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmTypePick 
+   Caption         =   "Выбор типа элемента"
+   ClientHeight    =   5220
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   10965
+   OleObjectBlob   =   "frmTypePick.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmTypePick"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Public Picked As String
+Private mLoading As Boolean
+
+Private Property Get LstG() As Object
+Set LstG = Me.Controls("lstGroups")
+End Property
+
+Private Property Get LstI() As Object
+Set LstI = Me.Controls("lstItems")
+End Property
+
+Public Sub Init(ByVal lastCode As String)
+Dim g As String
+Picked = ""
+mLoading = True
+FillGroups
+g = GroupOf(lastCode)
+SelByValue LstG, g
+If LstG.ListIndex < 0 And LstG.ListCount > 0 Then LstG.ListIndex = 0
+mLoading = False
+FillItems
+SelByValue LstI, lastCode
+If LstI.ListIndex < 0 And LstI.ListCount > 0 Then LstI.ListIndex = 0
+End Sub
+
+Private Function VisibleCode(ByVal c As String) As Boolean
+VisibleCode = (Len(c) > 0)
+End Function
+
+Private Function GroupOfRow(ByVal r As Long) As String
+Dim g As String
+g = Trim$(CStr(SprVal("tTypes", r, 11)))
+If Len(g) = 0 Then g = "Прочее"
+GroupOfRow = g
+End Function
+
+Private Function OrderOfRow(ByVal r As Long) As Double
+If IsNumeric(SprVal("tTypes", r, 10)) Then OrderOfRow = CDbl(SprVal("tTypes", r, 10)) Else OrderOfRow = 9999
+End Function
+
+Private Function GroupOf(ByVal code As String) As String
+Dim r As Long
+For r = 1 To SprRows("tTypes")
+If Trim$(CStr(SprVal("tTypes", r, 1))) = code Then GroupOf = GroupOfRow(r): Exit Function
+Next r
+End Function
+
+Private Sub FillGroups()
+Dim r As Long, c As String, g As String
+Dim gMin As Object, k As Variant
+Dim names() As String, ords() As Double, n As Long, j As Long
+Dim a As Long, b As Long, tD As Double, ts As String
+Set gMin = CreateObject("Scripting.Dictionary")
+For r = 1 To SprRows("tTypes")
+c = Trim$(CStr(SprVal("tTypes", r, 1)))
+If VisibleCode(c) Then
+g = GroupOfRow(r)
+If Not gMin.exists(g) Then
+gMin.Add g, OrderOfRow(r)
+Else
+If OrderOfRow(r) < gMin(g) Then gMin(g) = OrderOfRow(r)
+End If
+End If
+Next r
+n = gMin.Count
+LstG.Clear
+If n = 0 Then Exit Sub
+ReDim names(1 To n): ReDim ords(1 To n)
+j = 0
+For Each k In gMin.keys
+j = j + 1: names(j) = CStr(k): ords(j) = gMin(CStr(k))
+Next k
+For a = 1 To n - 1
+For b = a + 1 To n
+If ords(b) < ords(a) Then
+tD = ords(a): ords(a) = ords(b): ords(b) = tD
+ts = names(a): names(a) = names(b): names(b) = ts
+End If
+Next b
+Next a
+For a = 1 To n
+LstG.AddItem names(a)
+Next a
+End Sub
+
+Private Sub FillItems()
+Dim r As Long, c As String, g As String
+Dim codes() As String, names() As String, ords() As Double, n As Long
+Dim a As Long, b As Long, tD As Double, ts As String
+g = ""
+If LstG.ListIndex >= 0 Then g = CStr(LstG.List(LstG.ListIndex))
+n = 0
+ReDim codes(1 To SprRows("tTypes"))
+ReDim names(1 To SprRows("tTypes"))
+ReDim ords(1 To SprRows("tTypes"))
+For r = 1 To SprRows("tTypes")
+c = Trim$(CStr(SprVal("tTypes", r, 1)))
+If VisibleCode(c) And GroupOfRow(r) = g Then
+n = n + 1
+codes(n) = c
+names(n) = CStr(SprVal("tTypes", r, 2))
+ords(n) = OrderOfRow(r)
+End If
+Next r
+For a = 1 To n - 1
+For b = a + 1 To n
+If ords(b) < ords(a) Then
+tD = ords(a): ords(a) = ords(b): ords(b) = tD
+ts = codes(a): codes(a) = codes(b): codes(b) = ts
+ts = names(a): names(a) = names(b): names(b) = ts
+End If
+Next b
+Next a
+LstI.Clear
+LstI.ColumnCount = 2
+LstI.ColumnWidths = "0 pt;320 pt"
+For a = 1 To n
+LstI.AddItem codes(a)
+LstI.List(LstI.ListCount - 1, 1) = names(a)
+Next a
+End Sub
+
+Private Sub SelByValue(ByVal lst As Object, ByVal v As String)
+Dim i As Long
+If Len(v) = 0 Then lst.ListIndex = -1: Exit Sub
+For i = 0 To lst.ListCount - 1
+If CStr(lst.List(i)) = v Then lst.ListIndex = i: Exit Sub
+Next i
+lst.ListIndex = -1
+End Sub
+
+Private Sub lstGroups_Change()
+If mLoading Then Exit Sub
+FillItems
+If LstI.ListCount > 0 Then LstI.ListIndex = 0
+End Sub
+
+Private Sub lstItems_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
+Confirm
+End Sub
+
+Private Sub Confirm()
+If LstI.ListIndex < 0 Then
+MsgBox "Выберите элемент.", vbExclamation
+Exit Sub
+End If
+Picked = CStr(LstI.List(LstI.ListIndex, 0))
+Me.Hide
+End Sub
+
+Private Sub btnOK_Click()
+Confirm
+End Sub
+
+Private Sub btnCancel_Click()
+Picked = ""
+Me.Hide
+End Sub
+
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+If CloseMode = vbFormControlMenu Then
+Cancel = True
+Picked = ""
+Me.Hide
+End If
+End Sub

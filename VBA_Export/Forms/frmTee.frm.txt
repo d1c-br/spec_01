@@ -1,0 +1,218 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmTee 
+   Caption         =   "Тройник"
+   ClientHeight    =   3420
+   ClientLeft      =   120
+   ClientTop       =   465
+   ClientWidth     =   10965
+   OleObjectBlob   =   "frmTee.frx":0000
+   StartUpPosition =   1  'CenterOwner
+End
+Attribute VB_Name = "frmTee"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private mTarget As Range, mLoading As Boolean
+
+Public Sub ShowFor(ByVal targetCell As Range)
+    Dim ws As Worksheet, r As Long, pv As Variant, dv As Variant
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+    Me.Caption = TypeField("TEE", 2)
+    Me.lblGost.Caption = TypeField("TEE", 4)
+    FillFromTable Me.cboSteel, "tSteels", 1
+    FillList Me.cboD, BaseValues("TEE", 1, 0, Empty, 0, Empty)
+    SelIf Me.cboD, NumTxt0(ws.Cells(r, col("D")).Value)
+    mLoading = False
+    RefillT
+    SelIf Me.cboT, NumTxt0(ws.Cells(r, col("S")).Value)
+    RefillD1
+    dv = ws.Cells(r, col("D2")).Value
+    If isEmpty(dv) Then
+        SelIf Me.cboD1, NumTxt0(ws.Cells(r, col("D")).Value)
+    Else
+        SelIf Me.cboD1, NumTxt0(dv)
+    End If
+    SelIf Me.cboSteel, CStr(ws.Cells(r, col("Сталь")).Value)
+    pv = ws.Cells(r, col("Подк")).Value
+    If isEmpty(pv) Then Me.chkPodk.Value = True Else Me.chkPodk.Value = (CStr(pv) = "П")
+    mLoading = True
+    If isEmpty(dv) Then
+        Me.optEqual.Value = True
+    Else
+        Me.optEqual.Value = (Abs(CDbl(dv) - CDbl(ws.Cells(r, col("D")).Value)) < 0.001)
+        Me.optReducing.Value = Not Me.optEqual.Value
+    End If
+    mLoading = False
+    ApplyMode
+    ShowT1
+    Preview
+    Me.show vbModal
+    Exit Sub
+fail:
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+End Sub
+
+Private Function NumTxt0(ByVal v As Variant) As String
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+End Function
+
+Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
+    Dim i As Long
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
+End Sub
+
+Private Sub RefillT()
+    Dim cur As String
+    cur = Me.cboT.Value
+    mLoading = True
+    If Me.cboD.ListIndex >= 0 Then
+        FillList Me.cboT, BaseValues("TEE", 2, 1, CDbl(Me.cboD.Value), 0, Empty)
+    Else
+        FillList Me.cboT, BaseValues("TEE", 2, 0, Empty, 0, Empty)
+    End If
+    SelIf Me.cboT, cur
+    mLoading = False
+End Sub
+
+Private Sub RefillD1()
+    Dim cur As String
+    cur = Me.cboD1.Value
+    mLoading = True
+    If Me.cboD.ListIndex >= 0 And Me.cboT.ListIndex >= 0 Then
+        FillList Me.cboD1, BaseValues("TEE", 3, 1, CDbl(Me.cboD.Value), 2, CDbl(Me.cboT.Value))
+    Else
+        FillList Me.cboD1, BaseValues("TEE", 3, 0, Empty, 0, Empty)
+    End If
+    SelIf Me.cboD1, cur
+    mLoading = False
+End Sub
+
+Private Function CurrentD1() As Double
+    If Me.optEqual.Value Then
+        CurrentD1 = CDbl(Me.cboD.Value)
+    Else
+        CurrentD1 = CDbl(Me.cboD1.Value)
+    End If
+End Function
+
+Private Sub ApplyMode()
+    Dim eq As Boolean
+    eq = Me.optEqual.Value
+    Me.cboD1.Visible = Not eq
+    Me.lblX2.Visible = Not eq
+    Me.lblT1.Visible = Not eq
+    Me.lblDash2.Visible = Not eq
+    If eq Then
+        Me.Width = 400
+        Me.cboSteel.Left = 196
+        Me.lblGost.Left = 274: Me.lblGost.Width = 100
+    Else
+        Me.Width = 560
+        Me.cboSteel.Left = 316
+        Me.lblGost.Left = 394: Me.lblGost.Width = 140
+    End If
+    Me.lblPreview.Width = Me.Width - 38
+    Me.btnCancel.Left = Me.Width - Me.btnCancel.Width - 28
+    Me.btnOK.Left = Me.btnCancel.Left - Me.btnOK.Width - 10
+End Sub
+
+Private Sub ShowT1()
+    If Me.cboD.ListIndex < 0 Or Me.cboT.ListIndex < 0 Then
+        Me.lblT1.Caption = "": Exit Sub
+    End If
+    If Me.optEqual.Value Then
+        Me.lblT1.Caption = NumTxt(CDbl(Me.cboT.Value))
+    ElseIf Me.cboD1.ListIndex >= 0 Then
+        Me.lblT1.Caption = NumTxt(TeeVal(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CDbl(Me.cboD1.Value), 4))
+    Else
+        Me.lblT1.Caption = ""
+    End If
+End Sub
+
+Private Sub optEqual_Click()
+    If mLoading Then Exit Sub
+    ApplyMode
+    ShowT1
+    Preview
+End Sub
+
+Private Sub optReducing_Click()
+    If mLoading Then Exit Sub
+    ApplyMode
+    ShowT1
+    Preview
+End Sub
+
+Private Sub cboD_Change()
+    If mLoading Then Exit Sub
+    RefillT
+    RefillD1
+    If Me.optEqual.Value And Me.cboD.ListIndex >= 0 Then SelIf Me.cboD1, NumTxt(CDbl(Me.cboD.Value))
+    ShowT1
+    Preview
+End Sub
+
+Private Sub cboT_Change()
+    If mLoading Then Exit Sub
+    RefillD1
+    If Me.optEqual.Value And Me.cboD.ListIndex >= 0 Then SelIf Me.cboD1, NumTxt(CDbl(Me.cboD.Value))
+    ShowT1
+    Preview
+End Sub
+
+Private Sub cboD1_Change()
+    If mLoading Then Exit Sub
+    ShowT1
+    Preview
+End Sub
+
+Private Sub cboSteel_Change()
+    If mLoading Then Exit Sub
+    Preview
+End Sub
+
+Private Sub chkPodk_Change()
+    If mLoading Then Exit Sub
+    Preview
+End Sub
+
+Private Sub Preview()
+    Dim okSel As Boolean
+    okSel = (Me.cboD.ListIndex >= 0) And (Me.cboT.ListIndex >= 0) And (Me.cboSteel.ListIndex >= 0)
+    If Not Me.optEqual.Value Then okSel = okSel And (Me.cboD1.ListIndex >= 0)
+    If Not okSel Then
+        Me.lblPreview.Caption = "— выберите параметры —"
+    Else
+        Me.lblPreview.Caption = TeeDes(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CurrentD1(), _
+                                         TeeVal(CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), CurrentD1(), 4), _
+                                         Me.cboSteel.Value, Me.chkPodk.Value)
+    End If
+End Sub
+
+Private Sub btnOK_Click()
+    If Me.cboD.ListIndex < 0 Or Me.cboT.ListIndex < 0 Or Me.cboSteel.ListIndex < 0 Then
+        MsgBox "Выберите D, T и марку стали.", vbExclamation
+        Exit Sub
+    End If
+    If Not Me.optEqual.Value And Me.cboD1.ListIndex < 0 Then
+        MsgBox "Выберите диаметр ответвления D1.", vbExclamation
+        Exit Sub
+    End If
+    WriteTee mTarget, CDbl(Me.cboD.Value), CDbl(Me.cboT.Value), _
+             CurrentD1(), Me.cboSteel.Value, Me.chkPodk.Value
+    Unload Me
+End Sub
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+

@@ -1,0 +1,32 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "Ёта нига"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Option Explicit
+
+Private Sub Workbook_Open()
+    On Error Resume Next
+    «агрузитьЅазы
+    modMenu.—оздать онтекстноећеню
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error Resume Next
+    modMenu.”далить онтекстноећеню   ' первой строкой, чтобы очистка не пропустилась
+    CloseAllBases
+End Sub
+
+Private Sub Workbook_WindowDeactivate(ByVal Wn As Window)
+    On Error Resume Next
+    modMenu.ћеню¬идимость False      ' не светим меню в других книгах
+End Sub
+
+Private Sub Workbook_WindowActivate(ByVal Wn As Window)
+    On Error Resume Next
+    modMenu.ћеню¬идимость True
+End Sub

@@ -1,0 +1,104 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "Лист1"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Option Explicit
+Private mChanging As Boolean
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal target As Range, Cancel As Boolean)
+    Dim h As Long, k As String, s As Long
+    On Error GoTo fin
+    If FirstHdr() = 0 Then Exit Sub
+    If CStr(Cells(target.row, MARKCOL).Value) = "GAP" Then Exit Sub
+    s = SecOfRow(target.row)
+    If s > 0 And target.Column <= 8 Then
+        Cancel = True
+        frmSection.ShowFor target.Cells(1, 1)
+        Exit Sub
+    End If
+    If target.Column <> col("Наименование") Then Exit Sub
+    h = HdrOf(target.row)
+    If h = 0 Then Exit Sub
+    Cancel = True
+    k = CStr(Cells(target.row, col("Тип")).Value)
+    If Len(k) = 0 Then
+        PickAndOpen target.Cells(1, 1)
+    Else
+        OpenByType k, target.Cells(1, 1)
+    End If
+fin:
+    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+End Sub
+
+Private Sub Worksheet_Change(ByVal target As Range)
+Dim cell As Range, r As Long, h As Long, cB As Long, s As Long
+Dim blk As Object, k As Variant
+If mChanging Then Exit Sub
+If FirstHdr() = 0 Then Exit Sub
+On Error GoTo fin
+cB = col("Наименование")
+Set blk = CreateObject("Scripting.Dictionary")
+mChanging = True
+For Each cell In target.Cells
+If cell.Column = 7 Then
+s = SecOfRow(cell.row)
+If s > 0 And cell.row = s + 2 Then
+If Trim$(CStr(cell.Value)) = "(не проводить)" Then cell.MergeArea.ClearContents
+End If
+End If
+If cell.Column = cB Then
+r = cell.row
+h = HdrOf(r)
+If h > 0 Then
+If Len(Trim$(CStr(cell.Value))) = 0 Then
+ClearPosRow r
+Else
+Cells(r, col("№ввода")).ClearContents
+If Not RecognizeAndWrite(Cells(r, cB), CStr(cell.Value)) Then
+ClearTechParams r
+End If
+End If
+If Not blk.exists(CStr(h)) Then blk.Add CStr(h), h
+End If
+End If
+Next cell
+For Each k In blk.keys
+ПеренумероватьБлок CLng(blk(k))
+Next k
+fin:
+mChanging = False
+If Err.Number <> 0 Then
+If Err.Number <> vbObjectError + 20 And Err.Number <> vbObjectError + 21 Then
+MsgBox "Ошибка обработки изменения: " & Err.Description, vbExclamation
+End If
+End If
+End Sub
+
+Private Sub Worksheet_BeforeRightClick(ByVal target As Range, Cancel As Boolean)
+Dim z As String, r As Long, m As String, s As Long, h As Long, ts As String
+On Error GoTo fin
+r = target.row
+m = CStr(Cells(r, MARKCOL).Value)
+s = SecOfRow(r)
+h = HdrOf(r)
+If m = "GAP" Then
+z = "GAP"
+ElseIf s > 0 And h = 0 Then
+z = "SEC"
+ElseIf h > 0 And r = h Then
+z = "HDR"
+ElseIf h > 0 Then
+z = "POS"
+Else
+z = "FREE"
+End If
+If z = "POS" Then ts = modLayout.СостояниеВнеБазы(r)
+modMenu.МенюПрименитьЗону z, ts
+fin:
+' Cancel намеренно НЕ ставим: стандартное меню Excel остаётся
+End Sub
