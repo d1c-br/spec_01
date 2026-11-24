@@ -1,18 +1,3 @@
-VERSION 5.00
-Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmValve 
-   Caption         =   " ‡Ì ¯‡Ó‚ÓÈ ÙÎ‡ÌˆÂ‚˚È"
-   ClientHeight    =   10620
-   ClientLeft      =   120
-   ClientTop       =   465
-   ClientWidth     =   10155
-   OleObjectBlob   =   "frmValve.frx":0000
-   StartUpPosition =   1  'CenterOwner
-End
-Attribute VB_Name = "frmValve"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
 Option Explicit
 Private mTarget As Range, mLoading As Boolean
 Private mCode As String
@@ -27,13 +12,13 @@ mCode = code
 mLoading = True
 Me.Caption = TypeField(mCode, 2)
 Me.cboKorp.Clear
-Me.cboKorp.AddItem "ÒÚ‡Î¸ 20"
-Me.cboKorp.AddItem "ÒÚ‡Î¸ 20À"
-Me.cboKorp.AddItem "ÒÚ‡Î¸ 09√2—"
-Me.cboKorp.AddItem "ÌÂÊ. ÒÚ‡Î¸"
+Me.cboKorp.AddItem "—Å—Ç–∞–ª—å 20"
+Me.cboKorp.AddItem "—Å—Ç–∞–ª—å 20–õ"
+Me.cboKorp.AddItem "—Å—Ç–∞–ª—å 09–ì2–°"
+Me.cboKorp.AddItem "–Ω–µ—Ä–∂. —Å—Ç–∞–ª—å"
 Me.cboKlim.Clear
-Me.cboKlim.AddItem "”1"
-Me.cboKlim.AddItem "”’À"
+Me.cboKlim.AddItem "–£1"
+Me.cboKlim.AddItem "–£–•–õ"
 Me.cboKL.Clear
 Dim klasses As Variant, i As Long
 klasses = Array("A", "AA", "B", "C", "CC", "D", "E", "EE", "F", "G")
@@ -44,14 +29,14 @@ Me.cboUpl.Clear
 Me.cboUpl.AddItem "B-B"
 Me.cboUpl.AddItem "E-F"
 Me.cboZPExec.Clear
-Me.cboZPExec.AddItem "œÓ‚ÓÓÚÌ‡ˇ Á‡„ÎÛ¯Í‡"
-Me.cboZPExec.AddItem "«‡„ÎÛ¯Í‡ Ò ı‚ÓÒÚÓ‚ËÍÓÏ"
+Me.cboZPExec.AddItem "–ü–æ–≤–æ—Ä–æ—Ç–Ω–∞—è –∑–∞–≥–ª—É—à–∫–∞"
+Me.cboZPExec.AddItem "–ó–∞–≥–ª—É—à–∫–∞ —Å —Ö–≤–æ—Å—Ç–æ–≤–∏–∫–æ–º"
 Me.cboOFTyp.Clear
 Me.cboOFTyp.AddItem "11"
 Me.cboOFTyp.AddItem "01"
 Me.cboPRTyp.Clear
-Me.cboPRTyp.AddItem "—Õœ"
-Me.cboPRTyp.AddItem "œŒÕ"
+Me.cboPRTyp.AddItem "–°–ù–ü"
+Me.cboPRTyp.AddItem "–ü–û–ù"
 FillFromTable Me.cboZPSteel, "tSteels", 1
 FillFromTable Me.cboZFSteel, "tSteels", 1
 FillList Me.cboDN, BaseValues(mCode, 2, 0, Empty, 0, Empty)
@@ -59,7 +44,7 @@ SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
 mLoading = False
 RefillPN
 SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
-params = CStr(ws.Cells(r, col("œ‡‡Ï¿Ï")).Value)
+params = CStr(ws.Cells(r, col("–ü–∞—Ä–∞–º–ê—Ä–º")).Value)
 If Len(params) > 0 Then
 p = Split(params, "|")
 If UBound(p) >= 17 Then
@@ -93,7 +78,7 @@ UpdateVisibility
 Me.show vbModal
 Exit Sub
 fail:
-MsgBox "ÕÂ Û‰‡ÎÓÒ¸ ÓÚÍ˚Ú¸ ÙÓÏÛ: " & Err.Description, vbExclamation
+MsgBox "–ù–µ —É–¥–∞–ª–æ—Å—å –æ—Ç–∫—Ä—ã—Ç—å —Ñ–æ—Ä–º—É: " & Err.Description, vbExclamation
 End Sub
 
 Private Sub SetDefaults()
@@ -172,19 +157,19 @@ Private Function BuildParams() As String
 Dim s As String
 s = IIf(Me.cboKL.ListIndex >= 0, Me.cboKL.Value, "A") & "|"
 s = s & Me.txtTFrom.Value & "|" & Me.txtTTo.Value & "|"
-s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "ÒÚ‡Î¸ 20") & "|"
-s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "”1") & "|"
+s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "—Å—Ç–∞–ª—å 20") & "|"
+s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "–£1") & "|"
 s = s & Me.txtSred.Value & "|"
 s = s & IIf(Me.cboUpl.ListIndex >= 0, Me.cboUpl.Value, "B-B") & "|"
 s = s & IIf(Me.chkZP.Value, "1", "0") & "|"
-s = s & IIf(Me.cboZPExec.ListIndex >= 0, Me.cboZPExec.Value, "œÓ‚ÓÓÚÌ‡ˇ Á‡„ÎÛ¯Í‡") & "|"
+s = s & IIf(Me.cboZPExec.ListIndex >= 0, Me.cboZPExec.Value, "–ü–æ–≤–æ—Ä–æ—Ç–Ω–∞—è –∑–∞–≥–ª—É—à–∫–∞") & "|"
 s = s & IIf(Me.cboZPSteel.ListIndex >= 0, Me.cboZPSteel.Value, "20") & "|"
 s = s & IIf(Me.chkZF.Value, "1", "0") & "|"
 s = s & IIf(Me.cboZFSteel.ListIndex >= 0, Me.cboZFSteel.Value, "20") & "|"
 s = s & IIf(Me.chkOF.Value, "1", "0") & "|"
 s = s & IIf(Me.cboOFTyp.ListIndex >= 0, Me.cboOFTyp.Value, "11") & "|"
 s = s & IIf(Me.chkPR.Value, "1", "0") & "|"
-s = s & IIf(Me.cboPRTyp.ListIndex >= 0, Me.cboPRTyp.Value, "—Õœ") & "|"
+s = s & IIf(Me.cboPRTyp.ListIndex >= 0, Me.cboPRTyp.Value, "–°–ù–ü") & "|"
 s = s & IIf(Me.chkSH.Value, "1", "0") & "|"
 s = s & IIf(Me.chkG.Value, "1", "0")
 BuildParams = s
@@ -215,19 +200,19 @@ End Sub
 
 Private Sub btnOK_Click()
 If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Then
-MsgBox "¬˚·ÂËÚÂ DN Ë PN.", vbExclamation
+MsgBox "–í—ã–±–µ—Ä–∏—Ç–µ DN –∏ PN.", vbExclamation
 Exit Sub
 End If
 If Me.cboKL.ListIndex < 0 Then
-MsgBox "¬˚·ÂËÚÂ ÍÎ‡ÒÒ „ÂÏÂÚË˜ÌÓÒÚË.", vbExclamation
+MsgBox "–í—ã–±–µ—Ä–∏—Ç–µ –∫–ª–∞—Å—Å –≥–µ—Ä–º–µ—Ç–∏—á–Ω–æ—Å—Ç–∏.", vbExclamation
 Exit Sub
 End If
 If Len(Trim$(Me.txtTTo.Value)) = 0 Then
-MsgBox "”Í‡ÊËÚÂ ÚÂÏÔÂ‡ÚÛÛ ´‰Óª.", vbExclamation
+MsgBox "–£–∫–∞–∂–∏—Ç–µ —Ç–µ–º–ø–µ—Ä–∞—Ç—É—Ä—É ¬´–¥–æ¬ª.", vbExclamation
 Exit Sub
 End If
 If Me.cboKorp.ListIndex < 0 Or Me.cboKlim.ListIndex < 0 Or Me.cboUpl.ListIndex < 0 Then
-MsgBox "«‡ÔÓÎÌËÚÂ ÍÓÔÛÒ, ÍÎËÏ‡Ú Ë ÛÔÎÓÚÌ. ÔÓ‚.", vbExclamation
+MsgBox "–ó–∞–ø–æ–ª–Ω–∏—Ç–µ –∫–æ—Ä–ø—É—Å, –∫–ª–∏–º–∞—Ç –∏ —É–ø–ª–æ—Ç–Ω. –ø–æ–≤.", vbExclamation
 Exit Sub
 End If
 WriteValveEx mTarget, mCode, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
@@ -241,3 +226,6 @@ Private Sub btnCancel_Click()
 Unload Me
 End Sub
 
+Private Sub UserForm_Click()
+
+End Sub
