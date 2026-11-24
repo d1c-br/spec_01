@@ -1,8 +1,8 @@
 Attribute VB_Name = "modWordStamp"
 Option Explicit
 
-Private Const TEMPLATE_SUBFOLDER As String = "Шаблоны_конечных_файлов"
-Private Const TEMPLATE_NAME As String = "Шаблон.С.docx"
+Private Const TEMPLATE_SUBFOLDER As String = "РЁР°Р±Р»РѕРЅС‹_РєРѕРЅРµС‡РЅС‹С…_С„Р°Р№Р»РѕРІ"
+Private Const TEMPLATE_NAME As String = "РЁР°Р±Р»РѕРЅ.РЎ.docx"
 
 #If VBA7 Then
     Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
@@ -25,7 +25,7 @@ Type SpecItem
     OrigIndex As Long
 End Type
 
-' ==================== ШТАМП В КОЛОНТИТУЛЕ WORD ====================
+' ==================== РЁРўРђРњРџ Р’ РљРћР›РћРќРўРРўРЈР›Р• WORD ====================
 
 Public Sub ExportStampOnlyToWord()
     Dim tplPath As String, outPath As String, cipher As String
@@ -35,7 +35,7 @@ Public Sub ExportStampOnlyToWord()
 
     tplPath = GetTemplatePath()
     If Len(Dir$(tplPath)) = 0 Then
-        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
+        MsgBox "РќРµ РЅР°Р№РґРµРЅ С„Р°Р№Р» С€Р°Р±Р»РѕРЅР°:" & vbCrLf & tplPath, vbExclamation
         Exit Sub
     End If
 
@@ -43,37 +43,37 @@ Public Sub ExportStampOnlyToWord()
     ReDim tagsArr(1 To 1)
     cnt = 0
 
-    ' При необходимости оставьте здесь свой точный список AddPair из рабочей версии
-    AddPair namesArr, tagsArr, cnt, "Штамп_Шифр", "[ШИФР]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_договор", "[Договор]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_объект", "[Объект]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_содержание", "[Содержание]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_стадия", "[Ст]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_организация", "[Организация]"
+    ' РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РѕСЃС‚Р°РІСЊС‚Рµ Р·РґРµСЃСЊ СЃРІРѕР№ С‚РѕС‡РЅС‹Р№ СЃРїРёСЃРѕРє AddPair РёР· СЂР°Р±РѕС‡РµР№ РІРµСЂСЃРёРё
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЁРёС„СЂ", "[РЁРР¤Р ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РґРѕРіРѕРІРѕСЂ", "[Р”РѕРіРѕРІРѕСЂ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РѕР±СЉРµРєС‚", "[РћР±СЉРµРєС‚]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЃРѕРґРµСЂР¶Р°РЅРёРµ", "[РЎРѕРґРµСЂР¶Р°РЅРёРµ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЃС‚Р°РґРёСЏ", "[РЎС‚]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РѕСЂРіР°РЅРёР·Р°С†РёСЏ", "[РћСЂРіР°РЅРёР·Р°С†РёСЏ]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб", "[Разработал]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров", "[Проверил]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец", "[Глав.спец.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд", "[Нач.отд.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр", "[Н.контр.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип", "[ГИП]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЂР°Р·СЂР°Р±", "[Р Р°Р·СЂР°Р±РѕС‚Р°Р»]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РїСЂРѕРІ", "[РџСЂРѕРІРµСЂРёР»]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіР»Р°РІ_СЃРїРµС†", "[Р“Р»Р°РІ.СЃРїРµС†.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅР°С‡_РѕС‚Рґ", "[РќР°С‡.РѕС‚Рґ.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅ_РєРѕРЅС‚СЂ", "[Рќ.РєРѕРЅС‚СЂ.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіРёРї", "[Р“РРџ]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб_ф", "[Разработал_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров_ф", "[Проверил_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец_ф", "[Глав.спец._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд_ф", "[Нач.отд._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр_ф", "[Н.контр._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип_ф", "[ГИП_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЂР°Р·СЂР°Р±_С„", "[Р Р°Р·СЂР°Р±РѕС‚Р°Р»_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РїСЂРѕРІ_С„", "[РџСЂРѕРІРµСЂРёР»_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіР»Р°РІ_СЃРїРµС†_С„", "[Р“Р»Р°РІ.СЃРїРµС†._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅР°С‡_РѕС‚Рґ_С„", "[РќР°С‡.РѕС‚Рґ._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅ_РєРѕРЅС‚СЂ_С„", "[Рќ.РєРѕРЅС‚СЂ._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіРёРї_С„", "[Р“РРџ_]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_д1", "[д1]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д2", "[д2]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д3", "[д3]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ1", "[Рґ1]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ2", "[Рґ2]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ3", "[Рґ3]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ4", "[Рґ4]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ5", "[Рґ5]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ6", "[Рґ6]"
 
-    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
-    If Len(cipher) = 0 Then cipher = "Спецификация"
+    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[РЁРёС„СЂ]")
+    If Len(cipher) = 0 Then cipher = "РЎРїРµС†РёС„РёРєР°С†РёСЏ"
     outPath = OutFolder() & SafeFileName(cipher) & ".docx"
 
     On Error GoTo ErrStampHandler
@@ -93,7 +93,7 @@ Public Sub ExportStampOnlyToWord()
 
 ErrStampHandler:
     If Err.Number <> 0 Then
-        MsgBox "Ошибка при переносе штампа (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
+        MsgBox "РћС€РёР±РєР° РїСЂРё РїРµСЂРµРЅРѕСЃРµ С€С‚Р°РјРїР° (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
     End If
     On Error Resume Next
     If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
@@ -113,7 +113,7 @@ Private Sub ApplyStampTagsToWord(ByVal wdDoc As Object, ByRef namesArr() As Stri
     Next i
 End Sub
 
-' ==================== ОСНОВНАЯ ТАБЛИЦА + ШТАМП ====================
+' ==================== РћРЎРќРћР’РќРђРЇ РўРђР‘Р›РР¦Рђ + РЁРўРђРњРџ ====================
 
 Public Sub ExportSpecToWord()
     Dim tplPath As String, outPath As String, cipher As String
@@ -123,7 +123,7 @@ Public Sub ExportSpecToWord()
 
     tplPath = GetTemplatePath()
     If Len(Dir$(tplPath)) = 0 Then
-        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
+        MsgBox "РќРµ РЅР°Р№РґРµРЅ С„Р°Р№Р» С€Р°Р±Р»РѕРЅР°:" & vbCrLf & tplPath, vbExclamation
         Exit Sub
     End If
 
@@ -133,8 +133,8 @@ Public Sub ExportSpecToWord()
     End If
 
     BuildStampPairs namesArr, tagsArr, cnt
-    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
-    If Len(cipher) = 0 Then cipher = "Спецификация"
+    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[РЁРёС„СЂ]")
+    If Len(cipher) = 0 Then cipher = "РЎРїРµС†РёС„РёРєР°С†РёСЏ"
     outPath = OutFolder() & SafeFileName(cipher) & ".docx"
 
     On Error GoTo ErrSpecHandler
@@ -144,7 +144,7 @@ Public Sub ExportSpecToWord()
 
     Set wdDoc = OpenDocWithRetry(wdApp, tplPath)
     If wdDoc.Tables.Count = 0 Then
-        Err.Raise vbObjectError + 101, "ExportSpecToWord", "В документе шаблона не найдена таблица спецификации."
+        Err.Raise vbObjectError + 101, "ExportSpecToWord", "Р’ РґРѕРєСѓРјРµРЅС‚Рµ С€Р°Р±Р»РѕРЅР° РЅРµ РЅР°Р№РґРµРЅР° С‚Р°Р±Р»РёС†Р° СЃРїРµС†РёС„РёРєР°С†РёРё."
     End If
 
     ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
@@ -160,7 +160,7 @@ Public Sub ExportSpecToWord()
 
 ErrSpecHandler:
     If Err.Number <> 0 Then
-        MsgBox "Ошибка при формировании спецификации в Word (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
+        MsgBox "РћС€РёР±РєР° РїСЂРё С„РѕСЂРјРёСЂРѕРІР°РЅРёРё СЃРїРµС†РёС„РёРєР°С†РёРё РІ Word (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
     End If
     On Error Resume Next
     If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
@@ -176,33 +176,33 @@ Private Sub BuildStampPairs(ByRef namesArr() As String, ByRef tagsArr() As Strin
     ReDim tagsArr(1 To 1)
     cnt = 0
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_Шифр", "[ШИФР]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_договор", "[Договор]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_объект", "[Объект]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_содержание", "[Содержание]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_стадия", "[Ст]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_организация", "[Организация]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЁРёС„СЂ", "[РЁРР¤Р ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РґРѕРіРѕРІРѕСЂ", "[Р”РѕРіРѕРІРѕСЂ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РѕР±СЉРµРєС‚", "[РћР±СЉРµРєС‚]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЃРѕРґРµСЂР¶Р°РЅРёРµ", "[РЎРѕРґРµСЂР¶Р°РЅРёРµ]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЃС‚Р°РґРёСЏ", "[РЎС‚]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РѕСЂРіР°РЅРёР·Р°С†РёСЏ", "[РћСЂРіР°РЅРёР·Р°С†РёСЏ]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб", "[Разработал]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров", "[Проверил]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец", "[Глав.спец.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд", "[Нач.отд.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр", "[Н.контр.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип", "[ГИП]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЂР°Р·СЂР°Р±", "[Р Р°Р·СЂР°Р±РѕС‚Р°Р»]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РїСЂРѕРІ", "[РџСЂРѕРІРµСЂРёР»]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіР»Р°РІ_СЃРїРµС†", "[Р“Р»Р°РІ.СЃРїРµС†.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅР°С‡_РѕС‚Рґ", "[РќР°С‡.РѕС‚Рґ.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅ_РєРѕРЅС‚СЂ", "[Рќ.РєРѕРЅС‚СЂ.]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіРёРї", "[Р“РРџ]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб_ф", "[Разработал_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров_ф", "[Проверил_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец_ф", "[Глав.спец._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд_ф", "[Нач.отд._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр_ф", "[Н.контр._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип_ф", "[ГИП_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_СЂР°Р·СЂР°Р±_С„", "[Р Р°Р·СЂР°Р±РѕС‚Р°Р»_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РїСЂРѕРІ_С„", "[РџСЂРѕРІРµСЂРёР»_]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіР»Р°РІ_СЃРїРµС†_С„", "[Р“Р»Р°РІ.СЃРїРµС†._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅР°С‡_РѕС‚Рґ_С„", "[РќР°С‡.РѕС‚Рґ._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РЅ_РєРѕРЅС‚СЂ_С„", "[Рќ.РєРѕРЅС‚СЂ._]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_РіРёРї_С„", "[Р“РРџ_]"
 
-    AddPair namesArr, tagsArr, cnt, "Штамп_д1", "[д1]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д2", "[д2]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д3", "[д3]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ1", "[Рґ1]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ2", "[Рґ2]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ3", "[Рґ3]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ4", "[Рґ4]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ5", "[Рґ5]"
+    AddPair namesArr, tagsArr, cnt, "РЁС‚Р°РјРї_Рґ6", "[Рґ6]"
 
 End Sub
 
@@ -215,7 +215,7 @@ Private Sub CollectAndAggregateSpec(ByRef items() As SpecItem, ByRef itemCnt As 
     Dim idx As Long, foundIdx As Long
 
     itemCnt = 0
-    Set ws = ThisWorkbook.Worksheets("Сводная")
+    Set ws = ThisWorkbook.Worksheets("РЎРІРѕРґРЅР°СЏ")
     lastR = ws.Cells.Find(What:="*", LookIn:=xlFormulas, SearchOrder:=xlByRows, SearchDirection:=xlPrevious).row
     If lastR < 1 Then Exit Sub
 
@@ -278,12 +278,12 @@ Private Sub FindSpecColumns(ByVal ws As Worksheet, ByVal hdrRow As Long, _
         If c <> 9 Then
             hTxt = Trim$(CStr(ws.Cells(hdrRow, c).Value))
             Select Case hTxt
-                Case "Наименование": If cName = 0 Then cName = c
-                Case "Опросной лист", "Опросный лист": If cQuiz = 0 Then cQuiz = c
-                Case "Ед. изм.": If cUnit = 0 Then cUnit = c
-                Case "Кол-во": If cQty = 0 Then cQty = c
-                Case "Масса 1 ед": If cMass1 = 0 Then cMass1 = c
-                Case "Примечание": If cNote = 0 Then cNote = c
+                Case "РќР°РёРјРµРЅРѕРІР°РЅРёРµ": If cName = 0 Then cName = c
+                Case "РћРїСЂРѕСЃРЅРѕР№ Р»РёСЃС‚", "РћРїСЂРѕСЃРЅС‹Р№ Р»РёСЃС‚": If cQuiz = 0 Then cQuiz = c
+                Case "Р•Рґ. РёР·Рј.": If cUnit = 0 Then cUnit = c
+                Case "РљРѕР»-РІРѕ": If cQty = 0 Then cQty = c
+                Case "РњР°СЃСЃР° 1 РµРґ": If cMass1 = 0 Then cMass1 = c
+                Case "РџСЂРёРјРµС‡Р°РЅРёРµ": If cNote = 0 Then cNote = c
             End Select
         End If
     Next c
@@ -439,20 +439,20 @@ Private Sub FillWordSpecTable(ByVal tbl As Object, ByRef items() As SpecItem, By
             qtyStr = ""
         End If
 
-        ' 1: Позиция — не заполняем
-        ' 2: Наименование, техническая характеристика
+        ' 1: РџРѕР·РёС†РёСЏ вЂ” РЅРµ Р·Р°РїРѕР»РЅСЏРµРј
+        ' 2: РќР°РёРјРµРЅРѕРІР°РЅРёРµ, С‚РµС…РЅРёС‡РµСЃРєР°СЏ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєР°
         SetWordCellValueSafe tbl, rowIdx, 2, items(i).NameText
-        ' 3: Тип, марка, обозначение документа опросного листа
+        ' 3: РўРёРї, РјР°СЂРєР°, РѕР±РѕР·РЅР°С‡РµРЅРёРµ РґРѕРєСѓРјРµРЅС‚Р° РѕРїСЂРѕСЃРЅРѕРіРѕ Р»РёСЃС‚Р°
         SetWordCellValueSafe tbl, rowIdx, 3, items(i).QuizSheet
-        ' 4: Код продукции — не заполняем
-        ' 5: Поставщик — не заполняем
-        ' 6: Единица измерения
+        ' 4: РљРѕРґ РїСЂРѕРґСѓРєС†РёРё вЂ” РЅРµ Р·Р°РїРѕР»РЅСЏРµРј
+        ' 5: РџРѕСЃС‚Р°РІС‰РёРє вЂ” РЅРµ Р·Р°РїРѕР»РЅСЏРµРј
+        ' 6: Р•РґРёРЅРёС†Р° РёР·РјРµСЂРµРЅРёСЏ
         SetWordCellValueSafe tbl, rowIdx, 6, items(i).UnitText
-        ' 7: Количество
+        ' 7: РљРѕР»РёС‡РµСЃС‚РІРѕ
         SetWordCellValueSafe tbl, rowIdx, 7, qtyStr
-        ' 8: Масса одной единицы
+        ' 8: РњР°СЃСЃР° РѕРґРЅРѕР№ РµРґРёРЅРёС†С‹
         SetWordCellValueSafe tbl, rowIdx, 8, items(i).UnitMassText
-        ' 9: Примечание
+        ' 9: РџСЂРёРјРµС‡Р°РЅРёРµ
         SetWordCellValueSafe tbl, rowIdx, 9, items(i).NoteText
     Next i
 End Sub
@@ -470,7 +470,7 @@ Private Sub SetWordCellValueSafe(ByVal tbl As Object, ByVal r As Long, ByVal c A
     On Error GoTo 0
 End Sub
 
-' ==================== ЗАМЕНА МЕТОК В КОЛОНТИТУЛАХ WORD ====================
+' ==================== Р—РђРњР•РќРђ РњР•РўРћРљ Р’ РљРћР›РћРќРўРРўРЈР›РђРҐ WORD ====================
 
 Private Sub ReplaceTagInHeadersAndTables(ByVal wdDoc As Object, ByVal findText As String, ByVal replText As String)
     Const wdHeaderFooterFirstPage As Long = 2
@@ -546,7 +546,7 @@ Private Function CleanWordCellText(ByVal rawText As String) As String
     CleanWordCellText = s
 End Function
 
-' ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+' ==================== Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р• Р¤РЈРќРљР¦РР ====================
 
 Private Function GetTemplatePath() As String
     GetTemplatePath = ThisWorkbook.Path & "\" & TEMPLATE_SUBFOLDER & "\" & TEMPLATE_NAME
@@ -619,7 +619,7 @@ Private Function CreateWordWithRetry() As Object
         DoEvents
         Sleep 150
     Next attempt
-    Err.Raise -2147418110, "CreateWordWithRetry", "Не удалось запустить Word."
+    Err.Raise -2147418110, "CreateWordWithRetry", "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ Word."
 End Function
 
 Private Function OpenDocWithRetry(ByVal wdApp As Object, ByVal filePath As String) As Object
@@ -641,7 +641,7 @@ Private Function OpenDocWithRetry(ByVal wdApp As Object, ByVal filePath As Strin
         DoEvents
         Sleep 150
     Next attempt
-    Err.Raise -2147418110, "OpenDocWithRetry", "Не удалось открыть документ в Word."
+    Err.Raise -2147418110, "OpenDocWithRetry", "РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ РґРѕРєСѓРјРµРЅС‚ РІ Word."
 End Function
 
 Private Sub SaveDocWithRetry(ByVal wdDoc As Object, ByVal outPath As String)
@@ -662,7 +662,7 @@ Private Sub SaveDocWithRetry(ByVal wdDoc As Object, ByVal outPath As String)
         DoEvents
         Sleep 150
     Next attempt
-    Err.Raise -2147418110, "SaveDocWithRetry", "Не удалось сохранить документ Word."
+    Err.Raise -2147418110, "SaveDocWithRetry", "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РґРѕРєСѓРјРµРЅС‚ Word."
 End Sub
 
 Private Function FormatNumberClean(ByVal d As Double) As String
@@ -688,7 +688,7 @@ Private Function SafeFileName(ByVal s As String) As String
     For i = LBound(bad) To UBound(bad)
         s = Replace(s, CStr(bad(i)), "_")
     Next i
-    If Len(s) = 0 Then s = "Документ"
+    If Len(s) = 0 Then s = "Р”РѕРєСѓРјРµРЅС‚"
     If Len(s) > 150 Then s = Left$(s, 150)
     SafeFileName = s
 End Function
