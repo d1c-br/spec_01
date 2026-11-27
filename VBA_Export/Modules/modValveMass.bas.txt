@@ -1,0 +1,191 @@
+Option Explicit
+
+Private Function Ctl(ByVal f As Object, ByVal nm As String) As Object
+    On Error Resume Next
+    Set Ctl = f.Controls("fraMass").Controls(nm)
+    If Ctl Is Nothing Then Set Ctl = f.Controls(nm)
+    On Error GoTo 0
+End Function
+
+Private Function FormDn(ByVal f As Object) As Double
+    On Error Resume Next
+    FormDn = val(Replace(CStr(f.Controls("cboDN").Text), ",", "."))
+End Function
+
+Private Function FormPn(ByVal f As Object) As Double
+    On Error Resume Next
+    FormPn = val(Replace(CStr(f.Controls("cboPN").Text), ",", "."))
+End Function
+
+Public Function FmtMass(ByVal d As Double) As String
+    FmtMass = Format$(d, "0.00")
+End Function
+
+' разбор ввода: только цифры и один разделитель; Val — независимо от локали
+Public Function ParseMass(ByVal s As String, ByRef ok As Boolean) As Double
+    Dim t As String, i As Long, ch As String, nSep As Long
+    ok = False
+    t = Replace(Trim$(s), Chr$(160), "")
+    t = Replace(t, " ", "")
+    If Len(t) = 0 Then Exit Function
+    For i = 1 To Len(t)
+        ch = Mid$(t, i, 1)
+        If ch >= "0" And ch <= "9" Then
+        ElseIf ch = "," Or ch = "." Then
+            nSep = nSep + 1
+            If nSep > 1 Then Exit Function
+        Else
+            Exit Function
+        End If
+    Next i
+    ParseMass = val(Replace(t, ",", "."))
+    ok = True
+End Function
+
+Private Function MassFromParams(ByVal code As String, ByVal params As String) As Double
+    Dim p() As String, idx As Long
+    If Len(Trim$(params)) = 0 Then Exit Function
+    p = Split(params, "|")
+    If code = "VALVE_M" Then idx = 9 Else idx = 18
+    If UBound(p) < idx Then Exit Function
+    MassFromParams = val(Replace(p(idx), ",", "."))
+End Function
+
+' параметры комплектации прямо с формы — для живого пересчёта итога
+Private Function ParamsFromForm(ByVal f As Object, ByVal code As String) As String
+    Dim p(0 To 17) As String, i As Long
+    If code = "VALVE_M" Then Exit Function
+    On Error Resume Next
+    p(7) = IIf(f.Controls("chkZP").Value, "1", "0")
+    p(8) = CStr(f.Controls("cboZPExec").Text)
+    p(9) = CStr(f.Controls("cboZPSteel").Text)
+    p(10) = IIf(f.Controls("chkZF").Value, "1", "0")
+    p(11) = CStr(f.Controls("cboZFSteel").Text)
+    p(12) = IIf(f.Controls("chkOF").Value, "1", "0")
+    p(13) = CStr(f.Controls("cboOFTyp").Text)
+    p(14) = IIf(f.Controls("chkPR").Value, "1", "0")
+    p(15) = CStr(f.Controls("cboPRTyp").Text)
+    p(16) = IIf(f.Controls("chkSH").Value, "1", "0")
+    p(17) = IIf(f.Controls("chkG").Value, "1", "0")
+    ParamsFromForm = Join(p, "|")
+End Function
+
+Private Function UplFromForm(ByVal f As Object, ByVal code As String) As String
+    If code = "VALVE_M" Then Exit Function
+    On Error Resume Next
+    UplFromForm = CStr(f.Controls("cboUpl").Text)
+End Function
+
+Private Sub SetCatalogButton(ByVal f As Object, ByVal code As String)
+    Dim cat As Double, b As Object
+    cat = modEngine.ValveBaseMass(code, FormDn(f), FormPn(f))
+    Set b = Ctl(f, "btnMassCat")
+    If b Is Nothing Then Exit Sub
+    If cat > 0 Then
+        b.Caption = "Каталог: " & FmtMass(cat)
+        b.Enabled = True
+    Else
+        b.Caption = "Каталог: —"
+        b.Enabled = False
+    End If
+End Sub
+
+' вызов при открытии формы: сохранённая масса, иначе каталожная
+Public Sub MassInit(ByVal f As Object, ByVal code As String, ByVal paramsFromSheet As String)
+    Dim cat As Double, saved As Double, t As Object
+    SetCatalogButton f, code
+    cat = modEngine.ValveBaseMass(code, FormDn(f), FormPn(f))
+    saved = MassFromParams(code, paramsFromSheet)
+    Set t = Ctl(f, "txtBaseMass")
+    If Not t Is Nothing Then
+        If saved > 0 Then
+            t.Text = FmtMass(saved)
+        ElseIf cat > 0 Then
+            t.Text = FmtMass(cat)
+        Else
+            t.Text = ""
+        End If
+    End If
+    MassRefresh f, code
+End Sub
+
+' вызов при смене DN или PN: всегда сброс на каталог
+Public Sub MassSizeChanged(ByVal f As Object, ByVal code As String)
+    MassInit f, code, ""
+End Sub
+
+' вызов по кнопке «Каталог: …»
+Public Sub MassReset(ByVal f As Object, ByVal code As String)
+    Dim cat As Double, t As Object
+    cat = modEngine.ValveBaseMass(code, FormDn(f), FormPn(f))
+    Set t = Ctl(f, "txtBaseMass")
+    If t Is Nothing Then Exit Sub
+    If cat > 0 Then t.Text = FmtMass(cat) Else t.Text = ""
+    MassRefresh f, code
+End Sub
+
+' живой пересчёт итога
+Public Sub MassRefresh(ByVal f As Object, ByVal code As String)
+    Dim base As Double, cat As Double, kompl As Double, total As Double
+    Dim ok As Boolean, lbl As Object, t As Object
+    Set lbl = Ctl(f, "lblMassTotal")
+    Set t = Ctl(f, "txtBaseMass")
+    If lbl Is Nothing Or t Is Nothing Then Exit Sub
+
+    cat = modEngine.ValveBaseMass(code, FormDn(f), FormPn(f))
+    base = ParseMass(CStr(t.Text), ok)
+    If Not ok Or base <= 0 Then base = cat
+
+    If code <> "VALVE_M" Then
+        kompl = modEngine.ValveKomplMass(FormDn(f), FormPn(f), _
+                                        ParamsFromForm(f, code), UplFromForm(f, code))
+    End If
+    total = base + kompl
+
+    If base <= 0 Then
+        lbl.Caption = IIf(code = "VALVE_M", "Итого: —", "С комплектом: —")
+    Else
+        lbl.Caption = IIf(code = "VALVE_M", "Итого: ", "С комплектом: ") & FmtMass(total) & " кг"
+    End If
+End Sub
+
+' вызов в btnOK_Click перед записью.
+' Empty  -> использовать каталог
+' Double -> ручная масса
+' Null   -> ввод неверен, форму не закрывать
+Public Function MassAsk(ByVal f As Object, ByVal code As String) As Variant
+    Dim t As Object, s As String, v As Double, cat As Double, ok As Boolean
+    Set t = Ctl(f, "txtBaseMass")
+    If t Is Nothing Then MassAsk = Empty: Exit Function
+    s = Trim$(CStr(t.Text))
+    If Len(s) = 0 Then MassAsk = Empty: Exit Function
+
+    v = ParseMass(s, ok)
+    If Not ok Or v <= 0 Then
+        MsgBox "Масса должна быть положительным числом." & vbCrLf & _
+               "Оставьте поле пустым, чтобы взять каталожную.", vbExclamation, "Масса"
+        On Error Resume Next
+        t.SetFocus
+        On Error GoTo 0
+        MassAsk = Null
+        Exit Function
+    End If
+
+    cat = modEngine.ValveBaseMass(code, FormDn(f), FormPn(f))
+    If cat > 0 Then
+        If v > cat * 3 Or v < cat / 3 Then
+            If MsgBox("Масса " & FmtMass(v) & " кг сильно отличается от каталожной " & _
+                      FmtMass(cat) & " кг." & vbCrLf & vbCrLf & "Оставить введённое значение?", _
+                      vbQuestion + vbYesNo + vbDefaultButton2, "Проверьте массу") <> vbYes Then
+                On Error Resume Next
+                t.SetFocus
+                On Error GoTo 0
+                MassAsk = Null
+                Exit Function
+            End If
+        End If
+    End If
+
+    MassAsk = v
+End Function
+
