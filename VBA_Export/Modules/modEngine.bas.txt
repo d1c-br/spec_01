@@ -1,8 +1,7 @@
-Attribute VB_Name = "modEngine"
 Option Explicit
 Public mLastType As String
 
-' ==================== Числа и токены ====================
+' ==================== Р§РёСЃР»Р° Рё С‚РѕРєРµРЅС‹ ====================
 Public Function NumTxt(ByVal v As Variant) As String
     NumTxt = CStr(CDbl(v))
 End Function
@@ -12,7 +11,7 @@ Public Function NumKey(ByVal v As Variant) As String
 End Function
 
 Public Function TokPodk(ByVal isPodk As Boolean) As String
-    If isPodk Then TokPodk = "П " Else TokPodk = ""
+    If isPodk Then TokPodk = "Рџ " Else TokPodk = ""
 End Function
 
 Public Function TokSteelSeg(ByVal st As String) As String
@@ -23,7 +22,7 @@ Public Function TokSteelSeg(ByVal st As String) As String
     End If
 End Function
 
-' ==================== Обозначения ====================
+' ==================== РћР±РѕР·РЅР°С‡РµРЅРёСЏ ====================
 Public Function TypeField(ByVal code As String, ByVal colNo As Long) As String
     TypeField = CStr(SprVal("tTypes", TypeRow(code), colNo))
 End Function
@@ -55,7 +54,7 @@ Public Function ElbowDes(ByVal d As Variant, ByVal s As Variant, ByVal ang As Va
     ElbowDes = BuildFromDict("ELBOW", tk)
 End Function
 
-' ==================== Выборки ====================
+' ==================== Р’С‹Р±РѕСЂРєРё ====================
 Public Function PipeValues(ByVal field As Long, ByVal fField As Long, ByVal fVal As Variant) As Collection
     Dim r As Long, c As New Collection, v As Variant, ok As Boolean
     UseBase "PIPE_SMLS"
@@ -159,7 +158,7 @@ codes(n) = c
 names(n) = CStr(SprVal("tTypes", r, 2))
 If IsNumeric(SprVal("tTypes", r, 10)) Then ords(n) = CDbl(SprVal("tTypes", r, 10)) Else ords(n) = 9999
 g = Trim$(CStr(SprVal("tTypes", r, 11)))
-If Len(g) = 0 Then g = "Прочее"
+If Len(g) = 0 Then g = "РџСЂРѕС‡РµРµ"
 grps(n) = g
 End If
 Next r
@@ -178,21 +177,21 @@ For i = 1 To n
 If grps(i) <> curG Then
 curG = grps(i)
 cbo.AddItem ""
-cbo.List(cbo.ListCount - 1, 1) = "— " & UCase$(curG) & " —"
+cbo.List(cbo.ListCount - 1, 1) = "вЂ” " & UCase$(curG) & " вЂ”"
 End If
 cbo.AddItem codes(i)
 cbo.List(cbo.ListCount - 1, 1) = "    " & names(i)
 Next i
 End Sub
 
-' ==================== Очистка и открытие форм ====================
+' ==================== РћС‡РёСЃС‚РєР° Рё РѕС‚РєСЂС‹С‚РёРµ С„РѕСЂРј ====================
 Public Sub ClearPosParams(ByVal r As Long)
     Dim nm As Variant, i As Long, ws As Worksheet
     Set ws = ShSv()
-        nm = Array("Тип", "D", "S", "Угол", "D2", "S2", "DN", "PN", "ТипФ", "Ряд", _
-               "Исполн", "ГрК", "Группа", "Сталь", "Сталь2", "ТипО", "Высота", _
-               "КлючБазы", "КлючПозиции", "Площадь", "Объём", "Длина", "ПарамАрм", _
-               "DNсорт", "ПорядокГруппы", "Масса 1 ед", "Статус", "Подк")
+        nm = Array("РўРёРї", "D", "S", "РЈРіРѕР»", "D2", "S2", "DN", "PN", "РўРёРїР¤", "Р СЏРґ", _
+               "РСЃРїРѕР»РЅ", "Р“СЂРљ", "Р“СЂСѓРїРїР°", "РЎС‚Р°Р»СЊ", "РЎС‚Р°Р»СЊ2", "РўРёРїРћ", "Р’С‹СЃРѕС‚Р°", _
+               "РљР»СЋС‡Р‘Р°Р·С‹", "РљР»СЋС‡РџРѕР·РёС†РёРё", "РџР»РѕС‰Р°РґСЊ", "РћР±СЉС‘Рј", "Р”Р»РёРЅР°", "РџР°СЂР°РјРђСЂРј", _
+               "DNСЃРѕСЂС‚", "РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹", "РњР°СЃСЃР° 1 РµРґ", "РЎС‚Р°С‚СѓСЃ", "РџРѕРґРє")
     For i = 0 To UBound(nm)
         On Error Resume Next
         ws.Cells(r, col(CStr(nm(i)))).MergeArea.ClearContents
@@ -225,7 +224,7 @@ Case "FLANGE": frmFlange.ShowFor tgt
 Case "CAP": frmCap.ShowFor tgt
 Case "BLIND_FL": frmBlindFl.ShowFor tgt
 Case "BLIND_INT": frmBlindInt.ShowFor tgt
-Case Else: MsgBox "Неизвестный код [" & code & "]" & vbCrLf & CharCodes(code), vbExclamation
+Case Else: MsgBox "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РєРѕРґ [" & code & "]" & vbCrLf & CharCodes(code), vbExclamation
 End Select
 End Sub
 
@@ -241,7 +240,7 @@ Public Sub PickAndOpen(ByVal tgt As Range)
     OpenByType code, tgt
 End Sub
 
-' ==================== ТРУБЫ ====================
+' ==================== РўР РЈР‘Р« ====================
 Public Function PipeRowEx(ByVal code As String, ByVal d As Double, ByVal s As Double) As Long
 Dim r As Long
 UseBase code
@@ -280,41 +279,41 @@ On Error GoTo fin
 Set ws = ShSv()
 r = tgt.row
 h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
 UseBase code
 Application.EnableEvents = False
 ClearPosParams r
-ws.Cells(r, col("Наименование")).Value = PipeDes(code, d, s, grp, st)
-ws.Cells(r, col("Ед.изм.")).Value = TypeField(code, 6)
-ws.Cells(r, col("Тип")).Value = code
+ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = PipeDes(code, d, s, grp, st)
+ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField(code, 6)
+ws.Cells(r, col("РўРёРї")).Value = code
 ws.Cells(r, col("D")).Value = d
 ws.Cells(r, col("S")).Value = s
-ws.Cells(r, col("Группа")).Value = grp
-ws.Cells(r, col("Сталь")).Value = st
-ws.Cells(r, col("КлючБазы")).Value = code & "|" & NumKey(d) & "|" & NumKey(s)
-ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & grp & "|" & st
-ws.Cells(r, col("ПорядокГруппы")).Value = TypeField(code, 10)
+ws.Cells(r, col("Р“СЂСѓРїРїР°")).Value = grp
+ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = code & "|" & NumKey(d) & "|" & NumKey(s)
+ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & grp & "|" & st
+ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField(code, 10)
 k = PipeRowEx(code, d, s)
 If k > 0 Then
-ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 4)
-ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-ws.Cells(r, col("Площадь")).Value = BVal(k, 5)
-ws.Cells(r, col("Объём")).Value = BVal(k, 6)
-ws.Cells(r, col("DNсорт")).Value = BVal(k, 3)
+ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 4)
+ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+ws.Cells(r, col("РџР»РѕС‰Р°РґСЊ")).Value = BVal(k, 5)
+ws.Cells(r, col("РћР±СЉС‘Рј")).Value = BVal(k, 6)
+ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = BVal(k, 3)
 found = True
 End If
 If found Then
-ws.Cells(r, col("Статус")).Value = "ОК"
+ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
 Else
-ws.Cells(r, col("Масса 1 ед")).Value = "нет в базе"
-ws.Cells(r, col("Статус")).Value = "НЕТ В БАЗЕ"
+ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = "РЅРµС‚ РІ Р±Р°Р·Рµ"
+ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
 End If
-If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
+If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
 SetPosFormula r
-ПеренумероватьБлок h
+РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
 Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
 Public Sub WritePipe(ByVal tgt As Range, ByVal d As Double, ByVal s As Double, _
@@ -322,7 +321,7 @@ ByVal grp As String, ByVal st As String)
 WritePipeEx tgt, "PIPE_SMLS", d, s, grp, st
 End Sub
 
-' ==================== ОТВОДЫ ====================
+' ==================== РћРўР’РћР”Р« ====================
 Public Sub WriteElbow(ByVal tgt As Range, ByVal d As Double, ByVal s As Double, _
                       ByVal ang As Double, ByVal st As String, ByVal podk As Boolean)
     Dim ws As Worksheet, r As Long, k As Long, h As Long
@@ -332,51 +331,51 @@ Public Sub WriteElbow(ByVal tgt As Range, ByVal d As Double, ByVal s As Double, 
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     UseBase "ELBOW"
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = ElbowDes(d, s, ang, st, podk)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("ELBOW", 6)
-    ws.Cells(r, col("Тип")).Value = "ELBOW"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = ElbowDes(d, s, ang, st, podk)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("ELBOW", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "ELBOW"
     ws.Cells(r, col("D")).Value = d
     ws.Cells(r, col("S")).Value = s
-    ws.Cells(r, col("Угол")).Value = ang
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("Подк")).Value = IIf(podk, "П", "-")
-    ws.Cells(r, col("КлючБазы")).Value = "ELBOW|" & NumKey(d) & "|" & NumKey(s) & "|" & NumKey(ang)
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & st & "|" & IIf(podk, "П", "-")
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("ELBOW", 10)
+    ws.Cells(r, col("РЈРіРѕР»")).Value = ang
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("РџРѕРґРє")).Value = IIf(podk, "Рџ", "-")
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "ELBOW|" & NumKey(d) & "|" & NumKey(s) & "|" & NumKey(ang)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & st & "|" & IIf(podk, "Рџ", "-")
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("ELBOW", 10)
     For k = 1 To BRows()
         If Abs(CDbl(BVal(k, 2)) - d) < 0.001 _
         And Abs(CDbl(BVal(k, 3)) - s) < 0.001 _
         And Abs(CDbl(BVal(k, 4)) - ang) < 0.001 Then
-            ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 6)
-            ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-            ws.Cells(r, col("Площадь")).Value = BVal(k, 7)
-            ws.Cells(r, col("Длина")).Value = BVal(k, 8)
-            ws.Cells(r, col("DNсорт")).Value = BVal(k, 5)
+            ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 6)
+            ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+            ws.Cells(r, col("РџР»РѕС‰Р°РґСЊ")).Value = BVal(k, 7)
+            ws.Cells(r, col("Р”Р»РёРЅР°")).Value = BVal(k, 8)
+            ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = BVal(k, 5)
             found = True
             Exit For
         End If
     Next k
     If found Then
-        ws.Cells(r, col("Статус")).Value = "ОК"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
     Else
-        ws.Cells(r, col("Масса 1 ед")).Value = "нет в базе"
-        ws.Cells(r, col("Статус")).Value = "НЕТ В БАЗЕ"
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = "РЅРµС‚ РІ Р±Р°Р·Рµ"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
     End If
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then
-        ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then
+        ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     End If
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ТРОЙНИКИ ====================
+' ==================== РўР РћР™РќРРљР ====================
 Public Function TeeRow(ByVal d As Double, ByVal t As Double, ByVal d1 As Double) As Long
     Dim r As Long
     UseBase "TEE"
@@ -393,7 +392,7 @@ End Function
 Public Function TeeVal(ByVal d As Double, ByVal t As Double, ByVal d1 As Double, ByVal colNo As Long) As Variant
     Dim k As Long
     k = TeeRow(d, t, d1)
-    If k = 0 Then Err.Raise vbObjectError + 31, , "Нет такого тройника в базе tTees."
+    If k = 0 Then Err.Raise vbObjectError + 31, , "РќРµС‚ С‚Р°РєРѕРіРѕ С‚СЂРѕР№РЅРёРєР° РІ Р±Р°Р·Рµ tTees."
     UseBase "TEE"
     TeeVal = BVal(k, colNo)
 End Function
@@ -408,7 +407,7 @@ Public Function TeeDes(ByVal d As Variant, ByVal t As Variant, ByVal d1 As Varia
     If Abs(CDbl(d1) - CDbl(d)) < 0.001 Then
         tk("BR") = ""
     Else
-        tk("BR") = "-" & NumTxt(d1) & "х" & NumTxt(T1)
+        tk("BR") = "-" & NumTxt(d1) & "С…" & NumTxt(T1)
     End If
     tk("STSEG") = TokSteelSeg(st)
     TeeDes = BuildFromDict("TEE", tk)
@@ -423,40 +422,40 @@ Public Sub WriteTee(ByVal tgt As Range, ByVal d As Double, ByVal t As Double, _
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     k = TeeRow(d, t, d1)
-    If k = 0 Then Err.Raise vbObjectError + 31, , "Нет такого тройника в базе tTees."
+    If k = 0 Then Err.Raise vbObjectError + 31, , "РќРµС‚ С‚Р°РєРѕРіРѕ С‚СЂРѕР№РЅРёРєР° РІ Р±Р°Р·Рµ tTees."
     UseBase "TEE"
     T1 = CDbl(BVal(k, 4))
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = TeeDes(d, t, d1, T1, st, podk)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("TEE", 6)
-    ws.Cells(r, col("Тип")).Value = "TEE"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = TeeDes(d, t, d1, T1, st, podk)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("TEE", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "TEE"
     ws.Cells(r, col("D")).Value = d
     ws.Cells(r, col("S")).Value = t
     ws.Cells(r, col("D2")).Value = d1
     ws.Cells(r, col("S2")).Value = T1
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("Подк")).Value = IIf(podk, "П", "")
-    ws.Cells(r, col("КлючБазы")).Value = "TEE|" & NumKey(d) & "|" & NumKey(t) & "|" & NumKey(d1)
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & st & "|" & IIf(podk, "П", "-")
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("TEE", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 9)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = BVal(k, 5)
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then
-        ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("РџРѕРґРє")).Value = IIf(podk, "Рџ", "")
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "TEE|" & NumKey(d) & "|" & NumKey(t) & "|" & NumKey(d1)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & st & "|" & IIf(podk, "Рџ", "-")
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("TEE", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 9)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = BVal(k, 5)
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then
+        ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     End If
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ПЕРЕХОДЫ ====================
+' ==================== РџР•Р Р•РҐРћР”Р« ====================
 Public Function TransValues(ByVal field As Long, ByVal d As Variant, ByVal t As Variant, _
                             ByVal d1 As Variant, ByVal T1 As Variant) As Collection
     Dim r As Long, c As New Collection, v As Variant, ok As Boolean
@@ -504,7 +503,7 @@ Public Function TransAutoT1(ByVal d As Double, ByVal t As Double, ByVal d1 As Do
             Exit Function
         End If
     Next r
-    Err.Raise vbObjectError + 33, , "Нет такого перехода D=" & d & " T=" & t & " D1=" & d1 & " в базе."
+    Err.Raise vbObjectError + 33, , "РќРµС‚ С‚Р°РєРѕРіРѕ РїРµСЂРµС…РѕРґР° D=" & d & " T=" & t & " D1=" & d1 & " РІ Р±Р°Р·Рµ."
 End Function
 
 Public Function TransDes(ByVal d As Variant, ByVal t As Variant, ByVal d1 As Variant, _
@@ -519,7 +518,7 @@ Public Function TransDes(ByVal d As Variant, ByVal t As Variant, ByVal d1 As Var
     tk("T1") = NumTxt(T1)
     tk("STSEG") = TokSteelSeg(st)
     s = BuildFromDict("TRANS", tk)
-    If lMulti And Not isEmpty(L) Then s = s & ", L=" & NumTxt(L) & "мм"
+    If lMulti And Not isEmpty(L) Then s = s & ", L=" & NumTxt(L) & "РјРј"
     TransDes = s
 End Function
 
@@ -533,44 +532,44 @@ Public Sub WriteTrans(ByVal tgt As Range, ByVal d As Double, ByVal t As Double, 
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     Application.EnableEvents = False
 
     k = TransRow(d, t, d1, T1, L)
-    If k = 0 Then Err.Raise vbObjectError + 32, , "Нет такого перехода в базе tTransitions."
+    If k = 0 Then Err.Raise vbObjectError + 32, , "РќРµС‚ С‚Р°РєРѕРіРѕ РїРµСЂРµС…РѕРґР° РІ Р±Р°Р·Рµ tTransitions."
     lMulti = (TransValues(6, d, t, d1, T1).Count > 1)
     UseBase "TRANS"
 
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = TransDes(d, t, d1, T1, st, podk, L, lMulti)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("TRANS", 6)
-    ws.Cells(r, col("Тип")).Value = "TRANS"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = TransDes(d, t, d1, T1, st, podk, L, lMulti)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("TRANS", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "TRANS"
     ws.Cells(r, col("D")).Value = d
     ws.Cells(r, col("S")).Value = t
     ws.Cells(r, col("D2")).Value = d1
     ws.Cells(r, col("S2")).Value = T1
-    ws.Cells(r, col("Длина")).Value = L
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("Подк")).Value = IIf(podk, "П", "")
-    ws.Cells(r, col("КлючБазы")).Value = "TRANS|" & NumKey(d) & "|" & NumKey(t) & "|" & _
+    ws.Cells(r, col("Р”Р»РёРЅР°")).Value = L
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("РџРѕРґРє")).Value = IIf(podk, "Рџ", "")
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "TRANS|" & NumKey(d) & "|" & NumKey(t) & "|" & _
         NumKey(d1) & "|" & NumKey(T1) & "|" & NumKey(L)
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & st & "|" & IIf(podk, "П", "-")
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("TRANS", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 7)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = BVal(k, 5)
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then
-        ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & st & "|" & IIf(podk, "Рџ", "-")
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("TRANS", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 7)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = BVal(k, 5)
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then
+        ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     End If
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ФЛАНЦЫ ====================
+' ==================== Р¤Р›РђРќР¦Р« ====================
 Public Function FlangeValues(ByVal field As Long, ByVal dn As Variant, _
                              ByVal pn As Variant, ByVal typ As Variant) As Collection
     Dim r As Long, c As New Collection, v As Variant, ok As Boolean
@@ -609,11 +608,11 @@ Public Function FlangeDes(ByVal dn As Variant, ByVal pn As Variant, ByVal typ As
     Set tk = CreateObject("Scripting.Dictionary")
     tk("DN") = NumTxt(dn)
     tk("PN") = NumTxt(pn)
-    tk("Тип") = CStr(typ)
-    tk("Ряд") = "1"
-    tk("Упл") = CStr(upl)
+    tk("РўРёРї") = CStr(typ)
+    tk("Р СЏРґ") = "1"
+    tk("РЈРїР»") = CStr(upl)
     tk("ST") = st
-    tk("ГрК") = grk
+    tk("Р“СЂРљ") = grk
     FlangeDes = BuildFromDict("FLANGE", tk)
 End Function
 
@@ -627,50 +626,50 @@ Public Sub WriteFlange(ByVal tgt As Range, ByVal dn As Double, ByVal pn As Doubl
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     k = FlangeRow(dn, pn, typ)
-    If k = 0 Then Err.Raise vbObjectError + 32, , "Нет такого фланца в базе tFlanges."
+    If k = 0 Then Err.Raise vbObjectError + 32, , "РќРµС‚ С‚Р°РєРѕРіРѕ С„Р»Р°РЅС†Р° РІ Р±Р°Р·Рµ tFlanges."
     UseBase "FLANGE"
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = FlangeDes(dn, pn, typ, upl, st, grk)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("FLANGE", 6)
-    ws.Cells(r, col("Тип")).Value = "FLANGE"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = FlangeDes(dn, pn, typ, upl, st, grk)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("FLANGE", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "FLANGE"
     ws.Cells(r, col("DN")).Value = dn
     ws.Cells(r, col("PN")).Value = pn
-    ws.Cells(r, col("ТипФ")).Value = typ
-    ws.Cells(r, col("Ряд")).Value = 1
-    ws.Cells(r, col("УплПов")).Value = upl
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("ГрК")).Value = grk
-    ws.Cells(r, col("КлючБазы")).Value = "FLANGE|" & NumKey(dn) & "|" & NumKey(pn) & "|" & typ & "|1"
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & upl & "|" & st & "|" & grk
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("FLANGE", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 6)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = dn
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then
-        ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РўРёРїР¤")).Value = typ
+    ws.Cells(r, col("Р СЏРґ")).Value = 1
+    ws.Cells(r, col("РЈРїР»РџРѕРІ")).Value = upl
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("Р“СЂРљ")).Value = grk
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "FLANGE|" & NumKey(dn) & "|" & NumKey(pn) & "|" & typ & "|1"
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & upl & "|" & st & "|" & grk
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("FLANGE", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 6)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = dn
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then
+        ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     End If
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ОПОРЫ ====================
+' ==================== РћРџРћР Р« ====================
 Public Function SupportExec(ByVal baseExec As String, ByVal welded As Boolean, _
                             ByVal holes As Boolean, ByVal waste As Boolean) As String
     Dim s As String
     s = baseExec
     If welded Then
-        s = Replace(s, "А", "АС")
-        s = Replace(s, "Б", "БС")
+        s = Replace(s, "Рђ", "РђРЎ")
+        s = Replace(s, "Р‘", "Р‘РЎ")
     End If
-    If holes Then s = s & "О"
-    If waste Then s = s & "в"
+    If holes Then s = s & "Рћ"
+    If waste Then s = s & "РІ"
     SupportExec = s
 End Function
 
@@ -678,12 +677,12 @@ Public Function SupportKey(ByVal sCode As String, ByVal d As Variant, _
                            ByVal exec As String, ByVal fixed As Boolean) As String
     Dim s As String, sh As String
     If Left$(sCode, 4) <> "SUP_" Then _
-        Err.Raise vbObjectError + 34, , "Код опоры должен начинаться с SUP_: " & sCode
+        Err.Raise vbObjectError + 34, , "РљРѕРґ РѕРїРѕСЂС‹ РґРѕР»Р¶РµРЅ РЅР°С‡РёРЅР°С‚СЊСЃСЏ СЃ SUP_: " & sCode
     sh = Mid$(sCode, 5)
     s = exec
-    If Right$(s, 1) = "в" Then s = Left$(s, Len(s) - 1)
-    If Right$(s, 1) = "О" Then s = Left$(s, Len(s) - 1)
-    SupportKey = "SUP|" & sh & "|" & NumKey(d) & "|" & s & IIf(fixed, "|У", "")
+    If Right$(s, 1) = "РІ" Then s = Left$(s, Len(s) - 1)
+    If Right$(s, 1) = "Рћ" Then s = Left$(s, Len(s) - 1)
+    SupportKey = "SUP|" & sh & "|" & NumKey(d) & "|" & s & IIf(fixed, "|РЈ", "")
 End Function
 
 Public Function SupportDes(ByVal sCode As String, ByVal d As Variant, ByVal exec As String, _
@@ -693,7 +692,7 @@ Public Function SupportDes(ByVal sCode As String, ByVal d As Variant, ByVal exec
     tk("D") = NumTxt(d)
     tk("EXEC") = exec
     tk("ST") = Steel
-    tk("FIX") = IIf(fixed, " (в комплекте с упором)", "")
+    tk("FIX") = IIf(fixed, " (РІ РєРѕРјРїР»РµРєС‚Рµ СЃ СѓРїРѕСЂРѕРј)", "")
     SupportDes = BuildFromDict(sCode, tk)
 End Function
 
@@ -709,7 +708,7 @@ Public Sub WriteSupport(ByVal tgt As Range, ByVal sCode As String, ByVal d As Va
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
 
     exec = SupportExec(baseExec, welded, holes, waste)
     dbKey = SupportKey(sCode, d, exec, fixed)
@@ -728,34 +727,34 @@ Public Sub WriteSupport(ByVal tgt As Range, ByVal sCode As String, ByVal d As Va
         End If
     Next k
 
-    ws.Cells(r, col("Наименование")).Value = desc
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField(sCode, 6)
-    ws.Cells(r, col("Тип")).Value = sCode
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = desc
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField(sCode, 6)
+    ws.Cells(r, col("РўРёРї")).Value = sCode
     ws.Cells(r, col("D")).Value = d
-    ws.Cells(r, col("Исполн")).Value = exec
-    ws.Cells(r, col("Сталь")).Value = Steel
-    ws.Cells(r, col("КлючБазы")).Value = dbKey
-    ws.Cells(r, col("КлючПозиции")).Value = dbKey & "|" & exec & "|" & Steel
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField(sCode, 10)
+    ws.Cells(r, col("РСЃРїРѕР»РЅ")).Value = exec
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = Steel
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = dbKey
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = dbKey & "|" & exec & "|" & Steel
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField(sCode, 10)
     If found Then
-        ws.Cells(r, col("Масса 1 ед")).Value = mass
-        ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-        ws.Cells(r, col("Статус")).Value = "ОК"
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = mass
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
     Else
-        ws.Cells(r, col("Масса 1 ед")).Value = "нет в базе"
-        ws.Cells(r, col("Статус")).Value = "НЕТ В БАЗЕ"
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = "РЅРµС‚ РІ Р±Р°Р·Рµ"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
     End If
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then
-        ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then
+        ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     End If
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ДИАГНОСТИКА ====================
+' ==================== Р”РРђР“РќРћРЎРўРРљРђ ====================
 Private Function CharCodes(ByVal s As String) As String
     Dim i As Long, msg As String
     For i = 1 To Len(s)
@@ -764,32 +763,32 @@ Private Function CharCodes(ByVal s As String) As String
     CharCodes = msg
 End Function
 
-Public Sub ДиагностикаКода()
+Public Sub Р”РёР°РіРЅРѕСЃС‚РёРєР°РљРѕРґР°()
     Dim r As Long, c As String, msg As String
     For r = 1 To SprRows("tTypes")
         c = CStr(SprVal("tTypes", r, 1))
         msg = msg & r & ": [" & c & "] len=" & Len(c) & " -> " & CharCodes(c) & vbCrLf
     Next r
-    MsgBox msg, vbInformation, "Коды в tTypes"
+    MsgBox msg, vbInformation, "РљРѕРґС‹ РІ tTypes"
 End Sub
 
-Public Sub ДиагностикаПереходов()
+Public Sub Р”РёР°РіРЅРѕСЃС‚РёРєР°РџРµСЂРµС…РѕРґРѕРІ()
     Dim r As Long, msg As String, c As Collection, v As Variant
     UseBase "TRANS"
-    msg = "tTransitions: " & BRows() & " строк" & vbCrLf & vbCrLf
+    msg = "tTransitions: " & BRows() & " СЃС‚СЂРѕРє" & vbCrLf & vbCrLf
     For r = 1 To 10
         msg = msg & r & ": D=" & BVal(r, 1) & " T=" & BVal(r, 2) & _
               " D1=" & BVal(r, 3) & " T1=" & BVal(r, 4) & vbCrLf
     Next r
     Set c = TransValues(2, 426, Empty, Empty, Empty)
-    msg = msg & vbCrLf & "Толщины для D=426: " & c.Count & vbCrLf
+    msg = msg & vbCrLf & "РўРѕР»С‰РёРЅС‹ РґР»СЏ D=426: " & c.Count & vbCrLf
     For Each v In c
         msg = msg & v & " "
     Next v
-    MsgBox msg, vbInformation, "Диагностика переходов"
+    MsgBox msg, vbInformation, "Р”РёР°РіРЅРѕСЃС‚РёРєР° РїРµСЂРµС…РѕРґРѕРІ"
 End Sub
 
-' ==================== ЗАГЛУШКИ ЭЛЛИПТИЧЕСКИЕ (ГОСТ 17379) ====================
+' ==================== Р—РђР“Р›РЈРЁРљР Р­Р›Р›РРџРўРР§Р•РЎРљРР• (Р“РћРЎРў 17379) ====================
 Public Function CapRow(ByVal d As Double, ByVal t As Double) As Long
     Dim r As Long, key As String
     key = "CAP|" & NumKey(d) & "|" & NumKey(t)
@@ -820,37 +819,37 @@ Public Sub WriteCap(ByVal tgt As Range, ByVal d As Double, ByVal t As Double, _
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     k = CapRow(d, t)
-    If k = 0 Then Err.Raise vbObjectError + 35, , "Нет такой заглушки в базе tCaps."
+    If k = 0 Then Err.Raise vbObjectError + 35, , "РќРµС‚ С‚Р°РєРѕР№ Р·Р°РіР»СѓС€РєРё РІ Р±Р°Р·Рµ tCaps."
     UseBase "CAP"
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = CapDes(d, t, st, podk)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("CAP", 6)
-    ws.Cells(r, col("Тип")).Value = "CAP"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = CapDes(d, t, st, podk)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("CAP", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "CAP"
     ws.Cells(r, col("D")).Value = d
     ws.Cells(r, col("S")).Value = t
     ws.Cells(r, col("DN")).Value = BVal(k, 1)
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("Подк")).Value = IIf(podk, "П", "")
-    ws.Cells(r, col("Длина")).Value = BVal(k, 5)
-    ws.Cells(r, col("КлючБазы")).Value = "CAP|" & NumKey(d) & "|" & NumKey(t)
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & st & "|" & IIf(podk, "П", "-")
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("CAP", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 4)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = BVal(k, 1)
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("РџРѕРґРє")).Value = IIf(podk, "Рџ", "")
+    ws.Cells(r, col("Р”Р»РёРЅР°")).Value = BVal(k, 5)
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "CAP|" & NumKey(d) & "|" & NumKey(t)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & st & "|" & IIf(podk, "Рџ", "-")
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("CAP", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 4)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = BVal(k, 1)
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ЗАГЛУШКИ ФЛАНЦЕВЫЕ (ГОСТ 34785) ====================
+' ==================== Р—РђР“Р›РЈРЁРљР Р¤Р›РђРќР¦Р•Р’Р«Р• (Р“РћРЎРў 34785) ====================
 Public Function BlindFlRow(ByVal dn As Double, ByVal pn As Double) As Long
     Dim r As Long, key As String
     key = "BLIND|" & NumKey(dn) & "|" & NumKey(pn) & "|1"
@@ -867,10 +866,10 @@ Public Function BlindFlDes(ByVal dn As Variant, ByVal pn As Variant, ByVal upl A
     Set tk = CreateObject("Scripting.Dictionary")
     tk("DN") = NumTxt(dn)
     tk("PN") = NumTxt(pn)
-    tk("Упл") = CStr(upl)
-    tk("Ряд") = CStr(ryad)
+    tk("РЈРїР»") = CStr(upl)
+    tk("Р СЏРґ") = CStr(ryad)
     tk("ST") = st
-    tk("ГрК") = grk
+    tk("Р“СЂРљ") = grk
     BlindFlDes = BuildFromDict("BLIND_FL", tk)
 End Function
 
@@ -883,39 +882,39 @@ Public Sub WriteBlindFl(ByVal tgt As Range, ByVal dn As Double, ByVal pn As Doub
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     k = BlindFlRow(dn, pn)
-    If k = 0 Then Err.Raise vbObjectError + 36, , "Нет такой заглушки в базе tBlindsFl."
+    If k = 0 Then Err.Raise vbObjectError + 36, , "РќРµС‚ С‚Р°РєРѕР№ Р·Р°РіР»СѓС€РєРё РІ Р±Р°Р·Рµ tBlindsFl."
     UseBase "BLIND_FL"
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = BlindFlDes(dn, pn, upl, 1, st, grk)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("BLIND_FL", 6)
-    ws.Cells(r, col("Тип")).Value = "BLIND_FL"
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = BlindFlDes(dn, pn, upl, 1, st, grk)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("BLIND_FL", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "BLIND_FL"
     ws.Cells(r, col("DN")).Value = dn
     ws.Cells(r, col("PN")).Value = pn
-    ws.Cells(r, col("УплПов")).Value = upl
-    ws.Cells(r, col("Ряд")).Value = 1
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("ГрК")).Value = grk
-    ws.Cells(r, col("КлючБазы")).Value = "BLIND|" & NumKey(dn) & "|" & NumKey(pn) & "|1"
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & upl & "|" & st & "|" & grk
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("BLIND_FL", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 5)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = dn
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РЈРїР»РџРѕРІ")).Value = upl
+    ws.Cells(r, col("Р СЏРґ")).Value = 1
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("Р“СЂРљ")).Value = grk
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "BLIND|" & NumKey(dn) & "|" & NumKey(pn) & "|1"
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & upl & "|" & st & "|" & grk
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("BLIND_FL", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 5)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = dn
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== ЗАГЛУШКИ МЕЖФЛАНЦЕВЫЕ (ГОСТ Р 71797) ====================
+' ==================== Р—РђР“Р›РЈРЁРљР РњР•Р–Р¤Р›РђРќР¦Р•Р’Р«Р• (Р“РћРЎРў Р  71797) ====================
 Public Function BlindIntExecBase(ByVal isTurn As Boolean) As String
-    If isTurn Then BlindIntExecBase = "Поворотная заглушка" Else BlindIntExecBase = "Заглушка с хвостовиком"
+    If isTurn Then BlindIntExecBase = "РџРѕРІРѕСЂРѕС‚РЅР°СЏ Р·Р°РіР»СѓС€РєР°" Else BlindIntExecBase = "Р—Р°РіР»СѓС€РєР° СЃ С…РІРѕСЃС‚РѕРІРёРєРѕРј"
 End Function
 
 Public Function BlindIntRow(ByVal typ As Long, ByVal dn As Double, _
@@ -933,7 +932,7 @@ Public Function BlindIntDes(ByVal typ As Long, ByVal dn As Variant, ByVal pn As 
                             ByVal st As String, ByVal isTurn As Boolean) As String
     Dim tk As Object
     Set tk = CreateObject("Scripting.Dictionary")
-    tk("EXEC") = IIf(isTurn, "поворотная", "с хвостовиком")
+    tk("EXEC") = IIf(isTurn, "РїРѕРІРѕСЂРѕС‚РЅР°СЏ", "СЃ С…РІРѕСЃС‚РѕРІРёРєРѕРј")
     tk("TYP") = CStr(typ)
     tk("DN") = NumTxt(dn)
     tk("PN") = NumTxt(pn)
@@ -950,42 +949,42 @@ Public Sub WriteBlindInt(ByVal tgt As Range, ByVal typ As Long, ByVal dn As Doub
     Set ws = ShSv()
     r = tgt.row
     h = HdrOf(r)
-    If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
     k = BlindIntRow(typ, dn, pn, isTurn)
-    If k = 0 Then Err.Raise vbObjectError + 37, , "Нет такой заглушки в базе tBlinds_Int."
+    If k = 0 Then Err.Raise vbObjectError + 37, , "РќРµС‚ С‚Р°РєРѕР№ Р·Р°РіР»СѓС€РєРё РІ Р±Р°Р·Рµ tBlinds_Int."
     UseBase "BLIND_INT"
     Application.EnableEvents = False
     ClearPosParams r
-    ws.Cells(r, col("Наименование")).Value = BlindIntDes(typ, dn, pn, st, isTurn)
-    ws.Cells(r, col("Ед.изм.")).Value = TypeField("BLIND_INT", 6)
-    ws.Cells(r, col("Тип")).Value = "BLIND_INT"
-    ws.Cells(r, col("ТипФ")).Value = typ
-    ws.Cells(r, col("Исполн")).Value = BlindIntExecBase(isTurn)
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value = BlindIntDes(typ, dn, pn, st, isTurn)
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("BLIND_INT", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "BLIND_INT"
+    ws.Cells(r, col("РўРёРїР¤")).Value = typ
+    ws.Cells(r, col("РСЃРїРѕР»РЅ")).Value = BlindIntExecBase(isTurn)
     ws.Cells(r, col("DN")).Value = dn
     ws.Cells(r, col("PN")).Value = pn
-    ws.Cells(r, col("Сталь")).Value = st
-    ws.Cells(r, col("КлючБазы")).Value = "BLIND_INT|" & typ & "|" & BlindIntExecBase(isTurn) & "|" & NumKey(dn) & "|" & NumKey(pn)
-    ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & st
-    ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("BLIND_INT", 10)
-    ws.Cells(r, col("Масса 1 ед")).Value = BVal(k, 5)
-    ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-    ws.Cells(r, col("DNсорт")).Value = dn
-    ws.Cells(r, col("Статус")).Value = "ОК"
-    If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
+    ws.Cells(r, col("РЎС‚Р°Р»СЊ")).Value = st
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "BLIND_INT|" & typ & "|" & BlindIntExecBase(isTurn) & "|" & NumKey(dn) & "|" & NumKey(pn)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & st
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("BLIND_INT", 10)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = BVal(k, 5)
+    ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = dn
+    ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
     SetPosFormula r
-    ПеренумероватьБлок h
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
 
-' Преобразование PN из базы (16/25/40/63) в МПа для обозначения (1,6/2,5/4,0/6,3)
+' РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ PN РёР· Р±Р°Р·С‹ (16/25/40/63) РІ РњРџР° РґР»СЏ РѕР±РѕР·РЅР°С‡РµРЅРёСЏ (1,6/2,5/4,0/6,3)
 Public Function PnMpa(ByVal pnBase As Double) As String
     PnMpa = Replace(CStr(pnBase / 10), ".", ",")
 End Function
 
-' ==================== АРМАТУРА: ПРОСТОЙ И НАДЕЖНЫЙ КОД ====================
+' ==================== РђР РњРђРўРЈР Рђ: РџР РћРЎРўРћР™ Р РќРђР”Р•Р–РќР«Р™ РљРћР” ====================
 
 Public Function ArmRow(ByVal code As String, ByVal dn As Double, ByVal pn As Double) As Long
 Dim r As Long
@@ -1009,18 +1008,18 @@ ByVal korp As String, ByVal klim As String, ByVal sred As String, _
 ByVal upl As String, ByVal params As String) As String
 Dim lines() As String, n As Long
 ReDim lines(0 To 20)
-lines(n) = TypeField(code, 2) & " с ручным управлением DN" & NumTxt(dn) & " PN" & PnMpa(CDbl(pn)) & " МПа.": n = n + 1
-lines(n) = "Класс герметичности " & kl & " по ГОСТ 9544-2015.": n = n + 1
+lines(n) = TypeField(code, 2) & " СЃ СЂСѓС‡РЅС‹Рј СѓРїСЂР°РІР»РµРЅРёРµРј DN" & NumTxt(dn) & " PN" & PnMpa(CDbl(pn)) & " РњРџР°.": n = n + 1
+lines(n) = "РљР»Р°СЃСЃ РіРµСЂРјРµС‚РёС‡РЅРѕСЃС‚Рё " & kl & " РїРѕ Р“РћРЎРў 9544-2015.": n = n + 1
 If Len(Trim$(tFrom)) = 0 Then
-lines(n) = "Температура рабочей среды до " & tTo & " °С."
+lines(n) = "РўРµРјРїРµСЂР°С‚СѓСЂР° СЂР°Р±РѕС‡РµР№ СЃСЂРµРґС‹ РґРѕ " & tTo & " В°РЎ."
 Else
-lines(n) = "Температура рабочей среды от " & tFrom & " до " & tTo & " °С."
+lines(n) = "РўРµРјРїРµСЂР°С‚СѓСЂР° СЂР°Р±РѕС‡РµР№ СЃСЂРµРґС‹ РѕС‚ " & tFrom & " РґРѕ " & tTo & " В°РЎ."
 End If
 n = n + 1
-lines(n) = "Материал корпуса — " & korp & ".": n = n + 1
-lines(n) = "Климатическое исполнение " & klim & " по ГОСТ 15150-69.": n = n + 1
-lines(n) = "Рабочая среда — " & sred & ".": n = n + 1
-lines(n) = "Уплотнительная поверхность фланцев - " & upl & ".": n = n + 1
+lines(n) = "РњР°С‚РµСЂРёР°Р» РєРѕСЂРїСѓСЃР° вЂ” " & korp & ".": n = n + 1
+lines(n) = "РљР»РёРјР°С‚РёС‡РµСЃРєРѕРµ РёСЃРїРѕР»РЅРµРЅРёРµ " & klim & " РїРѕ Р“РћРЎРў 15150-69.": n = n + 1
+lines(n) = "Р Р°Р±РѕС‡Р°СЏ СЃСЂРµРґР° вЂ” " & sred & ".": n = n + 1
+lines(n) = "РЈРїР»РѕС‚РЅРёС‚РµР»СЊРЅР°СЏ РїРѕРІРµСЂС…РЅРѕСЃС‚СЊ С„Р»Р°РЅС†РµРІ - " & upl & ".": n = n + 1
 If Len(params) > 0 Then
 Dim p() As String
 p = Split(params, "|")
@@ -1028,7 +1027,7 @@ If UBound(p) >= 17 Then
 Dim hasKompl As Boolean
 hasKompl = (p(7) = "1") Or (p(10) = "1") Or (p(12) = "1") Or (p(14) = "1") Or (p(16) = "1") Or (p(17) = "1")
 If hasKompl Then
-lines(n) = "В комплекте с:": n = n + 1
+lines(n) = "Р’ РєРѕРјРїР»РµРєС‚Рµ СЃ:": n = n + 1
 Dim lastIdx As Long: lastIdx = -1
 If p(7) = "1" Then lastIdx = n
 If p(10) = "1" Then lastIdx = n + 1
@@ -1038,32 +1037,32 @@ If p(16) = "1" Then lastIdx = n + 4
 If p(17) = "1" Then lastIdx = n + 5
 If p(7) = "1" Then
 Dim zpType As String
-zpType = IIf(InStr(p(8), "хвостовик") > 0, "с хвостовиком", "поворотной")
-lines(n) = "Заглушкой " & zpType & " по ГОСТ Р 71797-2024 из стали " & p(9) & IIf(n = lastIdx, ".", ";")
+zpType = IIf(InStr(p(8), "С…РІРѕСЃС‚РѕРІРёРє") > 0, "СЃ С…РІРѕСЃС‚РѕРІРёРєРѕРј", "РїРѕРІРѕСЂРѕС‚РЅРѕР№")
+lines(n) = "Р—Р°РіР»СѓС€РєРѕР№ " & zpType & " РїРѕ Р“РћРЎРў Р  71797-2024 РёР· СЃС‚Р°Р»Рё " & p(9) & IIf(n = lastIdx, ".", ";")
 n = n + 1
 End If
 If p(10) = "1" Then
-lines(n) = "Заглушкой по ГОСТ 34785-2021 из стали " & p(11) & IIf(n = lastIdx, ".", ";")
+lines(n) = "Р—Р°РіР»СѓС€РєРѕР№ РїРѕ Р“РћРЎРў 34785-2021 РёР· СЃС‚Р°Р»Рё " & p(11) & IIf(n = lastIdx, ".", ";")
 n = n + 1
 End If
 If p(12) = "1" Then
 Dim flWord As String
-If p(10) = "1" Then flWord = "Ответным фланцем" Else flWord = "Ответными фланцами"
-lines(n) = flWord & " типа " & p(13) & " по ГОСТ 33259-2015" & IIf(n = lastIdx, ".", ";")
+If p(10) = "1" Then flWord = "РћС‚РІРµС‚РЅС‹Рј С„Р»Р°РЅС†РµРј" Else flWord = "РћС‚РІРµС‚РЅС‹РјРё С„Р»Р°РЅС†Р°РјРё"
+lines(n) = flWord & " С‚РёРїР° " & p(13) & " РїРѕ Р“РћРЎРў 33259-2015" & IIf(n = lastIdx, ".", ";")
 n = n + 1
 End If
 If p(14) = "1" Then
 Dim prGost As String
-If p(15) = "ПОН" Then prGost = "ГОСТ 15180-86" Else prGost = "ГОСТ Р 52376-2005"
-lines(n) = "Прокладками " & p(15) & " по " & prGost & IIf(n = lastIdx, ".", ";")
+If p(15) = "РџРћРќ" Then prGost = "Р“РћРЎРў 15180-86" Else prGost = "Р“РћРЎРў Р  52376-2005"
+lines(n) = "РџСЂРѕРєР»Р°РґРєР°РјРё " & p(15) & " РїРѕ " & prGost & IIf(n = lastIdx, ".", ";")
 n = n + 1
 End If
 If p(16) = "1" Then
-lines(n) = "Шпильками по ГОСТ 9066-75 из стали 35" & IIf(n = lastIdx, ".", ";")
+lines(n) = "РЁРїРёР»СЊРєР°РјРё РїРѕ Р“РћРЎРў 9066-75 РёР· СЃС‚Р°Р»Рё 35" & IIf(n = lastIdx, ".", ";")
 n = n + 1
 End If
 If p(17) = "1" Then
-lines(n) = "Гайками ГОСТ 9064-75 из стали 35."
+lines(n) = "Р“Р°Р№РєР°РјРё Р“РћРЎРў 9064-75 РёР· СЃС‚Р°Р»Рё 35."
 n = n + 1
 End If
 End If
@@ -1079,7 +1078,7 @@ ByVal korp As String, ByVal klim As String, ByVal sred As String, _
 ByVal params As String) As String
 Dim lines() As String, n As Long
 Dim p() As String, j As String, th As String, tD As String
-j = "резьбовой": th = "": tD = "внутренняя"
+j = "СЂРµР·СЊР±РѕРІРѕР№": th = "": tD = "РІРЅСѓС‚СЂРµРЅРЅСЏСЏ"
 If Len(params) > 0 Then
 p = Split(params, "|")
 If UBound(p) >= 6 Then j = p(6)
@@ -1087,71 +1086,26 @@ If UBound(p) >= 7 Then th = p(7)
 If UBound(p) >= 8 Then tD = p(8)
 End If
 ReDim lines(0 To 8)
-lines(n) = "Кран шаровой муфтовый с ручным управлением DN" & NumTxt(dn) & " PN" & PnMpa(CDbl(pn)) & " МПа.": n = n + 1
-If j = "под приварку" Then
-lines(n) = "Тип присоединения - под приварку."
+lines(n) = "РљСЂР°РЅ С€Р°СЂРѕРІРѕР№ РјСѓС„С‚РѕРІС‹Р№ СЃ СЂСѓС‡РЅС‹Рј СѓРїСЂР°РІР»РµРЅРёРµРј DN" & NumTxt(dn) & " PN" & PnMpa(CDbl(pn)) & " РњРџР°.": n = n + 1
+If j = "РїРѕРґ РїСЂРёРІР°СЂРєСѓ" Then
+lines(n) = "РўРёРї РїСЂРёСЃРѕРµРґРёРЅРµРЅРёСЏ - РїРѕРґ РїСЂРёРІР°СЂРєСѓ."
 Else
-lines(n) = "Тип присоединения - резьбовой " & th & " (" & tD & " резьба)."
+lines(n) = "РўРёРї РїСЂРёСЃРѕРµРґРёРЅРµРЅРёСЏ - СЂРµР·СЊР±РѕРІРѕР№ " & th & " (" & tD & " СЂРµР·СЊР±Р°)."
 End If
 n = n + 1
-lines(n) = "Класс герметичности " & kl & " по ГОСТ 9544-2015.": n = n + 1
+lines(n) = "РљР»Р°СЃСЃ РіРµСЂРјРµС‚РёС‡РЅРѕСЃС‚Рё " & kl & " РїРѕ Р“РћРЎРў 9544-2015.": n = n + 1
 If Len(Trim$(tFrom)) = 0 Then
-lines(n) = "Температура рабочей среды до " & tTo & " °С."
+lines(n) = "РўРµРјРїРµСЂР°С‚СѓСЂР° СЂР°Р±РѕС‡РµР№ СЃСЂРµРґС‹ РґРѕ " & tTo & " В°РЎ."
 Else
-lines(n) = "Температура рабочей среды от " & tFrom & " до " & tTo & " °С."
+lines(n) = "РўРµРјРїРµСЂР°С‚СѓСЂР° СЂР°Р±РѕС‡РµР№ СЃСЂРµРґС‹ РѕС‚ " & tFrom & " РґРѕ " & tTo & " В°РЎ."
 End If
 n = n + 1
-lines(n) = "Материал корпуса — " & korp & ".": n = n + 1
-lines(n) = "Климатическое исполнение " & klim & " по ГОСТ 15150-69.": n = n + 1
-lines(n) = "Рабочая среда — " & sred & ".": n = n + 1
+lines(n) = "РњР°С‚РµСЂРёР°Р» РєРѕСЂРїСѓСЃР° вЂ” " & korp & ".": n = n + 1
+lines(n) = "РљР»РёРјР°С‚РёС‡РµСЃРєРѕРµ РёСЃРїРѕР»РЅРµРЅРёРµ " & klim & " РїРѕ Р“РћРЎРў 15150-69.": n = n + 1
+lines(n) = "Р Р°Р±РѕС‡Р°СЏ СЃСЂРµРґР° вЂ” " & sred & ".": n = n + 1
 ReDim Preserve lines(0 To n - 1)
 ValveMDes = Join(lines, vbLf)
 End Function
-
-Public Sub WriteValveEx(ByVal tgt As Range, ByVal code As String, _
-ByVal dn As Double, ByVal pn As Double, _
-ByVal kl As String, ByVal tFrom As String, ByVal tTo As String, _
-ByVal korp As String, ByVal klim As String, ByVal sred As String, _
-ByVal upl As String, ByVal params As String)
-Dim ws As Worksheet, r As Long, h As Long, k As Long
-Dim ev As Boolean, mass As Double
-ev = Application.EnableEvents
-On Error GoTo fin
-Set ws = ShSv()
-r = tgt.row
-h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
-mass = ValveMass(code, dn, pn, params, upl)
-Application.EnableEvents = False
-ClearPosParams r
-With ws.Cells(r, col("Наименование"))
-.Value = ValveDes(code, dn, pn, kl, tFrom, tTo, korp, klim, sred, upl, params)
-.WrapText = True
-End With
-ws.Cells(r, col("Наименование")).EntireRow.AutoFit
-ws.Cells(r, col("Ед.изм.")).Value = TypeField(code, 6)
-ws.Cells(r, col("Тип")).Value = code
-ws.Cells(r, col("DN")).Value = dn
-ws.Cells(r, col("PN")).Value = pn
-k = ArmRow(code, dn, pn)
-If k > 0 Then ws.Cells(r, col("Длина")).Value = BVal(k, 5)
-ws.Cells(r, col("DNсорт")).Value = dn
-ws.Cells(r, col("ПарамАрм")).Value = params
-ws.Cells(r, col("КлючБазы")).Value = code & "|" & NumKey(dn) & "|" & NumKey(pn)
-ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & params
-ws.Cells(r, col("ПорядокГруппы")).Value = TypeField(code, 10)
-ws.Cells(r, col("Масса 1 ед")).Value = mass
-ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-ws.Cells(r, col("Статус")).Value = "ОК"
-If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
-SetPosFormula r
-On Error Resume Next
-ПеренумероватьБлок h
-On Error GoTo fin
-fin:
-Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
-End Sub
 
 Public Sub WriteValve(ByVal tgt As Range, ByVal dn As Double, ByVal pn As Double, _
 ByVal kl As String, ByVal tFrom As String, ByVal tTo As String, _
@@ -1160,120 +1114,324 @@ ByVal upl As String, ByVal params As String)
 WriteValveEx tgt, "VALVE", dn, pn, kl, tFrom, tTo, korp, klim, sred, upl, params
 End Sub
 
-Public Sub WriteValveM(ByVal tgt As Range, ByVal dn As Double, ByVal pn As Double, _
-ByVal kl As String, ByVal tFrom As String, ByVal tTo As String, _
-ByVal korp As String, ByVal klim As String, ByVal sred As String, _
-ByVal params As String)
-Dim ws As Worksheet, r As Long, h As Long, k As Long
-Dim ev As Boolean, mass As Double
-ev = Application.EnableEvents
-On Error GoTo fin
-Set ws = ShSv()
-r = tgt.row
-h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 30, , "Строка " & r & " не входит в блок позиций."
-UseBase "VALVE_M"
-k = ArmRow("VALVE_M", dn, pn)
-If k > 0 Then mass = CDbl(BVal(k, 4))
-Application.EnableEvents = False
-ClearPosParams r
-With ws.Cells(r, col("Наименование"))
-.Value = ValveMDes(dn, pn, kl, tFrom, tTo, korp, klim, sred, params)
-.WrapText = True
-End With
-ws.Cells(r, col("Наименование")).EntireRow.AutoFit
-ws.Cells(r, col("Ед.изм.")).Value = TypeField("VALVE_M", 6)
-ws.Cells(r, col("Тип")).Value = "VALVE_M"
-ws.Cells(r, col("DN")).Value = dn
-ws.Cells(r, col("PN")).Value = pn
-If k > 0 Then ws.Cells(r, col("Длина")).Value = BVal(k, 5)
-ws.Cells(r, col("DNсорт")).Value = dn
-ws.Cells(r, col("ПарамАрм")).Value = params
-ws.Cells(r, col("КлючБазы")).Value = "VALVE_M|" & NumKey(dn) & "|" & NumKey(pn)
-ws.Cells(r, col("КлючПозиции")).Value = ws.Cells(r, col("КлючБазы")).Value & "|" & params
-ws.Cells(r, col("ПорядокГруппы")).Value = TypeField("VALVE_M", 10)
-If k > 0 Then
-ws.Cells(r, col("Масса 1 ед")).Value = mass
-ws.Cells(r, col("Масса 1 ед")).NumberFormat = "0.00"
-ws.Cells(r, col("Статус")).Value = "ОК"
-Else
-ws.Cells(r, col("Масса 1 ед")).Value = "нет в базе"
-ws.Cells(r, col("Статус")).Value = "НЕТ В БАЗЕ"
-End If
-If isEmpty(ws.Cells(r, col("№ввода")).Value) Then ws.Cells(r, col("№ввода")).Value = NextInputNo()
-SetPosFormula r
-On Error Resume Next
-ПеренумероватьБлок h
-On Error GoTo fin
+Public Sub WriteValveEx(ByVal tgt As Range, ByVal code As String, _
+    ByVal dn As Double, ByVal pn As Double, _
+    ByVal kl As String, ByVal tFrom As String, ByVal tTo As String, _
+    ByVal korp As String, ByVal klim As String, ByVal sred As String, _
+    ByVal upl As String, ByVal params As String, _
+    Optional ByVal baseMassOverride As Variant = Empty)
+
+    Dim ws As Worksheet, r As Long, h As Long, k As Long
+    Dim ev As Boolean, mBase As Double, mass As Double
+    Dim paramsFull As String, hasBase As Boolean
+
+    ev = Application.EnableEvents
+    On Error GoTo fin
+    Set ws = ShSv()
+    r = tgt.row
+    h = HdrOf(r)
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
+
+    mBase = ValveBaseMass(code, dn, pn)
+    hasBase = (mBase > 0)
+    If Not isEmpty(baseMassOverride) Then
+        If IsNumeric(baseMassOverride) Then
+            If CDbl(baseMassOverride) > 0 Then
+                mBase = CDbl(baseMassOverride)
+                hasBase = True
+            End If
+        End If
+    End If
+    mass = mBase + ValveKomplMass(dn, pn, params, upl)
+
+    paramsFull = params
+    If hasBase Then paramsFull = params & "|" & NumKey(mBase)
+
+    Application.EnableEvents = False
+    ClearPosParams r
+
+    With ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ"))
+        .Value = ValveDes(code, dn, pn, kl, tFrom, tTo, korp, klim, sred, upl, params)
+        .WrapText = True
+    End With
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).EntireRow.AutoFit
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField(code, 6)
+    ws.Cells(r, col("РўРёРї")).Value = code
+    ws.Cells(r, col("DN")).Value = dn
+    ws.Cells(r, col("PN")).Value = pn
+    k = ArmRow(code, dn, pn)
+    If k > 0 Then ws.Cells(r, col("Р”Р»РёРЅР°")).Value = BVal(k, 5)
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = dn
+    ws.Cells(r, col("РџР°СЂР°РјРђСЂРј")).Value = paramsFull
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = code & "|" & NumKey(dn) & "|" & NumKey(pn)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & paramsFull
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField(code, 10)
+
+    If hasBase Then
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = mass
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    Else
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = "РЅРµС‚ РІ Р±Р°Р·Рµ"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
+    End If
+    
+    ' --- РєРѕРЅС‚СЂРѕР»СЊ РїРѕР»РЅРѕС‚С‹ РєРѕРјРїР»РµРєС‚Р° ---
+    Dim missK As String
+    missK = ValveKomplMissing(dn, pn, params, upl)
+    If Len(missK) > 0 Then
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
+        MsgBox "РљРѕРјРїР»РµРєС‚ Р°СЂРјР°С‚СѓСЂС‹ РЅРµ РЅР°Р№РґРµРЅ РІ Р±Р°Р·Р°С…:" & vbCrLf & vbCrLf & missK & vbCrLf & _
+               "РњР°СЃСЃР° РїРѕСЃС‡РёС‚Р°РЅР° Р±РµР· СЌС‚РёС… РїРѕР·РёС†РёР№ Рё Р·Р°РЅРёР¶РµРЅР°." & vbCrLf & _
+               "РЎС‚СЂРѕРєР° РїРѕРјРµС‡РµРЅР° В«РќР•Рў Р’ Р‘РђР—Р•В».", vbExclamation, "РљРѕРјРїР»РµРєС‚ РЅРµ РЅР°Р№РґРµРЅ"
+    End If
+    
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
+    SetPosFormula r
+    On Error Resume Next
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
+    On Error GoTo fin
 fin:
-Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка записи: " & Err.Description, vbExclamation
+    Application.EnableEvents = ev
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
 End Sub
 
+Public Sub WriteValveM(ByVal tgt As Range, ByVal dn As Double, ByVal pn As Double, _
+    ByVal kl As String, ByVal tFrom As String, ByVal tTo As String, _
+    ByVal korp As String, ByVal klim As String, ByVal sred As String, _
+    ByVal params As String, _
+    Optional ByVal baseMassOverride As Variant = Empty)
+
+    Dim ws As Worksheet, r As Long, h As Long, k As Long
+    Dim ev As Boolean, mBase As Double, paramsFull As String, hasBase As Boolean
+
+    ev = Application.EnableEvents
+    On Error GoTo fin
+    Set ws = ShSv()
+    r = tgt.row
+    h = HdrOf(r)
+    If h = 0 Then Err.Raise vbObjectError + 30, , "РЎС‚СЂРѕРєР° " & r & " РЅРµ РІС…РѕРґРёС‚ РІ Р±Р»РѕРє РїРѕР·РёС†РёР№."
+
+    mBase = ValveBaseMass("VALVE_M", dn, pn)
+    hasBase = (mBase > 0)
+    If Not isEmpty(baseMassOverride) Then
+        If IsNumeric(baseMassOverride) Then
+            If CDbl(baseMassOverride) > 0 Then
+                mBase = CDbl(baseMassOverride)
+                hasBase = True
+            End If
+        End If
+    End If
+
+    paramsFull = params
+    If hasBase Then paramsFull = params & "|" & NumKey(mBase)
+
+    Application.EnableEvents = False
+    ClearPosParams r
+
+    With ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ"))
+        .Value = ValveMDes(dn, pn, kl, tFrom, tTo, korp, klim, sred, params)
+        .WrapText = True
+    End With
+    ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).EntireRow.AutoFit
+    ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value = TypeField("VALVE_M", 6)
+    ws.Cells(r, col("РўРёРї")).Value = "VALVE_M"
+    ws.Cells(r, col("DN")).Value = dn
+    ws.Cells(r, col("PN")).Value = pn
+    k = ArmRow("VALVE_M", dn, pn)
+    If k > 0 Then ws.Cells(r, col("Р”Р»РёРЅР°")).Value = BVal(k, 5)
+    ws.Cells(r, col("DNСЃРѕСЂС‚")).Value = dn
+    ws.Cells(r, col("РџР°СЂР°РјРђСЂРј")).Value = paramsFull
+    ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value = "VALVE_M|" & NumKey(dn) & "|" & NumKey(pn)
+    ws.Cells(r, col("РљР»СЋС‡РџРѕР·РёС†РёРё")).Value = ws.Cells(r, col("РљР»СЋС‡Р‘Р°Р·С‹")).Value & "|" & paramsFull
+    ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value = TypeField("VALVE_M", 10)
+
+    If hasBase Then
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = mBase
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).NumberFormat = "0.00"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РћРљ"
+    Else
+        ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Value = "РЅРµС‚ РІ Р±Р°Р·Рµ"
+        ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value = "РќР•Рў Р’ Р‘РђР—Р•"
+    End If
+
+    If isEmpty(ws.Cells(r, col("в„–РІРІРѕРґР°")).Value) Then ws.Cells(r, col("в„–РІРІРѕРґР°")).Value = NextInputNo()
+    SetPosFormula r
+    On Error Resume Next
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
+    On Error GoTo fin
+fin:
+    Application.EnableEvents = ev
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР° Р·Р°РїРёСЃРё: " & Err.Description, vbExclamation
+End Sub
+
+Public Function ValveBaseMass(ByVal code As String, ByVal dn As Double, ByVal pn As Double) As Double
+    Dim k As Long
+    k = ArmRow(code, dn, pn)
+    If k = 0 Then Exit Function
+    If IsNumeric(BVal(k, 4)) Then ValveBaseMass = CDbl(BVal(k, 4))
+End Function
+
+Public Function ValveKomplMass(ByVal dn As Double, ByVal pn As Double, _
+                               ByVal params As String, ByVal upl As String) As Double
+    Dim p() As String, r As Long, t As Double
+    Dim nFl As Long, flUpl As String
+
+    If Len(Trim$(params)) = 0 Then Exit Function
+    p = Split(params, "|")
+    If UBound(p) < 17 Then Exit Function
+
+    If p(7) = "1" Then
+        UseBase "BLIND_INT"
+        For r = 1 To BRows()
+            If CStr(BVal(r, 1)) = "1" And CStr(BVal(r, 2)) = p(8) And _
+               Abs(CDbl(BVal(r, 3)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 4)) - pn) < 0.001 Then
+                t = t + CDbl(BVal(r, 5))
+                Exit For
+            End If
+        Next r
+    End If
+
+    If p(10) = "1" Then
+        UseBase "BLIND_FL"
+        For r = 1 To BRows()
+            If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+               CStr(BVal(r, 3)) = "1" Then
+                t = t + CDbl(BVal(r, 5))
+                Exit For
+            End If
+        Next r
+    End If
+
+    If p(12) = "1" Then
+        nFl = IIf(p(10) = "1", 1, 2)
+        flUpl = IIf(Left$(upl, 1) = "E", "E", "B")
+        UseBase "FLANGE"
+        For r = 1 To BRows()
+            If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+               CStr(BVal(r, 3)) = p(13) And _
+               CStr(BVal(r, 4)) = flUpl Then
+                t = t + nFl * CDbl(BVal(r, 6))
+                Exit For
+            End If
+        Next r
+    End If
+
+    ValveKomplMass = t
+End Function
+
 Public Function ValveMass(ByVal code As String, ByVal dn As Double, ByVal pn As Double, _
-ByVal params As String, ByVal upl As String) As Double
-Dim baseMass As Double, k As Long, totalMass As Double
-Dim p() As String
-Dim zpMass As Double, zfMass As Double, flOneMass As Double, nFl As Long
-Dim r As Long
-k = ArmRow(code, dn, pn)
-If k = 0 Then ValveMass = 0: Exit Function
-UseBase code
-baseMass = CDbl(BVal(k, 4))
-totalMass = baseMass
-If Len(Trim$(params)) = 0 Then ValveMass = totalMass: Exit Function
-p = Split(params, "|")
-If UBound(p) < 17 Then ValveMass = totalMass: Exit Function
-If p(7) = "1" Then
-UseBase "BLIND_INT"
-For r = 1 To BRows()
-If CStr(BVal(r, 1)) = "1" And CStr(BVal(r, 2)) = p(8) And _
-Abs(CDbl(BVal(r, 3)) - dn) < 0.001 And _
-Abs(CDbl(BVal(r, 4)) - pn) < 0.001 Then
-zpMass = CDbl(BVal(r, 5))
-Exit For
-End If
-Next r
-totalMass = totalMass + zpMass
-End If
-If p(10) = "1" Then
-UseBase "BLIND_FL"
-For r = 1 To BRows()
-If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
-Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
-CStr(BVal(r, 3)) = "1" Then
-zfMass = CDbl(BVal(r, 5))
-Exit For
-End If
-Next r
-totalMass = totalMass + zfMass
-End If
-If p(12) = "1" Then
-nFl = IIf(p(10) = "1", 1, 2)
-Dim flUpl As String
-flUpl = IIf(Left$(upl, 1) = "E", "E", "B")
-UseBase "FLANGE"
-For r = 1 To BRows()
-If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
-Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
-CStr(BVal(r, 3)) = p(13) And _
-CStr(BVal(r, 4)) = flUpl Then
-flOneMass = CDbl(BVal(r, 6))
-Exit For
-End If
-Next r
-totalMass = totalMass + nFl * flOneMass
-End If
-ValveMass = totalMass
+                          ByVal params As String, ByVal upl As String) As Double
+    Dim b As Double
+    b = ValveBaseMass(code, dn, pn)
+    If b <= 0 Then Exit Function
+    ValveMass = b + ValveKomplMass(dn, pn, params, upl)
+End Function
+
+Public Function BlindIntExists(ByVal dn As Double, ByVal pn As Double, ByVal execStr As String) As Boolean
+    Dim r As Long
+    UseBase "BLIND_INT"
+    For r = 1 To BRows()
+        If CStr(BVal(r, 1)) = "1" And CStr(BVal(r, 2)) = execStr And _
+           Abs(CDbl(BVal(r, 3)) - dn) < 0.001 And _
+           Abs(CDbl(BVal(r, 4)) - pn) < 0.001 Then
+            BlindIntExists = True
+            Exit Function
+        End If
+    Next r
+End Function
+
+Public Function BlindFlExists(ByVal dn As Double, ByVal pn As Double) As Boolean
+    Dim r As Long
+    UseBase "BLIND_FL"
+    For r = 1 To BRows()
+        If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+           Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+           CStr(BVal(r, 3)) = "1" Then
+            BlindFlExists = True
+            Exit Function
+        End If
+    Next r
+End Function
+
+Public Function FlangeExists(ByVal dn As Double, ByVal pn As Double, _
+                             ByVal typ As String, ByVal upl As String) As Boolean
+    Dim r As Long, u As String
+    u = IIf(Left$(upl, 1) = "E", "E", "B")
+    UseBase "FLANGE"
+    For r = 1 To BRows()
+        If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+           Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+           CStr(BVal(r, 3)) = typ And CStr(BVal(r, 4)) = u Then
+            FlangeExists = True
+            Exit Function
+        End If
+    Next r
+End Function
+
+' Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє РїРѕР·РёС†РёР№ РєРѕРјРїР»РµРєС‚Р°, РЅРµ РЅР°Р№РґРµРЅРЅС‹С… РІ Р±Р°Р·Р°С…. РџСѓСЃС‚Рѕ = РІСЃС‘ РЅР°Р№РґРµРЅРѕ.
+Public Function ValveKomplMissing(ByVal dn As Double, ByVal pn As Double, _
+                                  ByVal params As String, ByVal upl As String) As String
+    Dim p() As String, r As Long, res As String
+    Dim found As Boolean, nFl As Long, flUpl As String
+
+    If Len(Trim$(params)) = 0 Then Exit Function
+    p = Split(params, "|")
+    If UBound(p) < 17 Then Exit Function
+
+    If p(7) = "1" Then
+        found = False
+        UseBase "BLIND_INT"
+        For r = 1 To BRows()
+            If CStr(BVal(r, 1)) = "1" And CStr(BVal(r, 2)) = p(8) And _
+               Abs(CDbl(BVal(r, 3)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 4)) - pn) < 0.001 Then found = True: Exit For
+        Next r
+        If Not found Then res = res & "  - Р·Р°РіР»СѓС€РєР° РјРµР¶С„Р»Р°РЅС†РµРІР°СЏ С‚РёРї 1, " & p(8) & _
+                                  ", DN" & NumTxt(dn) & " PN" & NumTxt(pn) & vbCrLf
+    End If
+
+    If p(10) = "1" Then
+        found = False
+        UseBase "BLIND_FL"
+        For r = 1 To BRows()
+            If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+               CStr(BVal(r, 3)) = "1" Then found = True: Exit For
+        Next r
+        If Not found Then res = res & "  - Р·Р°РіР»СѓС€РєР° С„Р»Р°РЅС†РµРІР°СЏ Р СЏРґ 1, DN" & NumTxt(dn) & _
+                                  " PN" & NumTxt(pn) & vbCrLf
+    End If
+
+    If p(12) = "1" Then
+        nFl = IIf(p(10) = "1", 1, 2)
+        flUpl = IIf(Left$(upl, 1) = "E", "E", "B")
+        found = False
+        UseBase "FLANGE"
+        For r = 1 To BRows()
+            If Abs(CDbl(BVal(r, 1)) - dn) < 0.001 And _
+               Abs(CDbl(BVal(r, 2)) - pn) < 0.001 And _
+               CStr(BVal(r, 3)) = p(13) And _
+               CStr(BVal(r, 4)) = flUpl Then found = True: Exit For
+        Next r
+        If Not found Then res = res & "  - С„Р»Р°РЅРµС† С‚РёРї " & p(13) & ", СѓРїР». " & flUpl & _
+                                  ", DN" & NumTxt(dn) & " PN" & NumTxt(pn) & _
+                                  " (" & nFl & " С€С‚.)" & vbCrLf
+    End If
+
+    ValveKomplMissing = res
 End Function
 
 Public Sub ClearTechParams(ByVal r As Long)
 Dim nm As Variant, i As Long, ws As Worksheet
 Set ws = ShSv()
-nm = Array("Тип", "D", "S", "Угол", "D2", "S2", "DN", "PN", "ТипФ", "УплПов", "Ряд", _
-"Исполн", "ГрК", "Группа", "Сталь", "Сталь2", "ТипО", "Высота", _
-"КлючБазы", "КлючПозиции", "Площадь", "Объём", "Длина", "ПарамАрм", _
-"DNсорт", "ПорядокГруппы", "Статус", "Подк")
+nm = Array("РўРёРї", "D", "S", "РЈРіРѕР»", "D2", "S2", "DN", "PN", "РўРёРїР¤", "РЈРїР»РџРѕРІ", "Р СЏРґ", _
+"РСЃРїРѕР»РЅ", "Р“СЂРљ", "Р“СЂСѓРїРїР°", "РЎС‚Р°Р»СЊ", "РЎС‚Р°Р»СЊ2", "РўРёРїРћ", "Р’С‹СЃРѕС‚Р°", _
+"РљР»СЋС‡Р‘Р°Р·С‹", "РљР»СЋС‡РџРѕР·РёС†РёРё", "РџР»РѕС‰Р°РґСЊ", "РћР±СЉС‘Рј", "Р”Р»РёРЅР°", "РџР°СЂР°РјРђСЂРј", _
+"DNСЃРѕСЂС‚", "РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹", "РЎС‚Р°С‚СѓСЃ", "РџРѕРґРє")
 For i = 0 To UBound(nm)
 On Error Resume Next
 ws.Cells(r, col(CStr(nm(i)))).MergeArea.ClearContents
