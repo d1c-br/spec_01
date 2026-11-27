@@ -2,177 +2,211 @@ Option Explicit
 Private mTarget As Range, mLoading As Boolean
 
 Public Sub ShowFor(ByVal targetCell As Range)
-Dim ws As Worksheet, r As Long, params As String, p() As String
-On Error GoTo fail
-Set mTarget = targetCell
-Set ws = targetCell.Worksheet
-r = targetCell.row
-mLoading = True
-Me.Caption = TypeField("VALVE_M", 2)
-Me.cboKorp.Clear
-Me.cboKorp.AddItem "сталь 20"
-Me.cboKorp.AddItem "сталь 20Л"
-Me.cboKorp.AddItem "сталь 09Г2С"
-Me.cboKorp.AddItem "нерж. сталь"
-Me.cboKlim.Clear
-Me.cboKlim.AddItem "У1"
-Me.cboKlim.AddItem "УХЛ"
-Me.cboKL.Clear
-Dim klasses As Variant, i As Long
-klasses = Array("A", "AA", "B", "C", "CC", "D", "E", "EE", "F", "G")
-For i = 0 To UBound(klasses)
-Me.cboKL.AddItem CStr(klasses(i))
-Next i
-Me.cboJoin.Clear
-Me.cboJoin.AddItem "резьбовой"
-Me.cboJoin.AddItem "под приварку"
-Me.cboThreadDir.Clear
-Me.cboThreadDir.AddItem "внутренняя"
-Me.cboThreadDir.AddItem "наружная"
-FillList Me.cboDN, BaseValues("VALVE_M", 2, 0, Empty, 0, Empty)
-SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
-mLoading = False
-RefillPN
-SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
-params = CStr(ws.Cells(r, col("ПарамАрм")).Value)
-If Len(params) > 0 Then
-p = Split(params, "|")
-If UBound(p) >= 5 Then
-mLoading = True
-SelIf Me.cboKL, p(0)
-Me.txtTFrom.Value = p(1)
-Me.txtTTo.Value = p(2)
-SelIf Me.cboKorp, p(3)
-SelIf Me.cboKlim, p(4)
-Me.txtSred.Value = p(5)
-If UBound(p) >= 8 Then
-SelIf Me.cboJoin, p(6)
-Me.txtThread.Value = p(7)
-SelIf Me.cboThreadDir, p(8)
-Else
-If Me.cboJoin.ListCount > 0 Then Me.cboJoin.ListIndex = 0
-Me.txtThread.Value = ""
-If Me.cboThreadDir.ListCount > 0 Then Me.cboThreadDir.ListIndex = 0
-End If
-mLoading = False
-Else
-SetDefaults
-End If
-Else
-SetDefaults
-End If
-UpdateVisibility
-Me.show vbModal
-Exit Sub
+    Dim ws As Worksheet, r As Long, params As String, p() As String
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mLoading = True
+
+    Me.Caption = TypeField("VALVE_M", 2)
+
+    Me.cboKorp.Clear
+    Me.cboKorp.AddItem "сталь 20"
+    Me.cboKorp.AddItem "сталь 20Л"
+    Me.cboKorp.AddItem "сталь 09Г2С"
+    Me.cboKorp.AddItem "нерж. сталь"
+
+    Me.cboKlim.Clear
+    Me.cboKlim.AddItem "У1"
+    Me.cboKlim.AddItem "УХЛ"
+
+    Me.cboKL.Clear
+    Dim klasses As Variant, i As Long
+    klasses = Array("A", "AA", "B", "C", "CC", "D", "E", "EE", "F", "G")
+    For i = 0 To UBound(klasses)
+        Me.cboKL.AddItem CStr(klasses(i))
+    Next i
+
+    Me.cboJoin.Clear
+    Me.cboJoin.AddItem "резьбовой"
+    Me.cboJoin.AddItem "под приварку"
+
+    Me.cboThreadDir.Clear
+    Me.cboThreadDir.AddItem "внутренняя"
+    Me.cboThreadDir.AddItem "наружная"
+
+    FillList Me.cboDN, BaseValues("VALVE_M", 2, 0, Empty, 0, Empty)
+    SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
+    mLoading = False
+    RefillPN
+    SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
+
+    params = CStr(ws.Cells(r, col("ПарамАрм")).Value)
+    If Len(params) > 0 Then
+        p = Split(params, "|")
+        If UBound(p) >= 5 Then
+            mLoading = True
+            SelIf Me.cboKL, p(0)
+            Me.txtTFrom.Value = p(1)
+            Me.txtTTo.Value = p(2)
+            SelIf Me.cboKorp, p(3)
+            SelIf Me.cboKlim, p(4)
+            Me.txtSred.Value = p(5)
+            If UBound(p) >= 8 Then
+                SelIf Me.cboJoin, p(6)
+                Me.txtThread.Value = p(7)
+                SelIf Me.cboThreadDir, p(8)
+            Else
+                If Me.cboJoin.ListCount > 0 Then Me.cboJoin.ListIndex = 0
+                Me.txtThread.Value = ""
+                If Me.cboThreadDir.ListCount > 0 Then Me.cboThreadDir.ListIndex = 0
+            End If
+            mLoading = False
+        Else
+            SetDefaults
+        End If
+    Else
+        SetDefaults
+    End If
+
+    UpdateVisibility
+    modValveMass.MassInit Me, "VALVE_M", params
+    Me.show vbModal
+    Exit Sub
 fail:
-MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
 End Sub
 
 Private Sub SetDefaults()
-mLoading = True
-If Me.cboKL.ListCount > 0 Then Me.cboKL.ListIndex = 0
-If Me.cboKorp.ListCount > 0 Then Me.cboKorp.ListIndex = 0
-If Me.cboKlim.ListCount > 0 Then Me.cboKlim.ListIndex = 0
-If Me.cboJoin.ListCount > 0 Then Me.cboJoin.ListIndex = 0
-If Me.cboThreadDir.ListCount > 0 Then Me.cboThreadDir.ListIndex = 0
-Me.txtTFrom.Value = ""
-Me.txtTTo.Value = ""
-Me.txtSred.Value = ""
-Me.txtThread.Value = ""
-mLoading = False
+    mLoading = True
+    If Me.cboKL.ListCount > 0 Then Me.cboKL.ListIndex = 0
+    If Me.cboKorp.ListCount > 0 Then Me.cboKorp.ListIndex = 0
+    If Me.cboKlim.ListCount > 0 Then Me.cboKlim.ListIndex = 0
+    If Me.cboJoin.ListCount > 0 Then Me.cboJoin.ListIndex = 0
+    If Me.cboThreadDir.ListCount > 0 Then Me.cboThreadDir.ListIndex = 0
+    Me.txtTFrom.Value = ""
+    Me.txtTTo.Value = ""
+    Me.txtSred.Value = ""
+    Me.txtThread.Value = ""
+    mLoading = False
 End Sub
 
 Private Sub UpdateVisibility()
-Dim j As String
-j = ""
-If Me.cboJoin.ListIndex >= 0 Then j = Me.cboJoin.Value
-If j = "резьбовой" Then
-Me.txtThread.Enabled = True
-Me.cboThreadDir.Enabled = True
-Else
-Me.txtThread.Enabled = False
-Me.cboThreadDir.Enabled = False
-End If
+    Dim j As String
+    j = ""
+    If Me.cboJoin.ListIndex >= 0 Then j = Me.cboJoin.Value
+    If j = "резьбовой" Then
+        Me.txtThread.Enabled = True
+        Me.cboThreadDir.Enabled = True
+    Else
+        Me.txtThread.Enabled = False
+        Me.cboThreadDir.Enabled = False
+    End If
 End Sub
 
 Private Function NumTxt0(ByVal v As Variant) As String
-If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
 End Function
 
 Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
-Dim i As Long
-If Len(v) = 0 Then cbo.ListIndex = -1: Exit Sub
-For i = 0 To cbo.ListCount - 1
-If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
-Next i
-cbo.ListIndex = -1
+    Dim i As Long
+    If Len(v) = 0 Then cbo.ListIndex = -1: Exit Sub
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
 End Sub
 
 Private Sub RefillPN()
-Dim cur As String
-cur = Me.cboPN.Value
-mLoading = True
-If Me.cboDN.ListIndex >= 0 Then
-FillList Me.cboPN, BaseValues("VALVE_M", 3, 2, CDbl(Me.cboDN.Value), 0, Empty)
-Else
-Me.cboPN.Clear
-End If
-SelIf Me.cboPN, cur
-mLoading = False
+    Dim cur As String
+    cur = Me.cboPN.Value
+    mLoading = True
+    If Me.cboDN.ListIndex >= 0 Then
+        FillList Me.cboPN, BaseValues("VALVE_M", 3, 2, CDbl(Me.cboDN.Value), 0, Empty)
+    Else
+        Me.cboPN.Clear
+    End If
+    SelIf Me.cboPN, cur
+    mLoading = False
 End Sub
 
 Private Sub cboDN_Change()
-If Not mLoading Then RefillPN
+    If Not mLoading Then
+        RefillPN
+        modValveMass.MassSizeChanged Me, "VALVE_M"
+    End If
+End Sub
+
+Private Sub cboPN_Change()
+    If Not mLoading Then modValveMass.MassSizeChanged Me, "VALVE_M"
 End Sub
 
 Private Sub cboJoin_Change()
-If Not mLoading Then UpdateVisibility
+    If Not mLoading Then UpdateVisibility
 End Sub
 
 Private Function BuildParams() As String
-Dim s As String
-s = IIf(Me.cboKL.ListIndex >= 0, Me.cboKL.Value, "A") & "|"
-s = s & Me.txtTFrom.Value & "|" & Me.txtTTo.Value & "|"
-s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "сталь 20") & "|"
-s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "У1") & "|"
-s = s & Me.txtSred.Value & "|"
-s = s & IIf(Me.cboJoin.ListIndex >= 0, Me.cboJoin.Value, "резьбовой") & "|"
-s = s & Me.txtThread.Value & "|"
-s = s & IIf(Me.cboThreadDir.ListIndex >= 0, Me.cboThreadDir.Value, "внутренняя")
-BuildParams = s
+    Dim s As String
+    s = IIf(Me.cboKL.ListIndex >= 0, Me.cboKL.Value, "A") & "|"
+    s = s & Me.txtTFrom.Value & "|" & Me.txtTTo.Value & "|"
+    s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "сталь 20") & "|"
+    s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "У1") & "|"
+    s = s & Me.txtSred.Value & "|"
+    s = s & IIf(Me.cboJoin.ListIndex >= 0, Me.cboJoin.Value, "резьбовой") & "|"
+    s = s & Me.txtThread.Value & "|"
+    s = s & IIf(Me.cboThreadDir.ListIndex >= 0, Me.cboThreadDir.Value, "внутренняя")
+    BuildParams = s
 End Function
 
+' ==================== МАССА ====================
+Private Sub btnMassCat_Click()
+    modValveMass.MassReset Me, "VALVE_M"
+End Sub
+
+Private Sub txtBaseMass_Change()
+    modValveMass.MassRefresh Me, "VALVE_M"
+End Sub
+
+' ==================== КНОПКИ ====================
 Private Sub btnOK_Click()
-If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Then
-MsgBox "Выберите DN и PN.", vbExclamation
-Exit Sub
-End If
-If Me.cboKL.ListIndex < 0 Then
-MsgBox "Выберите класс герметичности.", vbExclamation
-Exit Sub
-End If
-If Len(Trim$(Me.txtTTo.Value)) = 0 Then
-MsgBox "Укажите температуру «до».", vbExclamation
-Exit Sub
-End If
-If Me.cboKorp.ListIndex < 0 Or Me.cboKlim.ListIndex < 0 Then
-MsgBox "Заполните корпус и климат.", vbExclamation
-Exit Sub
-End If
-If Me.cboJoin.ListIndex >= 0 Then
-If Me.cboJoin.Value = "резьбовой" And Len(Trim$(Me.txtThread.Value)) = 0 Then
-MsgBox "Укажите резьбу (например М20х1,5).", vbExclamation
-Exit Sub
-End If
-End If
-WriteValveM mTarget, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
-Me.cboKL.Value, Me.txtTFrom.Value, Me.txtTTo.Value, _
-Me.cboKorp.Value, Me.cboKlim.Value, Me.txtSred.Value, BuildParams()
-Unload Me
+    Dim mv As Variant
+
+    If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Then
+        MsgBox "Выберите DN и PN.", vbExclamation
+        Exit Sub
+    End If
+    If Me.cboKL.ListIndex < 0 Then
+        MsgBox "Выберите класс герметичности.", vbExclamation
+        Exit Sub
+    End If
+    If Len(Trim$(Me.txtTTo.Value)) = 0 Then
+        MsgBox "Укажите температуру «до».", vbExclamation
+        Exit Sub
+    End If
+    If Me.cboKorp.ListIndex < 0 Or Me.cboKlim.ListIndex < 0 Then
+        MsgBox "Заполните корпус и климат.", vbExclamation
+        Exit Sub
+    End If
+    If Me.cboJoin.ListIndex >= 0 Then
+        If Me.cboJoin.Value = "резьбовой" And Len(Trim$(Me.txtThread.Value)) = 0 Then
+            MsgBox "Укажите резьбу (например М20х1,5).", vbExclamation
+            Exit Sub
+        End If
+    End If
+
+    mv = modValveMass.MassAsk(Me, "VALVE_M")
+    If IsNull(mv) Then Exit Sub
+
+    WriteValveM mTarget, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
+                Me.cboKL.Value, Me.txtTFrom.Value, Me.txtTTo.Value, _
+                Me.cboKorp.Value, Me.cboKlim.Value, Me.txtSred.Value, _
+                BuildParams(), mv
+    Unload Me
 End Sub
 
 Private Sub btnCancel_Click()
-Unload Me
+    Unload Me
 End Sub
 
 Private Sub UserForm_Click()
