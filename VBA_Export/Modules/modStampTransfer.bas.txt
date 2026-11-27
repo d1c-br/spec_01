@@ -1,12 +1,11 @@
-Attribute VB_Name = "modStampTransfer"
 Option Explicit
 
-Private Const FORM_SHEET As String = "Штамп спецификации"
+Private Const FORM_SHEET As String = "РЁС‚Р°РјРї СЃРїРµС†РёС„РёРєР°С†РёРё"
 Private Const STAMP_RANGE As String = "G27:X40"
 
-' Переносит ТОЛЬКО значения ячеек.
-' Форматирование, объединения, высоты строк — не трогаются вообще.
-Public Sub ПеренестиШтамп(ByVal wsDst As Worksheet)
+' РџРµСЂРµРЅРѕСЃРёС‚ РўРћР›Р¬РљРћ Р·РЅР°С‡РµРЅРёСЏ СЏС‡РµРµРє.
+' Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ, РѕР±СЉРµРґРёРЅРµРЅРёСЏ, РІС‹СЃРѕС‚С‹ СЃС‚СЂРѕРє вЂ” РЅРµ С‚СЂРѕРіР°СЋС‚СЃСЏ РІРѕРѕР±С‰Рµ.
+Public Sub РџРµСЂРµРЅРµСЃС‚РёРЁС‚Р°РјРї(ByVal wsDst As Worksheet)
     Dim wsForm As Worksheet
     Dim c As Range, maF As Range, maT As Range, tc As Range
     Dim seen As Object
@@ -16,8 +15,8 @@ Public Sub ПеренестиШтамп(ByVal wsDst As Worksheet)
 
     If wsDst Is Nothing Then Exit Sub
             If wsDst.Cells(27, 7).MergeArea.Address <> "$G$27:$I$40" Then
-        MsgBox "Лист '" & wsDst.Name & "' не является первым листом спецификации " & _
-               "(нет объединения G27:I40). Перенос штампа отменён.", vbExclamation
+        MsgBox "Р›РёСЃС‚ '" & wsDst.Name & "' РЅРµ СЏРІР»СЏРµС‚СЃСЏ РїРµСЂРІС‹Рј Р»РёСЃС‚РѕРј СЃРїРµС†РёС„РёРєР°С†РёРё " & _
+               "(РЅРµС‚ РѕР±СЉРµРґРёРЅРµРЅРёСЏ G27:I40). РџРµСЂРµРЅРѕСЃ С€С‚Р°РјРїР° РѕС‚РјРµРЅС‘РЅ.", vbExclamation
         Exit Sub
     End If
 
@@ -25,7 +24,7 @@ Public Sub ПеренестиШтамп(ByVal wsDst As Worksheet)
     Set wsForm = ThisWorkbook.Worksheets(FORM_SHEET)
     On Error GoTo 0
     If wsForm Is Nothing Then
-        MsgBox "Лист '" & FORM_SHEET & "' не найден — штамп не перенесён.", vbExclamation
+        MsgBox "Р›РёСЃС‚ '" & FORM_SHEET & "' РЅРµ РЅР°Р№РґРµРЅ вЂ” С€С‚Р°РјРї РЅРµ РїРµСЂРµРЅРµСЃС‘РЅ.", vbExclamation
         Exit Sub
     End If
 
@@ -54,14 +53,14 @@ Public Sub ПеренестиШтамп(ByVal wsDst As Worksheet)
 
     msg = ""
     If Len(sSkip) > 0 Then
-        msg = msg & "Пропущено (на шаблоне это часть объединения):" & vbCrLf & sSkip & vbCrLf
+        msg = msg & "РџСЂРѕРїСѓС‰РµРЅРѕ (РЅР° С€Р°Р±Р»РѕРЅРµ СЌС‚Рѕ С‡Р°СЃС‚СЊ РѕР±СЉРµРґРёРЅРµРЅРёСЏ):" & vbCrLf & sSkip & vbCrLf
     End If
     If Len(sDiff) > 0 Then
-        msg = msg & "Геометрия формы и шаблона различается:" & vbCrLf & sDiff & vbCrLf
+        msg = msg & "Р“РµРѕРјРµС‚СЂРёСЏ С„РѕСЂРјС‹ Рё С€Р°Р±Р»РѕРЅР° СЂР°Р·Р»РёС‡Р°РµС‚СЃСЏ:" & vbCrLf & sDiff & vbCrLf
     End If
     If Len(msg) > 0 Then
-        MsgBox "Штамп перенесён (значений: " & nCells & ")." & vbCrLf & vbCrLf & msg & _
-               "Приведите объединения формы в соответствие с «л01.С».", vbExclamation
+        MsgBox "РЁС‚Р°РјРї РїРµСЂРµРЅРµСЃС‘РЅ (Р·РЅР°С‡РµРЅРёР№: " & nCells & ")." & vbCrLf & vbCrLf & msg & _
+               "РџСЂРёРІРµРґРёС‚Рµ РѕР±СЉРµРґРёРЅРµРЅРёСЏ С„РѕСЂРјС‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЃ В«Р»01.РЎВ».", vbExclamation
     End If
 End Sub
 
