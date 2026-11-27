@@ -1,104 +1,168 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "����1"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
 Option Explicit
+
 Private mChanging As Boolean
 
+' ==================== ПОМОЩНИКИ ====================
+Private Function ColNoSafe(ByVal nm As String) As Long
+    On Error Resume Next
+    ColNoSafe = col(nm)
+    If Err.Number <> 0 Then
+        Err.Clear
+        ColNoSafe = 0
+    End If
+    On Error GoTo 0
+End Function
+
+' Поиск заголовка по массиву маркеров — в памяти, без обращений к листу
+Private Function HdrFast(ByRef aMark As Variant, ByVal r As Long) As Long
+    Dim i As Long, m As String
+    If r < 1 Then Exit Function
+    For i = r To 1 Step -1
+        m = UCase$(Trim$(CStr(aMark(i, 1))))
+        If m = "HDR" Then
+            If r > i Then HdrFast = i
+            Exit Function
+        ElseIf m = "SEC" Then
+            Exit Function
+        End If
+    Next i
+End Function
+
+' ==================== ДВОЙНОЙ КЛИК ====================
 Private Sub Worksheet_BeforeDoubleClick(ByVal target As Range, Cancel As Boolean)
     Dim h As Long, k As String, s As Long
     On Error GoTo fin
     If FirstHdr() = 0 Then Exit Sub
     If CStr(Cells(target.row, MARKCOL).Value) = "GAP" Then Exit Sub
+
     s = SecOfRow(target.row)
     If s > 0 And target.Column <= 8 Then
         Cancel = True
         frmSection.ShowFor target.Cells(1, 1)
         Exit Sub
     End If
-    If target.Column <> col("������������") Then Exit Sub
+
+    If target.Column <> col("Наименование") Then Exit Sub
     h = HdrOf(target.row)
     If h = 0 Then Exit Sub
     Cancel = True
-    k = CStr(Cells(target.row, col("���")).Value)
+    k = CStr(Cells(target.row, col("Тип")).Value)
     If Len(k) = 0 Then
         PickAndOpen target.Cells(1, 1)
     Else
         OpenByType k, target.Cells(1, 1)
     End If
 fin:
-    If Err.Number <> 0 Then MsgBox "������: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
 End Sub
 
+' ==================== ИЗМЕНЕНИЕ ЯЧЕЕК ====================
 Private Sub Worksheet_Change(ByVal target As Range)
-Dim cell As Range, r As Long, h As Long, cB As Long, s As Long
-Dim blk As Object, k As Variant
-If mChanging Then Exit Sub
-If FirstHdr() = 0 Then Exit Sub
-On Error GoTo fin
-cB = col("������������")
-Set blk = CreateObject("Scripting.Dictionary")
-mChanging = True
-For Each cell In target.Cells
-If cell.Column = 7 Then
-s = SecOfRow(cell.row)
-If s > 0 And cell.row = s + 2 Then
-If Trim$(CStr(cell.Value)) = "(�� ���������)" Then cell.MergeArea.ClearContents
-End If
-End If
-If cell.Column = cB Then
-r = cell.row
-h = HdrOf(r)
-If h > 0 Then
-If Len(Trim$(CStr(cell.Value))) = 0 Then
-ClearPosRow r
-Else
-Cells(r, col("������")).ClearContents
-If Not RecognizeAndWrite(Cells(r, cB), CStr(cell.Value)) Then
-ClearTechParams r
-End If
-End If
-If Not blk.exists(CStr(h)) Then blk.Add CStr(h), h
-End If
-End If
-Next cell
-For Each k In blk.keys
-������������������ CLng(blk(k))
-Next k
+    Dim cell As Range, r As Long, h As Long, s As Long
+    Dim cB As Long, cQ As Long, cU As Long, cM As Long, cN As Long
+    Dim blk As Object, dupBlk As Object, k As Variant
+    Dim rng As Range, aMark As Variant, lastR As Long
+
+    If mChanging Then Exit Sub
+    If FirstHdr() = 0 Then Exit Sub
+    On Error GoTo fin
+
+    lastR = LastUsedRow()
+    If lastR < 1 Then Exit Sub
+
+    ' ограничиваем target реальными данными (защита от очистки целого столбца)
+    Set rng = Intersect(target, Me.Range(Me.Rows(1), Me.Rows(lastR + 1)))
+    If rng Is Nothing Then Exit Sub
+
+    ' маркеры читаем ОДИН раз массивом
+    aMark = Me.Range(Me.Cells(1, MARKCOL), Me.Cells(lastR + 1, MARKCOL)).Value
+
+    cB = col("Наименование")
+    cQ = ColNoSafe("Опросной лист")
+    If cQ = 0 Then cQ = ColNoSafe("Опросный лист")
+    cU = ColNoSafe("Ед.изм.")
+    cM = ColNoSafe("Масса 1 ед")
+    cN = ColNoSafe("Примечание")
+
+    Set blk = CreateObject("Scripting.Dictionary")
+    Set dupBlk = CreateObject("Scripting.Dictionary")
+    mChanging = True
+
+    For Each cell In rng.Cells
+        If cell.Column = 7 Then
+            s = SecOfRow(cell.row)
+            If s > 0 And cell.row = s + 2 Then
+                If Trim$(CStr(cell.Value)) = "(не проводить)" Then cell.MergeArea.ClearContents
+            End If
+        End If
+
+        If cell.Column = cB Then
+            r = cell.row
+            h = HdrFast(aMark, r)
+            If h > 0 Then
+                If Len(Trim$(CStr(cell.Value))) = 0 Then
+                    ClearPosRow r
+                Else
+                    Cells(r, col("№ввода")).ClearContents
+                    If Not RecognizeAndWrite(Cells(r, cB), CStr(cell.Value)) Then
+                        ClearTechParams r
+                    End If
+                End If
+                If Not blk.exists(CStr(h)) Then blk.Add CStr(h), h
+            End If
+
+        ElseIf cell.Column = cQ Or cell.Column = cU Or _
+               cell.Column = cM Or cell.Column = cN Then
+            h = HdrFast(aMark, cell.row)
+            If h > 0 Then
+                If Not dupBlk.exists(CStr(h)) Then dupBlk.Add CStr(h), h
+            End If
+        End If
+    Next cell
+
+    ' наименование: перенумерация (внутри уже есть подсветка)
+    For Each k In blk.keys
+        ПеренумероватьБлок CLng(blk(k))
+    Next k
+
+    ' остальные поля ключа: только подсветка, номера не трогаем
+    For Each k In dupBlk.keys
+        If Not blk.exists(k) Then ПодсветитьДублиУчастка CLng(dupBlk(k)), True
+    Next k
+
 fin:
-mChanging = False
-If Err.Number <> 0 Then
-If Err.Number <> vbObjectError + 20 And Err.Number <> vbObjectError + 21 Then
-MsgBox "������ ��������� ���������: " & Err.Description, vbExclamation
-End If
-End If
+    mChanging = False
+    If Err.Number <> 0 Then
+        If Err.Number <> vbObjectError + 20 And Err.Number <> vbObjectError + 21 Then
+            MsgBox "Ошибка обработки изменения: " & Err.Description, vbExclamation
+        End If
+    End If
 End Sub
 
+' ==================== ПРАВАЯ КНОПКА ====================
 Private Sub Worksheet_BeforeRightClick(ByVal target As Range, Cancel As Boolean)
-Dim z As String, r As Long, m As String, s As Long, h As Long, ts As String
-On Error GoTo fin
-r = target.row
-m = CStr(Cells(r, MARKCOL).Value)
-s = SecOfRow(r)
-h = HdrOf(r)
-If m = "GAP" Then
-z = "GAP"
-ElseIf s > 0 And h = 0 Then
-z = "SEC"
-ElseIf h > 0 And r = h Then
-z = "HDR"
-ElseIf h > 0 Then
-z = "POS"
-Else
-z = "FREE"
-End If
-If z = "POS" Then ts = modLayout.����������������(r)
-modMenu.����������������� z, ts
+    Dim z As String, r As Long, m As String, s As Long, h As Long, ts As String
+    On Error GoTo fin
+    r = target.row
+    m = CStr(Cells(r, MARKCOL).Value)
+    s = SecOfRow(r)
+    h = HdrOf(r)
+
+    If m = "GAP" Then
+        z = "GAP"
+    ElseIf s > 0 And h = 0 Then
+        z = "SEC"
+    ElseIf h > 0 And r = h Then
+        z = "HDR"
+    ElseIf h > 0 Then
+        z = "POS"
+    Else
+        z = "FREE"
+    End If
+
+    If z = "POS" Then ts = modLayout.СостояниеВнеБазы(r)
+    modMenu.МенюПрименитьЗону z, ts
 fin:
-' Cancel ��������� �� ������: ����������� ���� Excel �������
+    ' Cancel намеренно НЕ ставим: стандартное меню Excel остаётся
 End Sub
+
