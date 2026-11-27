@@ -1,95 +1,94 @@
-Attribute VB_Name = "modMenu"
 Option Explicit
 
 Private Const MENU_TAG As String = "SvodMenu"
 Private Const CB_POPUP As Long = 10    ' msoControlPopup
 Private Const CB_BUTTON As Long = 1    ' msoControlButton
 
-' ---------- доступ к нашему подменю ----------
-Public Function МенюПопап() As Object
-    Dim bar As CommandBar, ctl As Object
+' ---------- РґРѕСЃС‚СѓРї Рє РЅР°С€РµРјСѓ РїРѕРґРјРµРЅСЋ ----------
+Public Function РњРµРЅСЋРџРѕРїР°Рї() As Object
+    Dim bar As CommandBar, Ctl As Object
     On Error Resume Next
     Set bar = Application.CommandBars("Cell")
     On Error GoTo 0
     If bar Is Nothing Then Exit Function
-    For Each ctl In bar.Controls
-        If CStr(ctl.Tag) = MENU_TAG Then
-            Set МенюПопап = ctl
+    For Each Ctl In bar.Controls
+        If CStr(Ctl.tag) = MENU_TAG Then
+            Set РњРµРЅСЋРџРѕРїР°Рї = Ctl
             Exit Function
         End If
-    Next ctl
+    Next Ctl
 End Function
 
-Public Sub УдалитьКонтекстноеМеню()
+Public Sub РЈРґР°Р»РёС‚СЊРљРѕРЅС‚РµРєСЃС‚РЅРѕРµРњРµРЅСЋ()
     Dim bar As CommandBar, i As Long
     On Error Resume Next
     Set bar = Application.CommandBars("Cell")
     If bar Is Nothing Then Exit Sub
-    For i = bar.Controls.Count To 1 Step -1   ' обратный цикл: удаление во время перебора
-        If CStr(bar.Controls(i).Tag) = MENU_TAG Then bar.Controls(i).Delete
+    For i = bar.Controls.Count To 1 Step -1   ' РѕР±СЂР°С‚РЅС‹Р№ С†РёРєР»: СѓРґР°Р»РµРЅРёРµ РІРѕ РІСЂРµРјСЏ РїРµСЂРµР±РѕСЂР°
+        If CStr(bar.Controls(i).tag) = MENU_TAG Then bar.Controls(i).Delete
     Next i
     On Error GoTo 0
 End Sub
 
-Public Sub СоздатьКонтекстноеМеню()
+Public Sub РЎРѕР·РґР°С‚СЊРљРѕРЅС‚РµРєСЃС‚РЅРѕРµРњРµРЅСЋ()
 Dim bar As CommandBar, pop As Object, c As Object
-УдалитьКонтекстноеМеню
+РЈРґР°Р»РёС‚СЊРљРѕРЅС‚РµРєСЃС‚РЅРѕРµРњРµРЅСЋ
 Set bar = Application.CommandBars("Cell")
 Set pop = bar.Controls.Add(Type:=CB_POPUP, before:=1)
-pop.Caption = "Сводная спецификация"
-pop.Tag = MENU_TAG
+pop.Caption = "РЎРІРѕРґРЅР°СЏ СЃРїРµС†РёС„РёРєР°С†РёСЏ"
+pop.tag = MENU_TAG
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Редактировать участок…": c.OnAction = "modMenu.MenuSecEdit": c.Tag = "tSecEdit"
+c.Caption = "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СѓС‡Р°СЃС‚РѕРєвЂ¦": c.OnAction = "modMenu.MenuSecEdit": c.tag = "tSecEdit"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить участок выше": c.OnAction = "modMenu.MenuSecAbove": c.Tag = "tSecAbove"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РѕРє РІС‹С€Рµ": c.OnAction = "modMenu.MenuSecAbove": c.tag = "tSecAbove"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить участок ниже": c.OnAction = "modMenu.MenuSecBelow": c.Tag = "tSecBelow"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РѕРє РЅРёР¶Рµ": c.OnAction = "modMenu.MenuSecBelow": c.tag = "tSecBelow"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Удалить участок…": c.OnAction = "modMenu.MenuSecDel": c.Tag = "tSecDel"
+c.Caption = "РЈРґР°Р»РёС‚СЊ СѓС‡Р°СЃС‚РѕРєвЂ¦": c.OnAction = "modMenu.MenuSecDel": c.tag = "tSecDel"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Редактировать / выбрать позицию…": c.OnAction = "modMenu.MenuPosEdit": c.Tag = "tPosEdit"
+c.Caption = "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ / РІС‹Р±СЂР°С‚СЊ РїРѕР·РёС†РёСЋвЂ¦": c.OnAction = "modMenu.MenuPosEdit": c.tag = "tPosEdit"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить позицию выше": c.OnAction = "modMenu.MenuPosAddAbove": c.Tag = "tPosAddAbove"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ РїРѕР·РёС†РёСЋ РІС‹С€Рµ": c.OnAction = "modMenu.MenuPosAddAbove": c.tag = "tPosAddAbove"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить позицию ниже": c.OnAction = "modMenu.MenuPosAdd": c.Tag = "tPosAdd"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ РїРѕР·РёС†РёСЋ РЅРёР¶Рµ": c.OnAction = "modMenu.MenuPosAdd": c.tag = "tPosAdd"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Вставить пустую строку выше": c.OnAction = "modMenu.MenuRowInsertAbove": c.Tag = "tRowInsAbove"
+c.Caption = "Р’СЃС‚Р°РІРёС‚СЊ РїСѓСЃС‚СѓСЋ СЃС‚СЂРѕРєСѓ РІС‹С€Рµ": c.OnAction = "modMenu.MenuRowInsertAbove": c.tag = "tRowInsAbove"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Вставить пустую строку ниже": c.OnAction = "modMenu.MenuRowInsert": c.Tag = "tRowIns"
+c.Caption = "Р’СЃС‚Р°РІРёС‚СЊ РїСѓСЃС‚СѓСЋ СЃС‚СЂРѕРєСѓ РЅРёР¶Рµ": c.OnAction = "modMenu.MenuRowInsert": c.tag = "tRowIns"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Очистить позицию": c.OnAction = "modMenu.MenuPosClear": c.Tag = "tPosClear"
+c.Caption = "РћС‡РёСЃС‚РёС‚СЊ РїРѕР·РёС†РёСЋ": c.OnAction = "modMenu.MenuPosClear": c.tag = "tPosClear"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Удалить строку позиции": c.OnAction = "modMenu.MenuRowDel": c.Tag = "tRowDel"
+c.Caption = "РЈРґР°Р»РёС‚СЊ СЃС‚СЂРѕРєСѓ РїРѕР·РёС†РёРё": c.OnAction = "modMenu.MenuRowDel": c.tag = "tRowDel"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить во временную базу…": c.OnAction = "modMenu.MenuTempAdd": c.Tag = "tTemp": c.BeginGroup = True
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ РІРѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·СѓвЂ¦": c.OnAction = "modMenu.MenuTempAdd": c.tag = "tTemp": c.BeginGroup = True
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Сортировать участок": c.OnAction = "modMenu.MenuSort": c.Tag = "tSort": c.BeginGroup = True
+c.Caption = "РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ СѓС‡Р°СЃС‚РѕРє": c.OnAction = "modMenu.MenuSort": c.tag = "tSort": c.BeginGroup = True
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Сортировать ВСЕ участки…": c.OnAction = "modMenu.MenuSortAll": c.Tag = "tSortAll"
+c.Caption = "РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ Р’РЎР• СѓС‡Р°СЃС‚РєРёвЂ¦": c.OnAction = "modMenu.MenuSortAll": c.tag = "tSortAll"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить участок здесь (в разделитель)": c.OnAction = "modMenu.MenuGapAdd": c.Tag = "tGapAdd"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РѕРє Р·РґРµСЃСЊ (РІ СЂР°Р·РґРµР»РёС‚РµР»СЊ)": c.OnAction = "modMenu.MenuGapAdd": c.tag = "tGapAdd"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Добавить участок": c.OnAction = "modMenu.MenuFreeAdd": c.Tag = "tFreeAdd"
+c.Caption = "Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РѕРє": c.OnAction = "modMenu.MenuFreeAdd": c.tag = "tFreeAdd"
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Пересчитать испытания": c.OnAction = "modLayout.ПересчитатьИспытания": c.Tag = "tCalc": c.BeginGroup = True
+c.Caption = "РџРµСЂРµСЃС‡РёС‚Р°С‚СЊ РёСЃРїС‹С‚Р°РЅРёСЏ": c.OnAction = "modLayout.РџРµСЂРµСЃС‡РёС‚Р°С‚СЊРСЃРїС‹С‚Р°РЅРёСЏ": c.tag = "tCalc": c.BeginGroup = True
 Set c = pop.Controls.Add(Type:=CB_BUTTON)
-c.Caption = "Перерисовать границы": c.OnAction = "modLayout.ДобавитьРазделители": c.Tag = "tBorders"
+c.Caption = "РџРµСЂРµСЂРёСЃРѕРІР°С‚СЊ РіСЂР°РЅРёС†С‹": c.OnAction = "modLayout.Р”РѕР±Р°РІРёС‚СЊР Р°Р·РґРµР»РёС‚РµР»Рё": c.tag = "tBorders"
 End Sub
 
-Public Sub МенюВидимость(ByVal show As Boolean)
+Public Sub РњРµРЅСЋР’РёРґРёРјРѕСЃС‚СЊ(ByVal show As Boolean)
     Dim pop As Object
-    Set pop = МенюПопап()
+    Set pop = РњРµРЅСЋРџРѕРїР°Рї()
     If Not pop Is Nothing Then pop.Visible = show
 End Sub
 
-Public Sub МенюПрименитьЗону(ByVal z As String, Optional ByVal tempState As String = "")
-Dim pop As Object, ctl As Object, tags As String, cTemp As Object
+Public Sub РњРµРЅСЋРџСЂРёРјРµРЅРёС‚СЊР—РѕРЅСѓ(ByVal z As String, Optional ByVal tempState As String = "")
+Dim pop As Object, Ctl As Object, tags As String, cTemp As Object
 Dim arr As Variant, i As Long
-Set pop = МенюПопап()
+Set pop = РњРµРЅСЋРџРѕРїР°Рї()
 If pop Is Nothing Then Exit Sub
-For Each ctl In pop.Controls
-ctl.Visible = False
-Next ctl
+For Each Ctl In pop.Controls
+Ctl.Visible = False
+Next Ctl
 Select Case z
 Case "SEC": tags = "tSecEdit,tSecAbove,tSecBelow,tSecDel,tSort,tSortAll,tCalc,tBorders"
 Case "HDR": tags = "tSecEdit,tPosEdit,tPosAddAbove,tPosAdd,tRowInsAbove,tRowIns,tPosClear,tRowDel,tSort,tSortAll,tCalc,tBorders"
@@ -98,25 +97,25 @@ Case "GAP": tags = "tGapAdd,tSortAll,tCalc,tBorders"
 Case Else:  tags = "tFreeAdd,tSortAll,tCalc,tBorders"
 End Select
 arr = Split(tags, ",")
-For Each ctl In pop.Controls
+For Each Ctl In pop.Controls
 For i = 0 To UBound(arr)
-If CStr(ctl.Tag) = arr(i) Then
-ctl.Visible = True
+If CStr(Ctl.tag) = arr(i) Then
+Ctl.Visible = True
 Exit For
 End If
 Next i
-Next ctl
-For Each ctl In pop.Controls
-If CStr(ctl.Tag) = "tTemp" Then Set cTemp = ctl: Exit For
-Next ctl
+Next Ctl
+For Each Ctl In pop.Controls
+If CStr(Ctl.tag) = "tTemp" Then Set cTemp = Ctl: Exit For
+Next Ctl
 If Not cTemp Is Nothing Then
 If z = "POS" And Len(tempState) > 0 Then
 cTemp.Visible = True
 If tempState = "SENT" Then
-cTemp.Caption = "Уже есть во временной базе"
+cTemp.Caption = "РЈР¶Рµ РµСЃС‚СЊ РІРѕ РІСЂРµРјРµРЅРЅРѕР№ Р±Р°Р·Рµ"
 cTemp.Enabled = False
 Else
-cTemp.Caption = "Добавить во временную базу…"
+cTemp.Caption = "Р”РѕР±Р°РІРёС‚СЊ РІРѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·СѓвЂ¦"
 cTemp.Enabled = True
 End If
 Else
@@ -125,98 +124,98 @@ End If
 End If
 End Sub
 
-' ---------- обработчики пунктов ----------
+' ---------- РѕР±СЂР°Р±РѕС‚С‡РёРєРё РїСѓРЅРєС‚РѕРІ ----------
 Public Sub MenuSecEdit()
     Dim s As Long
     s = modLayout.SecOfRow(ActiveCell.row)
-    If s = 0 Then MsgBox "Курсор не на описании участка.", vbExclamation: Exit Sub
+    If s = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° РѕРїРёСЃР°РЅРёРё СѓС‡Р°СЃС‚РєР°.", vbExclamation: Exit Sub
     frmSection.ShowFor ActiveCell
 End Sub
 
 Public Sub MenuSecAbove()
     Dim s As Long
     s = modLayout.SecOfRow(ActiveCell.row)
-    If s = 0 Then MsgBox "Курсор не на описании участка.", vbExclamation: Exit Sub
-    modLayout.ВставитьБлок s - 1
+    If s = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° РѕРїРёСЃР°РЅРёРё СѓС‡Р°СЃС‚РєР°.", vbExclamation: Exit Sub
+    modLayout.Р’СЃС‚Р°РІРёС‚СЊР‘Р»РѕРє s - 1
 End Sub
 
 Public Sub MenuSecBelow()
     Dim s As Long, e As Long
     s = modLayout.SecOfRow(ActiveCell.row)
-    If s = 0 Then MsgBox "Курсор не на описании участка.", vbExclamation: Exit Sub
+    If s = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° РѕРїРёСЃР°РЅРёРё СѓС‡Р°СЃС‚РєР°.", vbExclamation: Exit Sub
     e = modLayout.BlockEnd(s + 4)
-    modLayout.ВставитьБлок e + 1
+    modLayout.Р’СЃС‚Р°РІРёС‚СЊР‘Р»РѕРє e + 1
 End Sub
 
 Public Sub MenuSecDel()
     Dim s As Long
     s = modLayout.SecOfRow(ActiveCell.row)
-    If s = 0 Then MsgBox "Курсор не на описании участка.", vbExclamation: Exit Sub
-    modLayout.УдалитьУчасток s
+    If s = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° РѕРїРёСЃР°РЅРёРё СѓС‡Р°СЃС‚РєР°.", vbExclamation: Exit Sub
+    modLayout.РЈРґР°Р»РёС‚СЊРЈС‡Р°СЃС‚РѕРє s
 End Sub
 
 Public Sub MenuPosEdit()
     Dim h As Long, k As String
     h = modLayout.HdrOf(ActiveCell.row)
-    If h = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-    k = CStr(ActiveCell.Worksheet.Cells(ActiveCell.row, modLayout.col("Тип")).Value)
+    If h = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+    k = CStr(ActiveCell.Worksheet.Cells(ActiveCell.row, modLayout.col("РўРёРї")).Value)
     If Len(k) > 0 Then modEngine.OpenByType k, ActiveCell Else modEngine.PickAndOpen ActiveCell
 End Sub
 
 Public Sub MenuPosAddAbove()
     Dim r As Long
     r = ActiveCell.row
-    If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-    modLayout.ВставитьСтрокуПозиции r, True
-    modEngine.PickAndOpen ActiveCell.Worksheet.Cells(r, modLayout.col("Наименование"))
+    If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+    modLayout.Р’СЃС‚Р°РІРёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё r, True
+    modEngine.PickAndOpen ActiveCell.Worksheet.Cells(r, modLayout.col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ"))
 End Sub
 
 Public Sub MenuPosAdd()
     Dim r As Long
     r = ActiveCell.row
-    If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-    modLayout.ВставитьСтрокуПозиции r
-    modEngine.PickAndOpen ActiveCell.Worksheet.Cells(r + 1, modLayout.col("Наименование"))
+    If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+    modLayout.Р’СЃС‚Р°РІРёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё r
+    modEngine.PickAndOpen ActiveCell.Worksheet.Cells(r + 1, modLayout.col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ"))
 End Sub
 
 Public Sub MenuRowInsert()
 Dim r As Long, n As Long
 r = ActiveCell.row
-If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-n = СпроситьКоличествоСтрок()
+If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+n = РЎРїСЂРѕСЃРёС‚СЊРљРѕР»РёС‡РµСЃС‚РІРѕРЎС‚СЂРѕРє()
 If n = 0 Then Exit Sub
-modLayout.ВставитьСтрокуПозиции r, False, n
+modLayout.Р’СЃС‚Р°РІРёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё r, False, n
 End Sub
 
 Public Sub MenuPosClear()
     Dim r As Long
     r = ActiveCell.row
-    If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-    modLayout.ОчиститьПозицию r
+    If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+    modLayout.РћС‡РёСЃС‚РёС‚СЊРџРѕР·РёС†РёСЋ r
 End Sub
 
 Public Sub MenuRowDel()
     Dim r As Long
     r = ActiveCell.row
-    If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-    modLayout.УдалитьСтрокуПозиции r
+    If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+    modLayout.РЈРґР°Р»РёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё r
 End Sub
 
 Public Sub MenuGapAdd()
-    modLayout.ВставитьБлок ActiveCell.row
+    modLayout.Р’СЃС‚Р°РІРёС‚СЊР‘Р»РѕРє ActiveCell.row
 End Sub
 
 Public Sub MenuFreeAdd()
-    modLayout.ДобавитьУчасток
+    modLayout.Р”РѕР±Р°РІРёС‚СЊРЈС‡Р°СЃС‚РѕРє
 End Sub
 
-Public Function СпроситьКоличествоСтрок() As Long
+Public Function РЎРїСЂРѕСЃРёС‚СЊРљРѕР»РёС‡РµСЃС‚РІРѕРЎС‚СЂРѕРє() As Long
 Static lastN As Long
 Dim s As String, v As Double
 If lastN < 1 Then lastN = 1
 Do
-s = InputBox("Сколько пустых строк вставить?" & vbCrLf & _
-"Допустимо от 1 до 100.", "Количество строк", CStr(lastN))
+s = InputBox("РЎРєРѕР»СЊРєРѕ РїСѓСЃС‚С‹С… СЃС‚СЂРѕРє РІСЃС‚Р°РІРёС‚СЊ?" & vbCrLf & _
+"Р”РѕРїСѓСЃС‚РёРјРѕ РѕС‚ 1 РґРѕ 100.", "РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє", CStr(lastN))
 If StrPtr(s) = 0 Then Exit Function
 s = Trim$(s)
 If Len(s) = 0 Then Exit Function
@@ -224,21 +223,21 @@ If IsNumeric(Replace(s, ",", ".")) Then
 v = CDbl(Replace(s, ",", "."))
 If v = Int(v) And v >= 1 And v <= 100 Then
 lastN = CLng(v)
-СпроситьКоличествоСтрок = lastN
+РЎРїСЂРѕСЃРёС‚СЊРљРѕР»РёС‡РµСЃС‚РІРѕРЎС‚СЂРѕРє = lastN
 Exit Function
 End If
 End If
-MsgBox "Нужно целое число от 1 до 100.", vbExclamation, "Количество строк"
+MsgBox "РќСѓР¶РЅРѕ С†РµР»РѕРµ С‡РёСЃР»Рѕ РѕС‚ 1 РґРѕ 100.", vbExclamation, "РљРѕР»РёС‡РµСЃС‚РІРѕ СЃС‚СЂРѕРє"
 Loop
 End Function
 
 Public Sub MenuRowInsertAbove()
 Dim r As Long, n As Long
 r = ActiveCell.row
-If modLayout.HdrOf(r) = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-n = СпроситьКоличествоСтрок()
+If modLayout.HdrOf(r) = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+n = РЎРїСЂРѕСЃРёС‚СЊРљРѕР»РёС‡РµСЃС‚РІРѕРЎС‚СЂРѕРє()
 If n = 0 Then Exit Sub
-modLayout.ВставитьСтрокуПозиции r, True, n
+modLayout.Р’СЃС‚Р°РІРёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё r, True, n
 End Sub
 
 Public Sub MenuSort()
@@ -249,12 +248,12 @@ If h = 0 Then
 s = modLayout.SecOfRow(r)
 If s > 0 Then h = s + 4
 End If
-If h = 0 Then MsgBox "Курсор не внутри участка.", vbExclamation: Exit Sub
-modLayout.СортироватьУчасток h
+If h = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РІРЅСѓС‚СЂРё СѓС‡Р°СЃС‚РєР°.", vbExclamation: Exit Sub
+modLayout.РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊРЈС‡Р°СЃС‚РѕРє h
 End Sub
 
 Public Sub MenuSortAll()
-modLayout.СортироватьВсеУчастки
+modLayout.РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊР’СЃРµРЈС‡Р°СЃС‚РєРё
 End Sub
 
 Public Sub MenuTempAdd()
@@ -264,48 +263,48 @@ Dim miss As String, sec As String, newNm As String
 Set ws = modLayout.ShSv()
 r = ActiveCell.row
 h = modLayout.HdrOf(r)
-If h = 0 Then MsgBox "Курсор не на строке позиции.", vbExclamation: Exit Sub
-If Len(modLayout.СостояниеВнеБазы(r)) = 0 Then
-MsgBox "Эта позиция уже в базе — добавление во временную базу не требуется.", vbInformation
+If h = 0 Then MsgBox "РљСѓСЂСЃРѕСЂ РЅРµ РЅР° СЃС‚СЂРѕРєРµ РїРѕР·РёС†РёРё.", vbExclamation: Exit Sub
+If Len(modLayout.РЎРѕСЃС‚РѕСЏРЅРёРµР’РЅРµР‘Р°Р·С‹(r)) = 0 Then
+MsgBox "Р­С‚Р° РїРѕР·РёС†РёСЏ СѓР¶Рµ РІ Р±Р°Р·Рµ вЂ” РґРѕР±Р°РІР»РµРЅРёРµ РІРѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·Сѓ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ.", vbInformation
 Exit Sub
 End If
-cB = modLayout.col("Наименование")
+cB = modLayout.col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")
 nm = Trim$(CStr(ws.Cells(r, cB).Value))
-un = Trim$(CStr(ws.Cells(r, modLayout.col("Ед.изм.")).Value))
-massV = ws.Cells(r, modLayout.col("Масса 1 ед")).Value
-If Len(nm) = 0 Then miss = miss & vbCrLf & "  - Наименование"
+un = Trim$(CStr(ws.Cells(r, modLayout.col("Р•Рґ.РёР·Рј.")).Value))
+massV = ws.Cells(r, modLayout.col("РњР°СЃСЃР° 1 РµРґ")).Value
+If Len(nm) = 0 Then miss = miss & vbCrLf & "  - РќР°РёРјРµРЅРѕРІР°РЅРёРµ"
 If isEmpty(massV) Or Not IsNumeric(massV) Then
-miss = miss & vbCrLf & "  - Масса 1 ед (числом)"
+miss = miss & vbCrLf & "  - РњР°СЃСЃР° 1 РµРґ (С‡РёСЃР»РѕРј)"
 ElseIf CDbl(massV) <= 0 Then
-miss = miss & vbCrLf & "  - Масса 1 ед (больше нуля)"
+miss = miss & vbCrLf & "  - РњР°СЃСЃР° 1 РµРґ (Р±РѕР»СЊС€Рµ РЅСѓР»СЏ)"
 End If
-If Len(un) = 0 Then miss = miss & vbCrLf & "  - Ед.изм."
+If Len(un) = 0 Then miss = miss & vbCrLf & "  - Р•Рґ.РёР·Рј."
 If Len(miss) > 0 Then
-MsgBox "Заполните ячейки:" & miss, vbExclamation, "Не хватает данных"
+MsgBox "Р—Р°РїРѕР»РЅРёС‚Рµ СЏС‡РµР№РєРё:" & miss, vbExclamation, "РќРµ С…РІР°С‚Р°РµС‚ РґР°РЅРЅС‹С…"
 Exit Sub
 End If
 If modTemp.TempContains(nm, un) Then
-MsgBox "Это наименование уже есть во временной базе.", vbInformation
-modLayout.ПодсветитьДублиУчастка h
+MsgBox "Р­С‚Рѕ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ СѓР¶Рµ РµСЃС‚СЊ РІРѕ РІСЂРµРјРµРЅРЅРѕР№ Р±Р°Р·Рµ.", vbInformation
+modLayout.РџРѕРґСЃРІРµС‚РёС‚СЊР”СѓР±Р»РёРЈС‡Р°СЃС‚РєР° h
 Exit Sub
 End If
-newNm = InputBox("Проверьте наименование перед занесением во временную базу." & vbCrLf & _
-"При необходимости исправьте текст и нажмите ОК.", "Проверка наименования", nm)
+newNm = InputBox("РџСЂРѕРІРµСЂСЊС‚Рµ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ РїРµСЂРµРґ Р·Р°РЅРµСЃРµРЅРёРµРј РІРѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·Сѓ." & vbCrLf & _
+"РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РёСЃРїСЂР°РІСЊС‚Рµ С‚РµРєСЃС‚ Рё РЅР°Р¶РјРёС‚Рµ РћРљ.", "РџСЂРѕРІРµСЂРєР° РЅР°РёРјРµРЅРѕРІР°РЅРёСЏ", nm)
 If StrPtr(newNm) = 0 Then Exit Sub
 If Len(Trim$(newNm)) = 0 Then Exit Sub
 If Trim$(newNm) <> nm Then
 ws.Cells(r, cB).Value = Trim$(newNm)
-MsgBox "Наименование исправлено. Во временную базу не добавляем." & vbCrLf & vbCrLf & _
-"Если это стандартный элемент — выберите его через форму (двойной клик по ячейке).", vbInformation
+MsgBox "РќР°РёРјРµРЅРѕРІР°РЅРёРµ РёСЃРїСЂР°РІР»РµРЅРѕ. Р’Рѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·Сѓ РЅРµ РґРѕР±Р°РІР»СЏРµРј." & vbCrLf & vbCrLf & _
+"Р•СЃР»Рё СЌС‚Рѕ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ СЌР»РµРјРµРЅС‚ вЂ” РІС‹Р±РµСЂРёС‚Рµ РµРіРѕ С‡РµСЂРµР· С„РѕСЂРјСѓ (РґРІРѕР№РЅРѕР№ РєР»РёРє РїРѕ СЏС‡РµР№РєРµ).", vbInformation
 Exit Sub
 End If
 s = modLayout.SecOfHdr(h)
 If s > 0 Then
 sec = Trim$(CStr(ws.Cells(s, 1).Value)) & " / " & Trim$(CStr(ws.Cells(s, 2).Value))
 End If
-If modTemp.ДобавитьВоВременнуюБазу(nm, CDbl(massV), un, sec) Then
-modLayout.ПодсветитьДублиУчастка h
-MsgBox "Добавлено во временную базу:" & vbCrLf & modTemp.TempFilePath(), vbInformation
+If modTemp.Р”РѕР±Р°РІРёС‚СЊР’РѕР’СЂРµРјРµРЅРЅСѓСЋР‘Р°Р·Сѓ(nm, CDbl(massV), un, sec) Then
+modLayout.РџРѕРґСЃРІРµС‚РёС‚СЊР”СѓР±Р»РёРЈС‡Р°СЃС‚РєР° h
+MsgBox "Р”РѕР±Р°РІР»РµРЅРѕ РІРѕ РІСЂРµРјРµРЅРЅСѓСЋ Р±Р°Р·Сѓ:" & vbCrLf & modTemp.TempFilePath(), vbInformation
 End If
 End Sub
 
