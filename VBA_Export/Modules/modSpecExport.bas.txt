@@ -1,9 +1,8 @@
-Attribute VB_Name = "modSpecExport"
 Option Explicit
 
-Private Const SRC_FIRST As String = "л01.С"
-Private Const SRC_CONT As String = "л02.С"
-Private Const FORM_SHEET As String = "Штамп спецификации"
+Private Const SRC_FIRST As String = "Р»01.РЎ"
+Private Const SRC_CONT As String = "Р»02.РЎ"
+Private Const FORM_SHEET As String = "РЁС‚Р°РјРї СЃРїРµС†РёС„РёРєР°С†РёРё"
 Private Const MEASURE_SHEET As String = "_measure_tmp"
 Private Const ROW_PT As Double = 22.25
 Private Const CIPHER_ROW As Long = 30
@@ -20,16 +19,16 @@ Private mColR As Long
 Private mIsFirst As Boolean
 Private mStep As String
 
-' ==================== ГЕОМЕТРИЯ ====================
+' ==================== Р“Р•РћРњР•РўР РРЇ ====================
 Private Sub SetLayout(ByVal isFirst As Boolean)
-    Dim cs As Variant, ce As Variant
+    Dim cS As Variant, ce As Variant
     Dim ts As Variant, bs As Variant
     Dim i As Long, nSimple As Long, n As Long
 
     mIsFirst = isFirst
 
     If isFirst Then
-        cs = Array(7, 8, 9, 10, 14, 18, 19, 20, 22)
+        cS = Array(7, 8, 9, 10, 14, 18, 19, 20, 22)
         ce = Array(7, 8, 9, 13, 17, 18, 19, 21, 24)
         ts = Array(16, 18, 20, 21, 23, 24, 26)
         bs = Array(17, 19, 20, 22, 23, 25, 26)
@@ -39,7 +38,7 @@ Private Sub SetLayout(ByVal isFirst As Boolean)
         mColL = 7
         mColR = 24
     Else
-        cs = Array(4, 5, 6, 7, 11, 15, 16, 17, 18)
+        cS = Array(4, 5, 6, 7, 11, 15, 16, 17, 18)
         ce = Array(4, 5, 6, 10, 14, 15, 16, 17, 19)
         ts = Array(24, 26, 27, 28, 30, 31, 32, 33)
         bs = Array(25, 26, 27, 29, 30, 31, 32, 34)
@@ -51,7 +50,7 @@ Private Sub SetLayout(ByVal isFirst As Boolean)
     End If
 
     For i = 0 To 8
-        mCS(i) = cs(i)
+        mCS(i) = cS(i)
         mCE(i) = ce(i)
     Next i
 
@@ -79,13 +78,13 @@ Private Sub VerifyLayout(ByVal ws As Worksheet)
     End If
     If sig <> expect Then
         Err.Raise vbObjectError + 514, "VerifyLayout", _
-            "Лист '" & ws.Name & "': объединение заголовка = " & sig & _
-            ", ожидалось " & expect & "."
+            "Р›РёСЃС‚ '" & ws.Name & "': РѕР±СЉРµРґРёРЅРµРЅРёРµ Р·Р°РіРѕР»РѕРІРєР° = " & sig & _
+            ", РѕР¶РёРґР°Р»РѕСЃСЊ " & expect & "."
     End If
 End Sub
 
-' ==================== ОСНОВНАЯ ====================
-Public Sub СформироватьСпецификацию()
+' ==================== РћРЎРќРћР’РќРђРЇ ====================
+Public Sub РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊРЎРїРµС†РёС„РёРєР°С†РёСЋ()
     Dim wsFirst As Worksheet, wsCont As Worksheet, wsForm As Worksheet
     Dim wsDst As Worksheet, wsFirstResult As Worksheet, wsM As Worksheet
     Dim wbOut As Workbook
@@ -105,7 +104,7 @@ Public Sub СформироватьСпецификацию()
     Dim scr As Boolean, al As Boolean
     Dim errNum As Long, errDesc As String
 
-    mStep = "старт"
+    mStep = "СЃС‚Р°СЂС‚"
     scr = Application.ScreenUpdating
     al = Application.DisplayAlerts
 
@@ -113,38 +112,38 @@ Public Sub СформироватьСпецификацию()
     Set wsCont = SheetByName(SRC_CONT)
     Set wsForm = SheetByName(FORM_SHEET)
     If wsFirst Is Nothing Then
-        MsgBox "Лист-шаблон '" & SRC_FIRST & "' не найден.", vbExclamation
+        MsgBox "Р›РёСЃС‚-С€Р°Р±Р»РѕРЅ '" & SRC_FIRST & "' РЅРµ РЅР°Р№РґРµРЅ.", vbExclamation
         Exit Sub
     End If
     If wsCont Is Nothing Then
-        MsgBox "Лист-шаблон '" & SRC_CONT & "' не найден.", vbExclamation
+        MsgBox "Р›РёСЃС‚-С€Р°Р±Р»РѕРЅ '" & SRC_CONT & "' РЅРµ РЅР°Р№РґРµРЅ.", vbExclamation
         Exit Sub
     End If
     If wsForm Is Nothing Then
-        MsgBox "Лист '" & FORM_SHEET & "' не найден.", vbExclamation
+        MsgBox "Р›РёСЃС‚ '" & FORM_SHEET & "' РЅРµ РЅР°Р№РґРµРЅ.", vbExclamation
         Exit Sub
     End If
 
     On Error GoTo fin
 
-    mStep = "чтение шифра"
+    mStep = "С‡С‚РµРЅРёРµ С€РёС„СЂР°"
     cipher = Trim$(CStr(wsForm.Cells(CIPHER_ROW, CIPHER_COL).Value))
 
-    mStep = "сбор позиций"
+    mStep = "СЃР±РѕСЂ РїРѕР·РёС†РёР№"
     nPos = GatherAllPositions(aNaim, aTip, aEdiz, aKol, aMass, aPrim, aW, aD, aT, aP)
     If nPos = 0 Then
-        MsgBox "Позиции не найдены.", vbInformation
+        MsgBox "РџРѕР·РёС†РёРё РЅРµ РЅР°Р№РґРµРЅС‹.", vbInformation
         Exit Sub
     End If
 
-    mStep = "сортировка"
+    mStep = "СЃРѕСЂС‚РёСЂРѕРІРєР°"
     ReDim ord(1 To nPos)
     For i = 1 To nPos
         ord(i) = i
     Next i
     SortIndex ord, nPos, aW, aD, aT, aP
 
-    mStep = "суммирование"
+    mStep = "СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ"
     Set mKey = CreateObject("Scripting.Dictionary")
     ReDim mNaim(1 To nPos)
     ReDim mTip(1 To nPos)
@@ -175,15 +174,15 @@ Public Sub СформироватьСпецификацию()
     Application.ScreenUpdating = False
     Application.DisplayAlerts = False
 
-    mStep = "создание измерителя"
+    mStep = "СЃРѕР·РґР°РЅРёРµ РёР·РјРµСЂРёС‚РµР»СЏ"
     Set wsM = MakeMeasureSheet()
 
-    mStep = "очистка старых результатов в сводной"
+    mStep = "РѕС‡РёСЃС‚РєР° СЃС‚Р°СЂС‹С… СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІ СЃРІРѕРґРЅРѕР№"
     DeleteResultSheets wsFirst
 
-    mStep = "создание книги и первого листа"
+    mStep = "СЃРѕР·РґР°РЅРёРµ РєРЅРёРіРё Рё РїРµСЂРІРѕРіРѕ Р»РёСЃС‚Р°"
     SetLayout True
-    Set wsDst = CopySheetTo(wsFirst, Nothing, "л1")
+    Set wsDst = CopySheetTo(wsFirst, Nothing, "Р»1")
     Set wbOut = wsDst.Parent
     VerifyLayout wsDst
     Set wsFirstResult = wsDst
@@ -197,31 +196,31 @@ Public Sub СформироватьСпецификацию()
 
     For i = 1 To nm
         ok = True
-        mStep = "позиция " & i & ": измерение на " & wsDst.Name
+        mStep = "РїРѕР·РёС†РёСЏ " & i & ": РёР·РјРµСЂРµРЅРёРµ РЅР° " & wsDst.Name
         lines = LinesNeeded(wsDst, wsM, mNaim(i), mTip(i), mPrim(i))
         If lr + lines - 1 > mTotal Then
             If lr = 1 And Not mIsFirst Then
                 ok = False
             Else
-                mStep = "позиция " & i & ": дооформление " & wsDst.Name
+                mStep = "РїРѕР·РёС†РёСЏ " & i & ": РґРѕРѕС„РѕСЂРјР»РµРЅРёРµ " & wsDst.Name
                 FinishSheet wsDst, lr
                 pageN = pageN + 1
-                mStep = "позиция " & i & ": новый лист л" & pageN
+                mStep = "РїРѕР·РёС†РёСЏ " & i & ": РЅРѕРІС‹Р№ Р»РёСЃС‚ Р»" & pageN
                 SetLayout False
-                Set wsDst = CopySheetTo(wsCont, wbOut, "л" & CStr(pageN))
+                Set wsDst = CopySheetTo(wsCont, wbOut, "Р»" & CStr(pageN))
                 VerifyLayout wsDst
                 ClearArea wsDst
                 FillSmallStamp wsDst, cipher
                 ActivateMeasure wsM
                 lr = 1
-                mStep = "позиция " & i & ": повторное измерение"
+                mStep = "РїРѕР·РёС†РёСЏ " & i & ": РїРѕРІС‚РѕСЂРЅРѕРµ РёР·РјРµСЂРµРЅРёРµ"
                 lines = LinesNeeded(wsDst, wsM, mNaim(i), mTip(i), mPrim(i))
                 If lines > mTotal Then ok = False
             End If
         End If
         If ok Then
-            mStep = "позиция " & i & ": заполнение lr=" & lr & " lines=" & lines & _
-                    " на " & wsDst.Name
+            mStep = "РїРѕР·РёС†РёСЏ " & i & ": Р·Р°РїРѕР»РЅРµРЅРёРµ lr=" & lr & " lines=" & lines & _
+                    " РЅР° " & wsDst.Name
             FillPosition wsDst, lr, lines, mNaim(i), mTip(i), mEdiz(i), _
                          mKol(i), mMass(i), mPrim(i)
             lr = lr + lines
@@ -231,20 +230,20 @@ Public Sub СформироватьСпецификацию()
         End If
     Next i
 
-    mStep = "дооформление последнего листа"
+    mStep = "РґРѕРѕС„РѕСЂРјР»РµРЅРёРµ РїРѕСЃР»РµРґРЅРµРіРѕ Р»РёСЃС‚Р°"
     FinishSheet wsDst, lr
 
-    mStep = "удаление измерителя"
+    mStep = "СѓРґР°Р»РµРЅРёРµ РёР·РјРµСЂРёС‚РµР»СЏ"
     KillMeasureSheet wsM
     Set wsM = Nothing
 
-    mStep = "перенос штампа"
-    modStampTransfer.ПеренестиШтамп wsFirstResult
+    mStep = "РїРµСЂРµРЅРѕСЃ С€С‚Р°РјРїР°"
+    modStampTransfer.РџРµСЂРµРЅРµСЃС‚РёРЁС‚Р°РјРї wsFirstResult
 
-    mStep = "номера листов в большом штампе"
+    mStep = "РЅРѕРјРµСЂР° Р»РёСЃС‚РѕРІ РІ Р±РѕР»СЊС€РѕРј С€С‚Р°РјРїРµ"
     SetBigStampNumbers wsFirstResult
 
-    mStep = "сохранение книги"
+    mStep = "СЃРѕС…СЂР°РЅРµРЅРёРµ РєРЅРёРіРё"
     fPath = OutFolder() & SafeFileName(cipher) & ".xlsx"
     wbOut.SaveAs fileName:=fPath, FileFormat:=51
 
@@ -253,10 +252,10 @@ Public Sub СформироватьСпецификацию()
     wbOut.Activate
     wsFirstResult.Activate
 
-    MsgBox "Готово. Листов: " & pageN & vbCrLf & _
-           "Размещено позиций: " & placed & " из " & nm & vbCrLf & _
-           "Не размещено: " & skipped & vbCrLf & vbCrLf & _
-           "Файл: " & fPath, vbInformation
+    MsgBox "Р“РѕС‚РѕРІРѕ. Р›РёСЃС‚РѕРІ: " & pageN & vbCrLf & _
+           "Р Р°Р·РјРµС‰РµРЅРѕ РїРѕР·РёС†РёР№: " & placed & " РёР· " & nm & vbCrLf & _
+           "РќРµ СЂР°Р·РјРµС‰РµРЅРѕ: " & skipped & vbCrLf & vbCrLf & _
+           "Р¤Р°Р№Р»: " & fPath, vbInformation
     Exit Sub
 
 fin:
@@ -267,11 +266,11 @@ fin:
     Application.DisplayAlerts = al
     Application.ScreenUpdating = scr
     On Error GoTo 0
-    MsgBox "Ошибка " & errNum & vbCrLf & _
-           "ШАГ: " & mStep & vbCrLf & vbCrLf & errDesc, vbExclamation
+    MsgBox "РћС€РёР±РєР° " & errNum & vbCrLf & _
+           "РЁРђР“: " & mStep & vbCrLf & vbCrLf & errDesc, vbExclamation
 End Sub
 
-' ==================== ШТАМПЫ ====================
+' ==================== РЁРўРђРњРџР« ====================
 Private Sub SetBigStampNumbers(ByVal ws As Worksheet)
     ws.Cells(36, 23).Formula = "=SHEET()"
     ws.Cells(36, 24).Formula = "=SHEETS()"
@@ -298,7 +297,7 @@ Private Function SafeFileName(ByVal s As String) As String
             Exit Do
         End If
     Loop
-    If Len(s) = 0 Then s = "Спецификация"
+    If Len(s) = 0 Then s = "РЎРїРµС†РёС„РёРєР°С†РёСЏ"
     If Len(s) > 150 Then s = Left$(s, 150)
     SafeFileName = s
 End Function
@@ -313,7 +312,7 @@ Private Function OutFolder() As String
     OutFolder = p
 End Function
 
-' ==================== ЛИСТЫ ====================
+' ==================== Р›РРЎРўР« ====================
 Private Function SheetByName(ByVal nm As String) As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
@@ -322,7 +321,7 @@ Private Function SheetByName(ByVal nm As String) As Worksheet
     Set SheetByName = ws
 End Function
 
-' wbDst = Nothing -> создаётся НОВАЯ книга с одной копией
+' wbDst = Nothing -> СЃРѕР·РґР°С‘С‚СЃСЏ РќРћР’РђРЇ РєРЅРёРіР° СЃ РѕРґРЅРѕР№ РєРѕРїРёРµР№
 Private Function CopySheetTo(ByVal wsSrc As Worksheet, ByVal wbDst As Workbook, _
     ByVal nm As String) As Worksheet
 
@@ -355,7 +354,7 @@ Private Function CopySheetTo(ByVal wsSrc As Worksheet, ByVal wbDst As Workbook, 
     wsSrc.Visible = vis
 
     If wsNew Is Nothing Then
-        Err.Raise vbObjectError + 513, "CopySheetTo", "Лист-копия не определён."
+        Err.Raise vbObjectError + 513, "CopySheetTo", "Р›РёСЃС‚-РєРѕРїРёСЏ РЅРµ РѕРїСЂРµРґРµР»С‘РЅ."
     End If
 
     wsNew.Visible = xlSheetVisible
@@ -385,7 +384,7 @@ Private Sub DeleteResultSheets(ByVal wsGuard As Worksheet)
         If nm <> SRC_FIRST And nm <> SRC_CONT And nm <> MEASURE_SHEET Then
             hit = False
             For k = 1 To 200
-                If nm = "л" & CStr(k) Then
+                If nm = "Р»" & CStr(k) Then
                     hit = True
                     Exit For
                 End If
@@ -454,7 +453,7 @@ Private Sub FinishSheet(ByVal ws As Worksheet, ByVal lrFrom As Long)
     Next i
 End Sub
 
-' ==================== СБОР ====================
+' ==================== РЎР‘РћР  ====================
 Private Function GatherAllPositions( _
     ByRef aNaim() As String, ByRef aTip() As String, ByRef aEdiz() As String, _
     ByRef aKol() As Double, ByRef aMass() As Double, ByRef aPrim() As String, _
@@ -477,14 +476,14 @@ Private Function GatherAllPositions( _
     For r = 1 To modLayout.LastUsedRow()
         h = modLayout.HdrOf(r)
         If h > 0 And r > h Then
-            If Len(Trim$(CStr(ws.Cells(r, modLayout.col("Наименование")).Value))) > 0 Then
+            If Len(Trim$(CStr(ws.Cells(r, modLayout.col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value))) > 0 Then
                 n = n + 1
-                aNaim(n) = CStr(ws.Cells(r, modLayout.col("Наименование")).Value)
-                aTip(n) = CStr(ws.Cells(r, modLayout.col("Опросной лист")).Value)
-                aEdiz(n) = CStr(ws.Cells(r, modLayout.col("Ед.изм.")).Value)
-                aPrim(n) = CStr(ws.Cells(r, modLayout.col("Примечание")).Value)
-                aKol(n) = ToNumDbl(ws.Cells(r, modLayout.col("Кол-во")).Value)
-                aMass(n) = ToNumDbl(ws.Cells(r, modLayout.col("Масса 1 ед")).Value)
+                aNaim(n) = CStr(ws.Cells(r, modLayout.col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value)
+                aTip(n) = CStr(ws.Cells(r, modLayout.col("РћРїСЂРѕСЃРЅРѕР№ Р»РёСЃС‚")).Value)
+                aEdiz(n) = CStr(ws.Cells(r, modLayout.col("Р•Рґ.РёР·Рј.")).Value)
+                aPrim(n) = CStr(ws.Cells(r, modLayout.col("РџСЂРёРјРµС‡Р°РЅРёРµ")).Value)
+                aKol(n) = ToNumDbl(ws.Cells(r, modLayout.col("РљРѕР»-РІРѕ")).Value)
+                aMass(n) = ToNumDbl(ws.Cells(r, modLayout.col("РњР°СЃСЃР° 1 РµРґ")).Value)
                 aW(n) = modLayout.GetSortWeight(r)
                 aD(n) = modLayout.GetSortDia(r)
                 aT(n) = modLayout.GetSortThk(r)
@@ -505,7 +504,7 @@ Private Function ToNumDbl(ByVal v As Variant) As Double
     End If
 End Function
 
-' ==================== СОРТИРОВКА ====================
+' ==================== РЎРћР РўРР РћР’РљРђ ====================
 Private Sub SortIndex(ByRef ord() As Long, ByVal n As Long, _
     ByRef aW() As Double, ByRef aD() As Double, _
     ByRef aT() As Double, ByRef aP() As Double)
@@ -545,7 +544,7 @@ Private Function ComesBefore(ByVal i As Long, ByVal j As Long, _
     ComesBefore = (i < j)
 End Function
 
-' ==================== ИЗМЕРЕНИЕ ====================
+' ==================== РР—РњР•Р Р•РќРР• ====================
 Private Function LinesNeeded(ByVal wsDst As Worksheet, ByVal wsM As Worksheet, _
     ByVal naim As String, ByVal tip As String, ByVal prim As String) As Long
 
@@ -595,7 +594,7 @@ Private Sub SetColWidthPts(ByVal ws As Worksheet, ByVal col As Long, ByVal targe
     Next k
 End Sub
 
-' ==================== ЗАПОЛНЕНИЕ ====================
+' ==================== Р—РђРџРћР›РќР•РќРР• ====================
 Private Sub FillPosition(ByVal ws As Worksheet, ByVal lr As Long, ByVal lines As Long, _
     ByVal naim As String, ByVal tip As String, ByVal ediz As String, _
     ByVal kol As Double, ByVal mass As Double, ByVal prim As String)
