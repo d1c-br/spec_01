@@ -1,24 +1,23 @@
-Attribute VB_Name = "modBuilder"
 Option Explicit
 
-Public Sub СобратьВсеФормы()
-Собрать_frmTee
-Собрать_frmSection
-Собрать_frmTrans
-Собрать_frmFlange
-Собрать_frmCap
-Собрать_frmBlindFl
-Собрать_frmBlindInt
-Собрать_frmValve
-Собрать_frmValveM
-Собрать_frmPipe
-Собрать_frmTypePick
-Собрать_frmSupportVP
-Собрать_frmSupportTO
-Собрать_frmSupportHB
-Собрать_frmSupportKP
-Собрать_frmSupportKH
-MsgBox "Все формы пересобраны.", vbInformation
+Public Sub РЎРѕР±СЂР°С‚СЊР’СЃРµР¤РѕСЂРјС‹()
+РЎРѕР±СЂР°С‚СЊ_frmTee
+РЎРѕР±СЂР°С‚СЊ_frmSection
+РЎРѕР±СЂР°С‚СЊ_frmTrans
+РЎРѕР±СЂР°С‚СЊ_frmFlange
+РЎРѕР±СЂР°С‚СЊ_frmCap
+РЎРѕР±СЂР°С‚СЊ_frmBlindFl
+РЎРѕР±СЂР°С‚СЊ_frmBlindInt
+РЎРѕР±СЂР°С‚СЊ_frmValve
+РЎРѕР±СЂР°С‚СЊ_frmValveM
+РЎРѕР±СЂР°С‚СЊ_frmPipe
+РЎРѕР±СЂР°С‚СЊ_frmTypePick
+РЎРѕР±СЂР°С‚СЊ_frmSupportVP
+РЎРѕР±СЂР°С‚СЊ_frmSupportTO
+РЎРѕР±СЂР°С‚СЊ_frmSupportHB
+РЎРѕР±СЂР°С‚СЊ_frmSupportKP
+РЎРѕР±СЂР°С‚СЊ_frmSupportKH
+MsgBox "Р’СЃРµ С„РѕСЂРјС‹ РїРµСЂРµСЃРѕР±СЂР°РЅС‹.", vbInformation
 End Sub
 
 Private Function GetForm(ByVal nm As String) As Object
@@ -37,9 +36,9 @@ Private Function GetForm(ByVal nm As String) As Object
     Set GetForm = comp
     Exit Function
 renameFail:
-    Err.Raise vbObjectError + 50, , "Не удалось переименовать новую форму в «" & nm & _
-        "». Скорее всего, в проекте уже есть компонент с таким именем, или открыто окно дизайнера. " & _
-        "Закройте окна форм в VBE, удалите дубликат и повторите."
+    Err.Raise vbObjectError + 50, , "РќРµ СѓРґР°Р»РѕСЃСЊ РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊ РЅРѕРІСѓСЋ С„РѕСЂРјСѓ РІ В«" & nm & _
+        "В». РЎРєРѕСЂРµРµ РІСЃРµРіРѕ, РІ РїСЂРѕРµРєС‚Рµ СѓР¶Рµ РµСЃС‚СЊ РєРѕРјРїРѕРЅРµРЅС‚ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј, РёР»Рё РѕС‚РєСЂС‹С‚Рѕ РѕРєРЅРѕ РґРёР·Р°Р№РЅРµСЂР°. " & _
+        "Р—Р°РєСЂРѕР№С‚Рµ РѕРєРЅР° С„РѕСЂРј РІ VBE, СѓРґР°Р»РёС‚Рµ РґСѓР±Р»РёРєР°С‚ Рё РїРѕРІС‚РѕСЂРёС‚Рµ."
 End Function
 
 Private Sub ClearControls(ByVal comp As Object)
@@ -62,7 +61,7 @@ Private Sub AddCombo(ByVal comp As Object, ByVal nm As String, _
                      ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim c As Object
     Set c = comp.Designer.Controls.Add("Forms.ComboBox.1")
-    c.Name = nm: c.style = 2 ' 2 = DropDownList (только выбор из списка)
+    c.Name = nm: c.style = 2 ' 2 = DropDownList (С‚РѕР»СЊРєРѕ РІС‹Р±РѕСЂ РёР· СЃРїРёСЃРєР°)
     c.Left = L: c.Top = t: c.Width = w: c.Height = h
 End Sub
 
@@ -86,6 +85,14 @@ Private Sub AddButton(ByVal comp As Object, ByVal nm As String, ByVal cap As Str
                       ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim c As Object
     Set c = comp.Designer.Controls.Add("Forms.CommandButton.1")
+    c.Name = nm: c.Caption = cap
+    c.Left = L: c.Top = t: c.Width = w: c.Height = h
+End Sub
+
+Private Sub AddButtonIn(ByVal host As Object, ByVal nm As String, ByVal cap As String, _
+                        ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
+    Dim c As Object
+    Set c = host.Controls.Add("Forms.CommandButton.1")
     c.Name = nm: c.Caption = cap
     c.Left = L: c.Top = t: c.Width = w: c.Height = h
 End Sub
@@ -126,73 +133,73 @@ Private Sub AddTextIn(ByVal host As Object, ByVal nm As String, _
 End Sub
 
 ' =========================================================================
-' БАЗОВЫЕ ФОРМЫ ЭЛЕМЕНТОВ ТРУБОПРОВОДА (Созданные через билдер)
+' Р‘РђР—РћР’Р«Р• Р¤РћР РњР« Р­Р›Р•РњР•РќРўРћР’ РўР РЈР‘РћРџР РћР’РћР”Рђ (РЎРѕР·РґР°РЅРЅС‹Рµ С‡РµСЂРµР· Р±РёР»РґРµСЂ)
 ' =========================================================================
 
-Public Sub Собрать_frmTee()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmTee()
     Dim comp As Object
     Set comp = GetForm("frmTee")
     ClearControls comp
-    comp.Properties("Caption").Value = "Тройник"
+    comp.Properties("Caption").Value = "РўСЂРѕР№РЅРёРє"
     comp.Properties("Width").Value = 560
     comp.Properties("Height").Value = 200
 
-    'строка 1: переключатель вида
-    AddOption comp, "optEqual", "равнопроходной", 24, 10, 150, 18
-    AddOption comp, "optReducing", "переходной", 180, 10, 150, 18
-    'строка 2: параметры (полная раскладка переходного)
-    AddLabel comp, "lblPrefix", "Тройник", 10, 42, 48, 16
+    'СЃС‚СЂРѕРєР° 1: РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РІРёРґР°
+    AddOption comp, "optEqual", "СЂР°РІРЅРѕРїСЂРѕС…РѕРґРЅРѕР№", 24, 10, 150, 18
+    AddOption comp, "optReducing", "РїРµСЂРµС…РѕРґРЅРѕР№", 180, 10, 150, 18
+    'СЃС‚СЂРѕРєР° 2: РїР°СЂР°РјРµС‚СЂС‹ (РїРѕР»РЅР°СЏ СЂР°СЃРєР»Р°РґРєР° РїРµСЂРµС…РѕРґРЅРѕРіРѕ)
+    AddLabel comp, "lblPrefix", "РўСЂРѕР№РЅРёРє", 10, 42, 48, 16
     AddCombo comp, "cboD", 62, 38, 54, 20
-    AddLabel comp, "lblX", "х", 118, 42, 10, 16
+    AddLabel comp, "lblX", "С…", 118, 42, 10, 16
     AddCombo comp, "cboT", 130, 38, 54, 20
     AddLabel comp, "lblDash1", "-", 186, 42, 8, 16
     AddCombo comp, "cboD1", 196, 38, 54, 20
-    AddLabel comp, "lblX2", "х", 252, 42, 10, 16
+    AddLabel comp, "lblX2", "С…", 252, 42, 10, 16
     AddLabel comp, "lblT1", "", 264, 38, 40, 20, 1
     AddLabel comp, "lblDash2", "-", 306, 42, 8, 16
     AddCombo comp, "cboSteel", 316, 38, 72, 20
     AddLabel comp, "lblGost", "", 394, 42, 140, 16
-    'строка 3: подконтрольность
-    AddCheck comp, "chkPodk", "Подконтрольная деталь (П)", 10, 66, 210, 18
-    'строка 4: превью
+    'СЃС‚СЂРѕРєР° 3: РїРѕРґРєРѕРЅС‚СЂРѕР»СЊРЅРѕСЃС‚СЊ
+    AddCheck comp, "chkPodk", "РџРѕРґРєРѕРЅС‚СЂРѕР»СЊРЅР°СЏ РґРµС‚Р°Р»СЊ (Рџ)", 10, 66, 210, 18
+    'СЃС‚СЂРѕРєР° 4: РїСЂРµРІСЊСЋ
     AddLabel comp, "lblPreview", "", 10, 92, 522, 36, 1
-    'строка 5: кнопки
-    AddButton comp, "btnOK", "ОК", 352, 140, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 447, 140, 85, 24
+    'СЃС‚СЂРѕРєР° 5: РєРЅРѕРїРєРё
+    AddButton comp, "btnOK", "РћРљ", 352, 140, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 447, 140, 85, 24
 End Sub
 
-Public Sub Собрать_frmSection()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSection()
     Dim comp As Object, f As Object
     Set comp = GetForm("frmSection")
     ClearControls comp
-    comp.Properties("Caption").Value = "Участок"
+    comp.Properties("Caption").Value = "РЈС‡Р°СЃС‚РѕРє"
     comp.Properties("Width").Value = 820
     comp.Properties("Height").Value = 200
 
     Set f = AddFrame(comp.Designer, "fraId", "", 8, 6, 210, 120)
-    AddLabelIn f, "lblMark", "Участок", 8, 20, 92, 16
+    AddLabelIn f, "lblMark", "РЈС‡Р°СЃС‚РѕРє", 8, 20, 92, 16
     AddTextIn f, "txtMark", 104, 18, 98, 20
-    AddLabelIn f, "lblProduct", "Поток", 8, 44, 92, 16
+    AddLabelIn f, "lblProduct", "РџРѕС‚РѕРє", 8, 44, 92, 16
     AddTextIn f, "txtProduct", 104, 42, 98, 20
-    AddLabelIn f, "lblStart", "Начало участка", 8, 68, 92, 16
+    AddLabelIn f, "lblStart", "РќР°С‡Р°Р»Рѕ СѓС‡Р°СЃС‚РєР°", 8, 68, 92, 16
     AddTextIn f, "txtStart", 104, 66, 98, 20
-    AddLabelIn f, "lblEnd", "Конец участка", 8, 92, 92, 16
+    AddLabelIn f, "lblEnd", "РљРѕРЅРµС† СѓС‡Р°СЃС‚РєР°", 8, 92, 92, 16
     AddTextIn f, "txtEnd", 104, 90, 98, 20
 
     Set f = AddFrame(comp.Designer, "fraMode", "", 224, 6, 170, 120)
-    AddLabelIn f, "lblTw", "T раб, °C", 8, 20, 76, 16
+    AddLabelIn f, "lblTw", "T СЂР°Р±, В°C", 8, 20, 76, 16
     AddTextIn f, "txtTw", 88, 18, 74, 20
-    AddLabelIn f, "lblTd", "T расч, °C", 8, 44, 76, 16
+    AddLabelIn f, "lblTd", "T СЂР°СЃС‡, В°C", 8, 44, 76, 16
     AddTextIn f, "txtTd", 88, 42, 74, 20
-    AddLabelIn f, "lblPw", "P раб, МПа", 8, 68, 76, 16
+    AddLabelIn f, "lblPw", "P СЂР°Р±, РњРџР°", 8, 68, 76, 16
     AddTextIn f, "txtPw", 88, 66, 74, 20
-    AddLabelIn f, "lblPd", "P расч, МПа", 8, 92, 76, 16
+    AddLabelIn f, "lblPd", "P СЂР°СЃС‡, РњРџР°", 8, 92, 76, 16
     AddTextIn f, "txtPd", 88, 90, 74, 20
 
     Set f = AddFrame(comp.Designer, "fraTest", "", 400, 6, 200, 120)
-    AddLabelIn f, "lblH1", "прочность", 8, 16, 60, 14
-    AddLabelIn f, "lblH2", "плотность", 70, 16, 60, 14
-    AddLabelIn f, "lblH3", "гермет.", 132, 16, 60, 14
+    AddLabelIn f, "lblH1", "РїСЂРѕС‡РЅРѕСЃС‚СЊ", 8, 16, 60, 14
+    AddLabelIn f, "lblH2", "РїР»РѕС‚РЅРѕСЃС‚СЊ", 70, 16, 60, 14
+    AddLabelIn f, "lblH3", "РіРµСЂРјРµС‚.", 132, 16, 60, 14
     AddComboIn f, "cboTestMed", 8, 34, 60, 20
     AddComboIn f, "cboTightMed", 132, 34, 60, 20
     AddLabelIn f, "lblP1", "", 8, 60, 60, 20, 1
@@ -200,204 +207,204 @@ Public Sub Собрать_frmSection()
     AddLabelIn f, "lblP3", "", 132, 60, 60, 20, 1
 
     Set f = AddFrame(comp.Designer, "fraEnv", "", 606, 6, 186, 120)
-    AddLabelIn f, "lblState", "Состояние", 8, 20, 64, 16
+    AddLabelIn f, "lblState", "РЎРѕСЃС‚РѕСЏРЅРёРµ", 8, 20, 64, 16
     AddComboIn f, "cboState", 76, 18, 102, 20
-    AddLabelIn f, "lblCatG", "Кат. ГОСТ", 8, 44, 64, 16
+    AddLabelIn f, "lblCatG", "РљР°С‚. Р“РћРЎРў", 8, 44, 64, 16
     AddTextIn f, "txtCatG", 76, 42, 102, 20
-    AddLabelIn f, "lblCatTR", "Кат. ТР ТС", 8, 68, 64, 16
+    AddLabelIn f, "lblCatTR", "РљР°С‚. РўР  РўРЎ", 8, 68, 64, 16
     AddTextIn f, "txtCatTR", 76, 66, 102, 20
-    AddLabelIn f, "lblIns", "Изоляция", 8, 92, 64, 16
+    AddLabelIn f, "lblIns", "РР·РѕР»СЏС†РёСЏ", 8, 92, 64, 16
     AddComboIn f, "cboIns", 76, 90, 102, 20
 
-    AddButton comp, "btnOK", "ОК", 620, 136, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 715, 136, 85, 24
+    AddButton comp, "btnOK", "РћРљ", 620, 136, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 715, 136, 85, 24
 End Sub
 
-Public Sub Собрать_frmTrans()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmTrans()
     Dim comp As Object
     Set comp = GetForm("frmTrans")
     ClearControls comp
-    comp.Properties("Caption").Value = "Переход"
+    comp.Properties("Caption").Value = "РџРµСЂРµС…РѕРґ"
     comp.Properties("Width").Value = 560
     comp.Properties("Height").Value = 200
-    'строка 1: параметры
-    AddLabel comp, "lblPrefix", "Переход", 10, 42, 48, 16
+    'СЃС‚СЂРѕРєР° 1: РїР°СЂР°РјРµС‚СЂС‹
+    AddLabel comp, "lblPrefix", "РџРµСЂРµС…РѕРґ", 10, 42, 48, 16
     AddCombo comp, "cboD", 62, 38, 54, 20
-    AddLabel comp, "lblX", "х", 118, 42, 10, 16
+    AddLabel comp, "lblX", "С…", 118, 42, 10, 16
     AddCombo comp, "cboT", 130, 38, 54, 20
     AddLabel comp, "lblDash1", "-", 186, 42, 8, 16
     AddCombo comp, "cboD1", 196, 38, 54, 20
-    AddLabel comp, "lblX2", "х", 252, 42, 10, 16
+    AddLabel comp, "lblX2", "С…", 252, 42, 10, 16
     AddLabel comp, "lblT1", "", 264, 38, 40, 20, 1
     AddLabel comp, "lblDash2", "-", 306, 42, 8, 16
     AddCombo comp, "cboSteel", 316, 38, 72, 20
     AddLabel comp, "lblGost", "", 394, 42, 140, 16
-    'строка 2: длина + подконтрольность
-    AddLabel comp, "lblL", "L, мм", 10, 66, 40, 16
+    'СЃС‚СЂРѕРєР° 2: РґР»РёРЅР° + РїРѕРґРєРѕРЅС‚СЂРѕР»СЊРЅРѕСЃС‚СЊ
+    AddLabel comp, "lblL", "L, РјРј", 10, 66, 40, 16
     AddLabel comp, "lblLVal", "", 52, 66, 54, 20, 1
     AddCombo comp, "cboL", 52, 62, 54, 20
-    AddCheck comp, "chkPodk", "Подконтрольная деталь (П)", 120, 66, 210, 18
-    'строка 3: превью
+    AddCheck comp, "chkPodk", "РџРѕРґРєРѕРЅС‚СЂРѕР»СЊРЅР°СЏ РґРµС‚Р°Р»СЊ (Рџ)", 120, 66, 210, 18
+    'СЃС‚СЂРѕРєР° 3: РїСЂРµРІСЊСЋ
     AddLabel comp, "lblPreview", "", 10, 92, 522, 36, 1
-    'строка 4: кнопки
-    AddButton comp, "btnOK", "ОК", 352, 140, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 447, 140, 85, 24
+    'СЃС‚СЂРѕРєР° 4: РєРЅРѕРїРєРё
+    AddButton comp, "btnOK", "РћРљ", 352, 140, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 447, 140, 85, 24
 End Sub
 
 ' =========================================================================
-' ФОРМЫ ДЛЯ ОПОР
+' Р¤РћР РњР« Р”Р›РЇ РћРџРћР 
 ' =========================================================================
 
-Public Sub Собрать_frmSupportPick()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportPick()
     Dim comp As Object
     Set comp = GetForm("frmSupportPick")
     ClearControls comp
-    comp.Properties("Caption").Value = "Выбор типа опоры"
+    comp.Properties("Caption").Value = "Р’С‹Р±РѕСЂ С‚РёРїР° РѕРїРѕСЂС‹"
     comp.Properties("Width").Value = 260
     comp.Properties("Height").Value = 120
     
     AddCombo comp, "cboSupport", 10, 15, 240, 20
-    AddButton comp, "btnOK", "Выбрать", 60, 50, 70, 24
-    AddButton comp, "btnCancel", "Отмена", 140, 50, 70, 24
+    AddButton comp, "btnOK", "Р’С‹Р±СЂР°С‚СЊ", 60, 50, 70, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 140, 50, 70, 24
 End Sub
 
-Public Sub Собрать_frmSupportTO()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportTO()
     Dim comp As Object
     Set comp = GetForm("frmSupportTO")
     ClearControls comp
-    comp.Properties("Caption").Value = "Опора типа ТО"
+    comp.Properties("Caption").Value = "РћРїРѕСЂР° С‚РёРїР° РўРћ"
     comp.Properties("Width").Value = 340
     comp.Properties("Height").Value = 250
     
-    AddLabel comp, "lblD", "Диаметр", 10, 12, 50, 16
+    AddLabel comp, "lblD", "Р”РёР°РјРµС‚СЂ", 10, 12, 50, 16
     AddCombo comp, "cboD", 65, 10, 80, 20
-    AddLabel comp, "lblExec", "Исполнение", 155, 12, 60, 16
+    AddLabel comp, "lblExec", "РСЃРїРѕР»РЅРµРЅРёРµ", 155, 12, 60, 16
     AddCombo comp, "cboExec", 220, 10, 60, 20
     
-    AddLabel comp, "lblSteel", "Сталь", 10, 42, 50, 16
+    AddLabel comp, "lblSteel", "РЎС‚Р°Р»СЊ", 10, 42, 50, 16
     AddCombo comp, "cboSteel", 65, 40, 80, 20
     
-    AddCheck comp, "chkHole", "Отверстия в плите (О)", 10, 70, 150, 18
+    AddCheck comp, "chkHole", "РћС‚РІРµСЂСЃС‚РёСЏ РІ РїР»РёС‚Рµ (Рћ)", 10, 70, 150, 18
     
     AddLabel comp, "lblPreview", "", 10, 100, 315, 36, 1
-    AddButton comp, "btnOK", "ОК", 150, 170, 80, 24
-    AddButton comp, "btnCancel", "Отмена", 240, 170, 80, 24
+    AddButton comp, "btnOK", "РћРљ", 150, 170, 80, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 240, 170, 80, 24
 End Sub
 
-Public Sub Собрать_frmSupportVP()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportVP()
     Dim comp As Object
     Set comp = GetForm("frmSupportVP")
     ClearControls comp
-    comp.Properties("Caption").Value = "Опора типа ВП"
+    comp.Properties("Caption").Value = "РћРїРѕСЂР° С‚РёРїР° Р’Рџ"
     comp.Properties("Width").Value = 340
     comp.Properties("Height").Value = 250
     
-    AddLabel comp, "lblD", "Диаметр", 10, 12, 50, 16
+    AddLabel comp, "lblD", "Р”РёР°РјРµС‚СЂ", 10, 12, 50, 16
     AddCombo comp, "cboD", 65, 10, 80, 20
-    AddLabel comp, "lblExec", "Исполнение", 155, 12, 60, 16
+    AddLabel comp, "lblExec", "РСЃРїРѕР»РЅРµРЅРёРµ", 155, 12, 60, 16
     AddCombo comp, "cboExec", 220, 10, 60, 20
     
-    AddLabel comp, "lblSteel", "Сталь", 10, 42, 50, 16
+    AddLabel comp, "lblSteel", "РЎС‚Р°Р»СЊ", 10, 42, 50, 16
     AddCombo comp, "cboSteel", 65, 40, 80, 20
     
-    AddCheck comp, "chkWelded", "Сварной корпус (С)", 10, 70, 150, 18
+    AddCheck comp, "chkWelded", "РЎРІР°СЂРЅРѕР№ РєРѕСЂРїСѓСЃ (РЎ)", 10, 70, 150, 18
     
     AddLabel comp, "lblPreview", "", 10, 100, 315, 36, 1
-    AddButton comp, "btnOK", "ОК", 150, 170, 80, 24
-    AddButton comp, "btnCancel", "Отмена", 240, 170, 80, 24
+    AddButton comp, "btnOK", "РћРљ", 150, 170, 80, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 240, 170, 80, 24
 End Sub
 
-Public Sub Собрать_frmSupportHB()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportHB()
     Dim comp As Object
     Set comp = GetForm("frmSupportHB")
     ClearControls comp
-    comp.Properties("Caption").Value = "Опора типа ХБ"
+    comp.Properties("Caption").Value = "РћРїРѕСЂР° С‚РёРїР° РҐР‘"
     comp.Properties("Width").Value = 340
     comp.Properties("Height").Value = 230
     
-    AddLabel comp, "lblD", "Диаметр", 10, 12, 50, 16
+    AddLabel comp, "lblD", "Р”РёР°РјРµС‚СЂ", 10, 12, 50, 16
     AddCombo comp, "cboD", 65, 10, 80, 20
-    AddLabel comp, "lblExec", "Исполнение", 155, 12, 60, 16
+    AddLabel comp, "lblExec", "РСЃРїРѕР»РЅРµРЅРёРµ", 155, 12, 60, 16
     AddCombo comp, "cboExec", 220, 10, 60, 20
     
-    AddLabel comp, "lblSteel", "Сталь", 10, 42, 50, 16
+    AddLabel comp, "lblSteel", "РЎС‚Р°Р»СЊ", 10, 42, 50, 16
     AddCombo comp, "cboSteel", 65, 40, 80, 20
     
     AddLabel comp, "lblPreview", "", 10, 80, 315, 36, 1
-    AddButton comp, "btnOK", "ОК", 150, 150, 80, 24
-    AddButton comp, "btnCancel", "Отмена", 240, 150, 80, 24
+    AddButton comp, "btnOK", "РћРљ", 150, 150, 80, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 240, 150, 80, 24
 End Sub
 
-Public Sub Собрать_frmSupportKP()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportKP()
     Dim comp As Object
     Set comp = GetForm("frmSupportKP")
     ClearControls comp
-    comp.Properties("Caption").Value = "Опора типа КП"
+    comp.Properties("Caption").Value = "РћРїРѕСЂР° С‚РёРїР° РљРџ"
     comp.Properties("Width").Value = 360
     comp.Properties("Height").Value = 290
     
-    AddLabel comp, "lblD", "Диаметр", 10, 12, 50, 16
+    AddLabel comp, "lblD", "Р”РёР°РјРµС‚СЂ", 10, 12, 50, 16
     AddCombo comp, "cboD", 65, 10, 80, 20
-    AddLabel comp, "lblExec", "Исполнение", 155, 12, 60, 16
+    AddLabel comp, "lblExec", "РСЃРїРѕР»РЅРµРЅРёРµ", 155, 12, 60, 16
     AddCombo comp, "cboExec", 220, 10, 60, 20
     
-    AddLabel comp, "lblSteel", "Сталь", 10, 42, 50, 16
+    AddLabel comp, "lblSteel", "РЎС‚Р°Р»СЊ", 10, 42, 50, 16
     AddCombo comp, "cboSteel", 65, 40, 80, 20
     
-    AddCheck comp, "chkWelded", "Сварной корпус (С)", 10, 70, 150, 18
-    AddCheck comp, "chkWaste", "Вырез для спутника (в)", 10, 90, 130, 14
+    AddCheck comp, "chkWelded", "РЎРІР°СЂРЅРѕР№ РєРѕСЂРїСѓСЃ (РЎ)", 10, 70, 150, 18
+    AddCheck comp, "chkWaste", "Р’С‹СЂРµР· РґР»СЏ СЃРїСѓС‚РЅРёРєР° (РІ)", 10, 90, 130, 14
     
     AddLabel comp, "lblPreview", "", 10, 120, 335, 36, 1
-    AddButton comp, "btnOK", "ОК", 160, 210, 80, 24
-    AddButton comp, "btnCancel", "Отмена", 250, 210, 80, 24
+    AddButton comp, "btnOK", "РћРљ", 160, 210, 80, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 250, 210, 80, 24
 End Sub
 
-Public Sub Собрать_frmSupportKH()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmSupportKH()
     Dim comp As Object
     Set comp = GetForm("frmSupportKH")
     ClearControls comp
-    comp.Properties("Caption").Value = "Опора типа КХ"
+    comp.Properties("Caption").Value = "РћРїРѕСЂР° С‚РёРїР° РљРҐ"
     comp.Properties("Width").Value = 360
     comp.Properties("Height").Value = 310
     
-    AddLabel comp, "lblD", "Диаметр", 10, 12, 50, 16
+    AddLabel comp, "lblD", "Р”РёР°РјРµС‚СЂ", 10, 12, 50, 16
     AddCombo comp, "cboD", 65, 10, 80, 20
-    AddLabel comp, "lblExec", "Исполнение", 155, 12, 60, 16
+    AddLabel comp, "lblExec", "РСЃРїРѕР»РЅРµРЅРёРµ", 155, 12, 60, 16
     AddCombo comp, "cboExec", 220, 10, 60, 20
     
-    AddLabel comp, "lblSteel", "Сталь", 10, 42, 50, 16
+    AddLabel comp, "lblSteel", "РЎС‚Р°Р»СЊ", 10, 42, 50, 16
     AddCombo comp, "cboSteel", 65, 40, 80, 20
     
-    AddCheck comp, "chkWelded", "Сварной корпус (С)", 10, 70, 150, 18
-    AddCheck comp, "chkWaste", "Вырез для спутника (в)", 10, 90, 130, 14
-    AddCheck comp, "chkFixed", "Использовать как неподвижную (с упорами)", 10, 110, 250, 18
+    AddCheck comp, "chkWelded", "РЎРІР°СЂРЅРѕР№ РєРѕСЂРїСѓСЃ (РЎ)", 10, 70, 150, 18
+    AddCheck comp, "chkWaste", "Р’С‹СЂРµР· РґР»СЏ СЃРїСѓС‚РЅРёРєР° (РІ)", 10, 90, 130, 14
+    AddCheck comp, "chkFixed", "РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєР°Рє РЅРµРїРѕРґРІРёР¶РЅСѓСЋ (СЃ СѓРїРѕСЂР°РјРё)", 10, 110, 250, 18
     
     AddLabel comp, "lblPreview", "", 10, 140, 335, 40, 1
-    AddButton comp, "btnOK", "ОК", 160, 230, 80, 24
-    AddButton comp, "btnCancel", "Отмена", 250, 230, 80, 24
+    AddButton comp, "btnOK", "РћРљ", 160, 230, 80, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 250, 230, 80, 24
 End Sub
 
-Public Sub СписокКомпонентов()
+Public Sub РЎРїРёСЃРѕРєРљРѕРјРїРѕРЅРµРЅС‚РѕРІ()
     Dim i As Long, msg As String
     For i = 1 To ThisWorkbook.VBProject.VBComponents.Count
         msg = msg & i & ": " & ThisWorkbook.VBProject.VBComponents(i).Name & _
-              "  (тип " & ThisWorkbook.VBProject.VBComponents(i).Type & ")" & vbCrLf
+              "  (С‚РёРї " & ThisWorkbook.VBProject.VBComponents(i).Type & ")" & vbCrLf
     Next i
-    MsgBox msg, vbInformation, "Компоненты проекта"
+    MsgBox msg, vbInformation, "РљРѕРјРїРѕРЅРµРЅС‚С‹ РїСЂРѕРµРєС‚Р°"
 End Sub
 
-Public Sub Собрать_frmFlange()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmFlange()
     Dim comp As Object
     Set comp = GetForm("frmFlange")
     ClearControls comp
-    comp.Properties("Caption").Value = "Фланец"
+    comp.Properties("Caption").Value = "Р¤Р»Р°РЅРµС†"
     comp.Properties("Width").Value = 560
     comp.Properties("Height").Value = 170
-    'строка 1: тип фланца
-    AddOption comp, "opt11", "Тип 11 (приварной встык)", 24, 8, 150, 18
-    AddOption comp, "opt01", "Тип 01 (плоский)", 180, 8, 150, 18
-    'строка 2: параметры (без лишних дефисов — поля и так визуально разделены)
-    AddLabel comp, "lblPrefix", "Фланец", 10, 38, 48, 16
+    'СЃС‚СЂРѕРєР° 1: С‚РёРї С„Р»Р°РЅС†Р°
+    AddOption comp, "opt11", "РўРёРї 11 (РїСЂРёРІР°СЂРЅРѕР№ РІСЃС‚С‹Рє)", 24, 8, 150, 18
+    AddOption comp, "opt01", "РўРёРї 01 (РїР»РѕСЃРєРёР№)", 180, 8, 150, 18
+    'СЃС‚СЂРѕРєР° 2: РїР°СЂР°РјРµС‚СЂС‹ (Р±РµР· Р»РёС€РЅРёС… РґРµС„РёСЃРѕРІ вЂ” РїРѕР»СЏ Рё С‚Р°Рє РІРёР·СѓР°Р»СЊРЅРѕ СЂР°Р·РґРµР»РµРЅС‹)
+    AddLabel comp, "lblPrefix", "Р¤Р»Р°РЅРµС†", 10, 38, 48, 16
     AddCombo comp, "cboDN", 62, 34, 54, 20
     AddCombo comp, "cboPN", 120, 34, 54, 20
     AddLabel comp, "lblTyp", "", 178, 38, 30, 20
@@ -406,41 +413,41 @@ Public Sub Собрать_frmFlange()
     AddCombo comp, "cboSteel", 278, 34, 60, 20
     AddCombo comp, "cboGrK", 342, 34, 50, 20
     AddLabel comp, "lblGost", "", 396, 38, 140, 16
-    'строка 3: превью
+    'СЃС‚СЂРѕРєР° 3: РїСЂРµРІСЊСЋ
     AddLabel comp, "lblPreview", "", 10, 64, 522, 36, 1
-    'строка 4: кнопки
-    AddButton comp, "btnOK", "ОК", 352, 110, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 447, 110, 85, 24
+    'СЃС‚СЂРѕРєР° 4: РєРЅРѕРїРєРё
+    AddButton comp, "btnOK", "РћРљ", 352, 110, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 447, 110, 85, 24
 End Sub
 
-Public Sub Собрать_frmCap()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmCap()
     Dim comp As Object
     Set comp = GetForm("frmCap")
     ClearControls comp
-    comp.Properties("Caption").Value = "Заглушка эллиптическая"
+    comp.Properties("Caption").Value = "Р—Р°РіР»СѓС€РєР° СЌР»Р»РёРїС‚РёС‡РµСЃРєР°СЏ"
     comp.Properties("Width").Value = 480
     comp.Properties("Height").Value = 190
-    AddLabel comp, "lblPrefix", "Заглушка", 10, 42, 48, 16
+    AddLabel comp, "lblPrefix", "Р—Р°РіР»СѓС€РєР°", 10, 42, 48, 16
     AddCombo comp, "cboD", 62, 38, 54, 20
-    AddLabel comp, "lblX", "х", 118, 42, 10, 16
+    AddLabel comp, "lblX", "С…", 118, 42, 10, 16
     AddCombo comp, "cboT", 130, 38, 54, 20
     AddLabel comp, "lblDash1", "-", 186, 42, 8, 16
     AddCombo comp, "cboSteel", 196, 38, 72, 20
     AddLabel comp, "lblGost", "", 274, 42, 150, 16
-    AddCheck comp, "chkPodk", "Подконтрольная деталь (П)", 10, 66, 210, 18
+    AddCheck comp, "chkPodk", "РџРѕРґРєРѕРЅС‚СЂРѕР»СЊРЅР°СЏ РґРµС‚Р°Р»СЊ (Рџ)", 10, 66, 210, 18
     AddLabel comp, "lblPreview", "", 10, 92, 440, 36, 1
-    AddButton comp, "btnOK", "ОК", 292, 140, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 387, 140, 85, 24
+    AddButton comp, "btnOK", "РћРљ", 292, 140, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 387, 140, 85, 24
 End Sub
 
-Public Sub Собрать_frmBlindFl()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmBlindFl()
     Dim comp As Object
     Set comp = GetForm("frmBlindFl")
     ClearControls comp
-    comp.Properties("Caption").Value = "Заглушка фланцевая"
+    comp.Properties("Caption").Value = "Р—Р°РіР»СѓС€РєР° С„Р»Р°РЅС†РµРІР°СЏ"
     comp.Properties("Width").Value = 560
     comp.Properties("Height").Value = 185
-    AddLabel comp, "lblPrefix", "Заглушка", 10, 42, 48, 16
+    AddLabel comp, "lblPrefix", "Р—Р°РіР»СѓС€РєР°", 10, 42, 48, 16
     AddCombo comp, "cboDN", 62, 38, 54, 20
     AddLabel comp, "lblDash1", "-", 118, 42, 8, 16
     AddCombo comp, "cboPN", 128, 38, 54, 20
@@ -454,20 +461,20 @@ Public Sub Собрать_frmBlindFl()
     AddCombo comp, "cboGrK", 350, 38, 50, 20
     AddLabel comp, "lblGost", "", 404, 42, 140, 16
     AddLabel comp, "lblPreview", "", 10, 72, 522, 36, 1
-    AddButton comp, "btnOK", "ОК", 352, 120, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 447, 120, 85, 24
+    AddButton comp, "btnOK", "РћРљ", 352, 120, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 447, 120, 85, 24
 End Sub
 
-Public Sub Собрать_frmBlindInt()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmBlindInt()
     Dim comp As Object
     Set comp = GetForm("frmBlindInt")
     ClearControls comp
-    comp.Properties("Caption").Value = "Заглушка межфланцевая"
+    comp.Properties("Caption").Value = "Р—Р°РіР»СѓС€РєР° РјРµР¶С„Р»Р°РЅС†РµРІР°СЏ"
     comp.Properties("Width").Value = 520
     comp.Properties("Height").Value = 190
-    AddOption comp, "optTurn", "поворотная", 24, 8, 120, 18
-    AddOption comp, "optTail", "с хвостовиком", 150, 8, 140, 18
-    AddLabel comp, "lblPrefix", "Заглушка", 10, 42, 48, 16
+    AddOption comp, "optTurn", "РїРѕРІРѕСЂРѕС‚РЅР°СЏ", 24, 8, 120, 18
+    AddOption comp, "optTail", "СЃ С…РІРѕСЃС‚РѕРІРёРєРѕРј", 150, 8, 140, 18
+    AddLabel comp, "lblPrefix", "Р—Р°РіР»СѓС€РєР°", 10, 42, 48, 16
     AddCombo comp, "cboTyp", 62, 38, 40, 20
     AddLabel comp, "lblDash1", "-", 104, 42, 8, 16
     AddCombo comp, "cboDN", 114, 38, 54, 20
@@ -477,86 +484,20 @@ Public Sub Собрать_frmBlindInt()
     AddCombo comp, "cboSteel", 246, 38, 72, 20
     AddLabel comp, "lblGost", "", 324, 42, 170, 16
     AddLabel comp, "lblPreview", "", 10, 72, 482, 36, 1
-    AddButton comp, "btnOK", "ОК", 322, 120, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 417, 120, 85, 24
+    AddButton comp, "btnOK", "РћРљ", 322, 120, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 417, 120, 85, 24
 End Sub
 
-Public Sub Собрать_frmValve()
-    Dim comp As Object
-    Set comp = GetForm("frmValve")
-    ClearControls comp
-    comp.Properties("Caption").Value = "Кран шаровой фланцевый"
-    comp.Properties("Width").Value = 520
-    comp.Properties("Height").Value = 560
-    
-    ' Строка 1: DN и PN
-    AddLabel comp, "lblDN", "DN", 10, 10, 30, 16
-    AddCombo comp, "cboDN", 44, 8, 60, 20
-    AddLabel comp, "lblPN", "PN, МПа", 110, 10, 50, 16
-    AddCombo comp, "cboPN", 164, 8, 60, 20
-    
-    ' Строка 2: класс герметичности
-    AddLabel comp, "lblKL", "Класс герм.", 10, 38, 70, 16
-    AddCombo comp, "cboKL", 84, 36, 140, 20
-    
-    ' Строка 3: температура
-    AddLabel comp, "lblTFrom", "от", 10, 66, 20, 16
-    AddTextIn comp.Designer, "txtTFrom", 34, 64, 60, 20
-    AddLabel comp, "lblTTo", "до", 100, 66, 20, 16
-    AddTextIn comp.Designer, "txtTTo", 124, 64, 60, 20
-    AddLabel comp, "lblTUnit", "°С", 190, 66, 20, 16
-    
-    ' Строка 4: корпус
-    AddLabel comp, "lblKorp", "Корпус", 10, 94, 50, 16
-    AddCombo comp, "cboKorp", 64, 92, 160, 20
-    
-    ' Строка 5: климат
-    AddLabel comp, "lblKlim", "Климат", 10, 122, 50, 16
-    AddCombo comp, "cboKlim", 64, 120, 80, 20
-    
-    ' Строка 6: среда
-    AddLabel comp, "lblSred", "Среда", 10, 150, 50, 16
-    AddTextIn comp.Designer, "txtSred", 64, 148, 160, 20
-    
-    ' Строка 7: уплотнение
-    AddLabel comp, "lblUpl", "Упл. пов.", 10, 178, 60, 16
-    AddCombo comp, "cboUpl", 74, 176, 80, 20
-    
-    ' Разделитель
-    AddLabel comp, "lblKompl", "В комплекте с:", 10, 206, 200, 16
-    
-    ' Чекбоксы комплекта
-    AddCheck comp, "chkZP", "Межфланцевая заглушка", 10, 228, 200, 18
-    AddCombo comp, "cboZPExec", 220, 226, 140, 20
-    AddCombo comp, "cboZPSteel", 370, 226, 80, 20
-    
-    AddCheck comp, "chkZF", "Фланцевая заглушка", 10, 252, 200, 18
-    AddCombo comp, "cboZFSteel", 220, 250, 80, 20
-    
-    AddCheck comp, "chkOF", "Ответные фланцы", 10, 276, 200, 18
-    AddCombo comp, "cboOFTyp", 220, 274, 60, 20
-    
-    AddCheck comp, "chkPR", "Прокладки", 10, 300, 200, 18
-    AddCombo comp, "cboPRTyp", 220, 298, 80, 20
-    
-    AddCheck comp, "chkSH", "Шпильки", 10, 324, 200, 18
-    AddCheck comp, "chkG", "Гайки", 10, 348, 200, 18
-    
-    ' Кнопки
-    AddButton comp, "btnOK", "ОК", 322, 390, 85, 24
-    AddButton comp, "btnCancel", "Отмена", 417, 390, 85, 24
-End Sub
-
-Public Sub Собрать_frmPipe()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmPipe()
 Dim comp As Object
 Set comp = GetForm("frmPipe")
 ClearControls comp
-comp.Properties("Caption").Value = "Труба"
+comp.Properties("Caption").Value = "РўСЂСѓР±Р°"
 comp.Properties("Width").Value = 560
 comp.Properties("Height").Value = 180
-AddLabel comp, "lblPrefix", "Труба", 10, 14, 48, 16
+AddLabel comp, "lblPrefix", "РўСЂСѓР±Р°", 10, 14, 48, 16
 AddCombo comp, "cboD", 62, 10, 54, 20
-AddLabel comp, "lblX", "х", 118, 14, 10, 16
+AddLabel comp, "lblX", "С…", 118, 14, 10, 16
 AddCombo comp, "cboS", 130, 10, 54, 20
 AddLabel comp, "lblDash1", "-", 186, 14, 8, 16
 AddCombo comp, "cboGroup", 196, 10, 54, 20
@@ -564,52 +505,20 @@ AddCombo comp, "cboSteel", 254, 10, 72, 20
 AddLabel comp, "lblND1", "", 10, 40, 260, 16
 AddLabel comp, "lblND2", "", 274, 40, 260, 16
 AddLabel comp, "lblPreview", "", 10, 66, 522, 36, 1
-AddButton comp, "btnOK", "ОК", 352, 112, 85, 24
-AddButton comp, "btnCancel", "Отмена", 447, 112, 85, 24
+AddButton comp, "btnOK", "РћРљ", 352, 112, 85, 24
+AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 447, 112, 85, 24
 End Sub
 
-Public Sub Собрать_frmPipePick()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmPipePick()
 Dim comp As Object
 Set comp = GetForm("frmPipePick")
 ClearControls comp
-comp.Properties("Caption").Value = "Выбор типа трубы"
+comp.Properties("Caption").Value = "Р’С‹Р±РѕСЂ С‚РёРїР° С‚СЂСѓР±С‹"
 comp.Properties("Width").Value = 300
 comp.Properties("Height").Value = 120
 AddCombo comp, "cboPipe", 10, 15, 260, 20
-AddButton comp, "btnOK", "Выбрать", 70, 50, 80, 24
-AddButton comp, "btnCancel", "Отмена", 160, 50, 80, 24
-End Sub
-
-Public Sub Собрать_frmValveM()
-Dim comp As Object
-Set comp = GetForm("frmValveM")
-ClearControls comp
-comp.Properties("Caption").Value = "Кран шаровой муфтовый"
-comp.Properties("Width").Value = 400
-comp.Properties("Height").Value = 270
-AddLabel comp, "lblDN", "DN", 10, 10, 30, 16
-AddCombo comp, "cboDN", 44, 8, 60, 20
-AddLabel comp, "lblPN", "PN, МПа", 110, 10, 50, 16
-AddCombo comp, "cboPN", 164, 8, 60, 20
-AddLabel comp, "lblKL", "Класс герм.", 10, 38, 70, 16
-AddCombo comp, "cboKL", 84, 36, 140, 20
-AddLabel comp, "lblTFrom", "от", 10, 66, 20, 16
-AddTextIn comp.Designer, "txtTFrom", 34, 64, 60, 20
-AddLabel comp, "lblTTo", "до", 100, 66, 20, 16
-AddTextIn comp.Designer, "txtTTo", 124, 64, 60, 20
-AddLabel comp, "lblTUnit", "°С", 190, 66, 20, 16
-AddLabel comp, "lblKorp", "Корпус", 10, 94, 50, 16
-AddCombo comp, "cboKorp", 64, 92, 160, 20
-AddLabel comp, "lblKlim", "Климат", 10, 122, 50, 16
-AddCombo comp, "cboKlim", 64, 120, 80, 20
-AddLabel comp, "lblSred", "Среда", 10, 150, 50, 16
-AddTextIn comp.Designer, "txtSred", 64, 148, 160, 20
-AddLabel comp, "lblJoin", "Присоед.", 10, 178, 50, 16
-AddCombo comp, "cboJoin", 64, 176, 110, 20
-AddTextIn comp.Designer, "txtThread", 180, 176, 90, 20
-AddCombo comp, "cboThreadDir", 276, 176, 100, 20
-AddButton comp, "btnOK", "ОК", 200, 210, 85, 24
-AddButton comp, "btnCancel", "Отмена", 295, 210, 85, 24
+AddButton comp, "btnOK", "Р’С‹Р±СЂР°С‚СЊ", 70, 50, 80, 24
+AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 160, 50, 80, 24
 End Sub
 
 Private Sub AddList(ByVal comp As Object, ByVal nm As String, _
@@ -620,20 +529,119 @@ c.Name = nm
 c.Left = L: c.Top = t: c.Width = w: c.Height = h
 End Sub
 
-Public Sub Собрать_frmTypePick()
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmTypePick()
 Dim comp As Object
 Set comp = GetForm("frmTypePick")
 ClearControls comp
-comp.Properties("Caption").Value = "Выбор типа элемента"
+comp.Properties("Caption").Value = "Р’С‹Р±РѕСЂ С‚РёРїР° СЌР»РµРјРµРЅС‚Р°"
 comp.Properties("Width").Value = 560
 comp.Properties("Height").Value = 290
-AddLabel comp, "lblGroups", "Группы:", 10, 8, 180, 16
-AddLabel comp, "lblItems", "Элементы группы:", 200, 8, 340, 16
+AddLabel comp, "lblGroups", "Р“СЂСѓРїРїС‹:", 10, 8, 180, 16
+AddLabel comp, "lblItems", "Р­Р»РµРјРµРЅС‚С‹ РіСЂСѓРїРїС‹:", 200, 8, 340, 16
 AddList comp, "lstGroups", 10, 26, 180, 200
 AddList comp, "lstItems", 200, 26, 340, 200
-AddButton comp, "btnOK", "ОК", 350, 236, 85, 24
-AddButton comp, "btnCancel", "Отмена", 445, 236, 85, 24
+AddButton comp, "btnOK", "РћРљ", 350, 236, 85, 24
+AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 445, 236, 85, 24
 comp.Designer.Controls("btnOK").Default = True
 comp.Designer.Controls("btnCancel").Cancel = True
 End Sub
 
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmValve()
+    Dim comp As Object, f As Object
+    Set comp = GetForm("frmValve")
+    ClearControls comp
+    comp.Properties("Caption").Value = "РљСЂР°РЅ С€Р°СЂРѕРІРѕР№ С„Р»Р°РЅС†РµРІС‹Р№"
+    comp.Properties("Width").Value = 520
+    comp.Properties("Height").Value = 560
+
+    AddLabel comp, "lblDN", "DN", 10, 10, 30, 16
+    AddCombo comp, "cboDN", 44, 8, 60, 20
+    AddLabel comp, "lblPN", "PN, РњРџР°", 110, 10, 50, 16
+    AddCombo comp, "cboPN", 164, 8, 60, 20
+
+    AddLabel comp, "lblKL", "РљР»Р°СЃСЃ РіРµСЂРј.", 10, 38, 70, 16
+    AddCombo comp, "cboKL", 84, 36, 140, 20
+
+    AddLabel comp, "lblTFrom", "РѕС‚", 10, 66, 20, 16
+    AddTextIn comp.Designer, "txtTFrom", 34, 64, 60, 20
+    AddLabel comp, "lblTTo", "РґРѕ", 100, 66, 20, 16
+    AddTextIn comp.Designer, "txtTTo", 124, 64, 60, 20
+    AddLabel comp, "lblTUnit", "В°РЎ", 190, 66, 20, 16
+
+    AddLabel comp, "lblKorp", "РљРѕСЂРїСѓСЃ", 10, 94, 50, 16
+    AddCombo comp, "cboKorp", 64, 92, 160, 20
+    AddLabel comp, "lblKlim", "РљР»РёРјР°С‚", 10, 122, 50, 16
+    AddCombo comp, "cboKlim", 64, 120, 80, 20
+    AddLabel comp, "lblSred", "РЎСЂРµРґР°", 10, 150, 50, 16
+    AddTextIn comp.Designer, "txtSred", 64, 148, 160, 20
+    AddLabel comp, "lblUpl", "РЈРїР». РїРѕРІ.", 10, 178, 60, 16
+    AddCombo comp, "cboUpl", 74, 176, 80, 20
+
+    AddLabel comp, "lblKompl", "Р’ РєРѕРјРїР»РµРєС‚Рµ СЃ:", 10, 206, 200, 16
+    AddCheck comp, "chkZP", "РњРµР¶С„Р»Р°РЅС†РµРІР°СЏ Р·Р°РіР»СѓС€РєР°", 10, 228, 200, 18
+    AddCombo comp, "cboZPExec", 220, 226, 140, 20
+    AddCombo comp, "cboZPSteel", 370, 226, 80, 20
+    AddCheck comp, "chkZF", "Р¤Р»Р°РЅС†РµРІР°СЏ Р·Р°РіР»СѓС€РєР°", 10, 252, 200, 18
+    AddCombo comp, "cboZFSteel", 220, 250, 80, 20
+    AddCheck comp, "chkOF", "РћС‚РІРµС‚РЅС‹Рµ С„Р»Р°РЅС†С‹", 10, 276, 200, 18
+    AddCombo comp, "cboOFTyp", 220, 274, 60, 20
+    AddCheck comp, "chkPR", "РџСЂРѕРєР»Р°РґРєРё", 10, 300, 200, 18
+    AddCombo comp, "cboPRTyp", 220, 298, 80, 20
+    AddCheck comp, "chkSH", "РЁРїРёР»СЊРєРё", 10, 324, 200, 18
+    AddCheck comp, "chkG", "Р“Р°Р№РєРё", 10, 348, 200, 18
+
+    ' === Р±Р»РѕРє РјР°СЃСЃС‹ СЃРїСЂР°РІР° ===
+    Set f = AddFrame(comp.Designer, "fraMass", "РњР°СЃСЃР°", 248, 6, 262, 100)
+    AddLabelIn f, "lblMassCap", "РњР°СЃСЃР° Р°СЂРјР°С‚СѓСЂС‹ Р±РµР· РєРѕРјРїР»РµРєС‚Р°, РєРі", 8, 16, 246, 14
+    AddTextIn f, "txtBaseMass", 8, 34, 70, 20
+    AddButtonIn f, "btnMassCat", "РљР°С‚Р°Р»РѕРі: вЂ”", 86, 33, 160, 22
+    AddLabelIn f, "lblMassTotal", "РЎ РєРѕРјРїР»РµРєС‚РѕРј: вЂ”", 8, 64, 246, 16
+
+    AddButton comp, "btnOK", "РћРљ", 322, 390, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 417, 390, 85, 24
+End Sub
+
+Public Sub РЎРѕР±СЂР°С‚СЊ_frmValveM()
+    Dim comp As Object, f As Object
+    Set comp = GetForm("frmValveM")
+    ClearControls comp
+    comp.Properties("Caption").Value = "РљСЂР°РЅ С€Р°СЂРѕРІРѕР№ РјСѓС„С‚РѕРІС‹Р№"
+    comp.Properties("Width").Value = 400
+    comp.Properties("Height").Value = 270
+
+    AddLabel comp, "lblDN", "DN", 10, 10, 30, 16
+    AddCombo comp, "cboDN", 44, 8, 60, 20
+    AddLabel comp, "lblPN", "PN, РњРџР°", 110, 10, 50, 16
+    AddCombo comp, "cboPN", 164, 8, 60, 20
+
+    AddLabel comp, "lblKL", "РљР»Р°СЃСЃ РіРµСЂРј.", 10, 38, 70, 16
+    AddCombo comp, "cboKL", 84, 36, 140, 20
+
+    AddLabel comp, "lblTFrom", "РѕС‚", 10, 66, 20, 16
+    AddTextIn comp.Designer, "txtTFrom", 34, 64, 60, 20
+    AddLabel comp, "lblTTo", "РґРѕ", 100, 66, 20, 16
+    AddTextIn comp.Designer, "txtTTo", 124, 64, 60, 20
+    AddLabel comp, "lblTUnit", "В°РЎ", 190, 66, 20, 16
+
+    AddLabel comp, "lblKorp", "РљРѕСЂРїСѓСЃ", 10, 94, 50, 16
+    AddCombo comp, "cboKorp", 64, 92, 160, 20
+    AddLabel comp, "lblKlim", "РљР»РёРјР°С‚", 10, 122, 50, 16
+    AddCombo comp, "cboKlim", 64, 120, 80, 20
+    AddLabel comp, "lblSred", "РЎСЂРµРґР°", 10, 150, 50, 16
+    AddTextIn comp.Designer, "txtSred", 64, 148, 160, 20
+
+    AddLabel comp, "lblJoin", "РџСЂРёСЃРѕРµРґ.", 10, 178, 50, 16
+    AddCombo comp, "cboJoin", 64, 176, 110, 20
+    AddTextIn comp.Designer, "txtThread", 180, 176, 90, 20
+    AddCombo comp, "cboThreadDir", 276, 176, 100, 20
+
+    ' === Р±Р»РѕРє РјР°СЃСЃС‹ СЃРїСЂР°РІР° ===
+    Set f = AddFrame(comp.Designer, "fraMass", "РњР°СЃСЃР°", 232, 6, 158, 112)
+    AddLabelIn f, "lblMassCap", "РњР°СЃСЃР° Р°СЂРјР°С‚СѓСЂС‹, РєРі", 6, 16, 146, 14
+    AddTextIn f, "txtBaseMass", 6, 34, 146, 20
+    AddButtonIn f, "btnMassCat", "РљР°С‚Р°Р»РѕРі: вЂ”", 6, 58, 146, 22
+    AddLabelIn f, "lblMassTotal", "РС‚РѕРіРѕ: вЂ”", 6, 86, 146, 14
+
+    AddButton comp, "btnOK", "РћРљ", 200, 210, 85, 24
+    AddButton comp, "btnCancel", "РћС‚РјРµРЅР°", 295, 210, 85, 24
+End Sub
