@@ -1,0 +1,68 @@
+Option Explicit
+
+Public Sub ExportProjectCode()
+    ' Имя ЭТОГО модуля, который нужно исключить из экспорта
+    Const SELF_MODULE_NAME As String = "modExporter"
+    
+    Dim vbComp As Object
+    Dim basePath As String
+    Dim subFolder As String
+    Dim ext As String
+    Dim countExported As Long
+    
+    ' Проверяем, сохранён ли сам файл Excel
+    If ThisWorkbook.Path = "" Then
+        MsgBox "Сначала сохраните книгу 'Сводная.xlsm' на диск!", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Основная папка для экспорта рядом с файлом Сводная.xlsm
+    basePath = ThisWorkbook.Path & "\VBA_Export\"
+    EnsureFolderExists basePath
+    
+    For Each vbComp In ThisWorkbook.VBProject.VBComponents
+        ' Пропускаем сам модуль экспортёра
+        If StrComp(vbComp.Name, SELF_MODULE_NAME, vbTextCompare) <> 0 Then
+            
+            ' Определяем подпапку и расширение по типу компонента
+            Select Case vbComp.Type
+                Case 1 ' Стандартные модули (modBuilder, modDB и др.)
+                    subFolder = "Modules\"
+                    ext = ".bas"
+                Case 2 ' Модули классов
+                    subFolder = "Classes\"
+                    ext = ".cls"
+                Case 3 ' Пользовательские формы (frmBlindFl, frmCap и др.)
+                    subFolder = "Forms\"
+                    ext = ".frm"
+                Case 100 ' Объекты Excel (Лист1..Лист8, ЭтаКнига)
+                    subFolder = "Objects\"
+                    ext = ".cls"
+                Case Else
+                    subFolder = "Other\"
+                    ext = ".txt"
+            End Select
+            
+            ' Экспортируем, только если в модуле есть хотя бы одна строка кода
+            ' (пустые модули листов вроде Лист2 или Лист4 не будут захламлять папку)
+            If vbComp.CodeModule.CountOfLines > 0 Then
+                EnsureFolderExists basePath & subFolder
+                vbComp.Export basePath & subFolder & vbComp.Name & ext
+                countExported = countExported + 1
+            End If
+            
+        End If
+    Next vbComp
+    
+    MsgBox "Готово! Экспортировано компонентов: " & countExported & vbCrLf & _
+           "Путь: " & basePath, vbInformation, "Экспорт VBA"
+End Sub
+
+' Вспомогательная процедура для создания папки, если её нет
+Private Sub EnsureFolderExists(ByVal folderPath As String)
+    If Dir(folderPath, vbDirectory) = "" Then
+        MkDir folderPath
+    End If
+End Sub
+
+
