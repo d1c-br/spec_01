@@ -1,4 +1,3 @@
-Attribute VB_Name = "modRecognize"
 Option Explicit
 
 Public Function RecognizeAndWrite(ByVal tgt As Range, ByVal txt As String) As Boolean
@@ -25,11 +24,11 @@ sFull = Replace(Trim$(txt), vbCrLf, vbLf)
 sFull = Trim$(sFull)
 RecognizeAndWrite = False
 On Error GoTo fail
-' === “–”¡¿ (ÚË ÚËÔ‡) ===
-If Left$(sFull, 6) = "“Û·‡ " Then
-If InStr(sFull, "√Œ—“ 8734") > 0 Then
+' === –¢–†–£–ë–ê (—Ç—Ä–∏ —Ç–∏–ø–∞) ===
+If Left$(sFull, 6) = "–¢—Ä—É–±–∞ " Then
+If InStr(sFull, "–ì–û–°–¢ 8734") > 0 Then
 pipeCode = "PIPE_SMLS_CD"
-ElseIf InStr(sFull, "√Œ—“ 10704") > 0 Then
+ElseIf InStr(sFull, "–ì–û–°–¢ 10704") > 0 Then
 pipeCode = "PIPE_WELD"
 Else
 pipeCode = "PIPE_SMLS"
@@ -38,68 +37,68 @@ posA = InStr(sFull, " / ")
 If posA = 0 Then Exit Function
 segA = Left$(sFull, posA - 1): segB = Mid$(sFull, posA + 3)
 core = Mid$(segA, 7)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
-parts = Split(core, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(core, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
 parts = Split(segB, " "): If UBound(parts) < 1 Then Exit Function
 grp = parts(0): stl = parts(1)
 WritePipeEx tgt, pipeCode, dMain, thk, grp, stl
 RecognizeAndWrite = True
-' === Œ“¬Œƒ ===
-ElseIf Left$(sFull, 6) = "ŒÚ‚Ó‰ " Then
+' === –û–¢–í–û–î ===
+ElseIf Left$(sFull, 6) = "–û—Ç–≤–æ–¥ " Then
 core = Mid$(sFull, 7)
-podk = (Left$(core, 2) = "œ ")
+podk = (Left$(core, 2) = "–ü ")
 If podk Then core = Mid$(core, 3)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 stl = SteelFromCore(core): core = StripSteel(core, stl)
 parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
 ang = ToNum(parts(0))
-parts = Split(parts(1), "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(parts(1), "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
 WriteElbow tgt, dMain, thk, ang, stl, podk
 RecognizeAndWrite = True
-' === “–Œ…Õ»  ===
-ElseIf Left$(sFull, 8) = "“ÓÈÌËÍ " Then
+' === –¢–†–û–ô–ù–ò–ö ===
+ElseIf Left$(sFull, 8) = "–¢—Ä–æ–π–Ω–∏–∫ " Then
 core = Mid$(sFull, 9)
-podk = (Left$(core, 2) = "œ ")
+podk = (Left$(core, 2) = "–ü ")
 If podk Then core = Mid$(core, 3)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 stl = SteelFromCore(core): core = StripSteel(core, stl)
 If InStr(core, "-") > 0 Then
 parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
 segA = parts(0): segBr = parts(1)
-parts = Split(segBr, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(segBr, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dBr = ToNum(parts(0))
 Else
 segA = core: dBr = 0
 End If
-parts = Split(segA, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(segA, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
 If dBr = 0 Then dBr = dMain
 WriteTee tgt, dMain, thk, dBr, stl, podk
 RecognizeAndWrite = True
-' === œ≈–≈’Œƒ ===
-ElseIf Left$(sFull, 8) = "œÂÂıÓ‰ " Then
+' === –ü–ï–†–ï–•–û–î ===
+ElseIf Left$(sFull, 8) = "–ü–µ—Ä–µ—Ö–æ–¥ " Then
 core = Mid$(sFull, 9)
-podk = (Left$(core, 2) = "œ ")
+podk = (Left$(core, 2) = "–ü ")
 If podk Then core = Mid$(core, 3)
 lenMm = 0
 posA = InStr(core, ", L=")
 If posA > 0 Then
-lenMm = ToNum(Replace(Mid$(core, posA + 4), "ÏÏ", ""))
+lenMm = ToNum(Replace(Mid$(core, posA + 4), "–º–º", ""))
 core = Left$(core, posA - 1)
 End If
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 stl = SteelFromCore(core): core = StripSteel(core, stl)
 parts = Split(core, "-"): If UBound(parts) <> 1 Then Exit Function
 segA = parts(0): segBr = parts(1)
-parts = Split(segA, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(segA, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
-parts = Split(segBr, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(segBr, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dBr = ToNum(parts(0))
 If lenMm = 0 Then
 Set vals = TransValues(6, dMain, thk, dBr, TransAutoT1(dMain, thk, dBr))
@@ -108,10 +107,10 @@ lenMm = CDbl(vals(1))
 End If
 WriteTrans tgt, dMain, thk, dBr, TransAutoT1(dMain, thk, dBr), lenMm, stl, podk
 RecognizeAndWrite = True
-' === ‘À¿Õ≈÷ ===
-ElseIf Left$(sFull, 7) = "‘Î‡ÌÂˆ " Then
+' === –§–õ–ê–ù–ï–¶ ===
+ElseIf Left$(sFull, 7) = "–§–ª–∞–Ω–µ—Ü " Then
 core = Mid$(sFull, 8)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 parts = Split(core, "-"): If UBound(parts) <> 6 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
@@ -119,23 +118,23 @@ typ = parts(2): upl = parts(4)
 stl = Mid$(parts(5), 4): grk = parts(6)
 WriteFlange tgt, dMain, thk, typ, upl, stl, grk
 RecognizeAndWrite = True
-' === «¿√À”ÿ ¿ (‚ÒÂ ÚË ÚËÔ‡) ===
-ElseIf Left$(sFull, 8) = "«‡„ÎÛ¯Í‡" Then
-If InStr(sFull, "√Œ—“ – 71797") > 0 Then
-isTurn = (InStr(sFull, "ÔÓ‚ÓÓÚÌ‡ˇ") > 0)
+' === –ó–ê–ì–õ–£–®–ö–ê (–≤—Å–µ —Ç—Ä–∏ —Ç–∏–ø–∞) ===
+ElseIf Left$(sFull, 8) = "–ó–∞–≥–ª—É—à–∫–∞" Then
+If InStr(sFull, "–ì–û–°–¢ –† 71797") > 0 Then
+isTurn = (InStr(sFull, "–ø–æ–≤–æ—Ä–æ—Ç–Ω–∞—è") > 0)
 If isTurn Then
-core = Mid$(sFull, InStr(sFull, "ÔÓ‚ÓÓÚÌ‡ˇ") + 11)
+core = Mid$(sFull, InStr(sFull, "–ø–æ–≤–æ—Ä–æ—Ç–Ω–∞—è") + 11)
 Else
-core = Mid$(sFull, InStr(sFull, "ı‚ÓÒÚÓ‚ËÍÓÏ") + 12)
+core = Mid$(sFull, InStr(sFull, "—Ö–≤–æ—Å—Ç–æ–≤–∏–∫–æ–º") + 12)
 End If
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 parts = Split(core, "-"): If UBound(parts) <> 3 Then Exit Function
 iTyp = CLng(parts(0)): dMain = ToNum(parts(1)): thk = ToNum(parts(2)): stl = parts(3)
 WriteBlindInt tgt, iTyp, dMain, thk, stl, isTurn
-ElseIf InStr(sFull, "√Œ—“ 34785") > 0 Then
+ElseIf InStr(sFull, "–ì–û–°–¢ 34785") > 0 Then
 core = Mid$(sFull, 10)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 parts = Split(core, "-"): If UBound(parts) <> 5 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
@@ -143,18 +142,18 @@ upl = parts(2): stl = Mid$(parts(4), 4): grk = parts(5)
 WriteBlindFl tgt, dMain, thk, upl, stl, grk
 Else
 core = Mid$(sFull, 10)
-podk = (Left$(core, 2) = "œ ")
+podk = (Left$(core, 2) = "–ü ")
 If podk Then core = Mid$(core, 3)
-posB = InStr(core, " √Œ—“"): If posB = 0 Then Exit Function
+posB = InStr(core, " –ì–û–°–¢"): If posB = 0 Then Exit Function
 core = Left$(core, posB - 1)
 stl = SteelFromCore(core): core = StripSteel(core, stl)
-parts = Split(core, "ı"): If UBound(parts) <> 1 Then Exit Function
+parts = Split(core, "—Ö"): If UBound(parts) <> 1 Then Exit Function
 dMain = ToNum(parts(0)): thk = ToNum(parts(1))
 WriteCap tgt, dMain, thk, stl, podk
 End If
 RecognizeAndWrite = True
-' ===  –¿Õ ÿ¿–Œ¬Œ… Ã”‘“Œ¬€… ===
-ElseIf InStr(1, sFull, " ‡Ì ¯‡Ó‚ÓÈ ÏÛÙÚÓ‚˚È", vbTextCompare) > 0 Then
+' === –ö–†–ê–ù –®–ê–†–û–í–û–ô –ú–£–§–¢–û–í–´–ô ===
+ElseIf InStr(1, sFull, "–ö—Ä–∞–Ω —à–∞—Ä–æ–≤–æ–π –º—É—Ñ—Ç–æ–≤—ã–π", vbTextCompare) > 0 Then
 vLines = Split(sFull, vbLf)
 line1 = vLines(0)
 posDN = InStr(line1, "DN")
@@ -182,51 +181,51 @@ End If
 Next i
 If Len(pnStr) = 0 Then Exit Function
 thk = CDbl(pnStr) * 10
-vKl = "A": vTFrom = "": vTTo = "": vKorp = "ÒÚ‡Î¸ 20": vKlim = "”1": vSred = ""
-vJoin = "ÂÁ¸·Ó‚ÓÈ": vThread = "": vDir = "‚ÌÛÚÂÌÌˇˇ"
+vKl = "A": vTFrom = "": vTTo = "": vKorp = "—Å—Ç–∞–ª—å 20": vKlim = "–£1": vSred = ""
+vJoin = "—Ä–µ–∑—å–±–æ–≤–æ–π": vThread = "": vDir = "–≤–Ω—É—Ç—Ä–µ–Ω–Ω—è—è"
 For li = 0 To UBound(vLines)
-If InStr(1, vLines(li), "“ËÔ ÔËÒÓÂ‰ËÌÂÌËˇ", vbTextCompare) > 0 Then
-If InStr(1, vLines(li), "ÔÓ‰ ÔË‚‡ÍÛ", vbTextCompare) > 0 Then
-vJoin = "ÔÓ‰ ÔË‚‡ÍÛ": vThread = "": vDir = ""
+If InStr(1, vLines(li), "–¢–∏–ø –ø—Ä–∏—Å–æ–µ–¥–∏–Ω–µ–Ω–∏—è", vbTextCompare) > 0 Then
+If InStr(1, vLines(li), "–ø–æ–¥ –ø—Ä–∏–≤–∞—Ä–∫—É", vbTextCompare) > 0 Then
+vJoin = "–ø–æ–¥ –ø—Ä–∏–≤–∞—Ä–∫—É": vThread = "": vDir = ""
 Else
-vJoin = "ÂÁ¸·Ó‚ÓÈ"
-posA = InStr(1, vLines(li), "ÂÁ¸·Ó‚ÓÈ ", vbTextCompare)
+vJoin = "—Ä–µ–∑—å–±–æ–≤–æ–π"
+posA = InStr(1, vLines(li), "—Ä–µ–∑—å–±–æ–≤–æ–π ", vbTextCompare)
 sTmp = Mid$(vLines(li), posA + 10)
 posB = InStr(sTmp, " (")
 If posB > 0 Then vThread = Left$(sTmp, posB - 1) Else vThread = sTmp
 If Right$(vThread, 1) = "." Then vThread = Left$(vThread, Len(vThread) - 1)
-If InStr(1, vLines(li), "Ì‡ÛÊÌ‡ˇ", vbTextCompare) > 0 Then vDir = "Ì‡ÛÊÌ‡ˇ" Else vDir = "‚ÌÛÚÂÌÌˇˇ"
+If InStr(1, vLines(li), "–Ω–∞—Ä—É–∂–Ω–∞—è", vbTextCompare) > 0 Then vDir = "–Ω–∞—Ä—É–∂–Ω–∞—è" Else vDir = "–≤–Ω—É—Ç—Ä–µ–Ω–Ω—è—è"
 End If
 End If
-If InStr(1, vLines(li), " Î‡ÒÒ „ÂÏÂÚË˜ÌÓÒÚË", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), " Î‡ÒÒ „ÂÏÂÚË˜ÌÓÒÚË")
+If InStr(1, vLines(li), "–ö–ª–∞—Å—Å –≥–µ—Ä–º–µ—Ç–∏—á–Ω–æ—Å—Ç–∏", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ö–ª–∞—Å—Å –≥–µ—Ä–º–µ—Ç–∏—á–Ω–æ—Å—Ç–∏")
 vKl = Trim$(Mid$(vLines(li), posA + 19))
-If InStr(vKl, " ÔÓ") > 0 Then vKl = Left$(vKl, InStr(vKl, " ÔÓ") - 1)
+If InStr(vKl, " –ø–æ") > 0 Then vKl = Left$(vKl, InStr(vKl, " –ø–æ") - 1)
 End If
-If InStr(1, vLines(li), "“ÂÏÔÂ‡ÚÛ‡ ‡·Ó˜ÂÈ ÒÂ‰˚", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "ÓÚ")
-posB = InStr(vLines(li), "‰Ó")
+If InStr(1, vLines(li), "–¢–µ–º–ø–µ—Ä–∞—Ç—É—Ä–∞ —Ä–∞–±–æ—á–µ–π —Å—Ä–µ–¥—ã", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–æ—Ç")
+posB = InStr(vLines(li), "–¥–æ")
 If posA > 0 And posB > 0 Then
 vTFrom = Trim$(Mid$(vLines(li), posA + 2, posB - posA - 2))
 vTTo = Trim$(Mid$(vLines(li), posB + 2))
-If InStr(vTTo, "∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "∞") - 1)
+If InStr(vTTo, "¬∞") > 0 Then vTTo = Trim$(Left$(vTTo, InStr(vTTo, "¬∞") - 1))
 ElseIf posB > 0 Then
 vTTo = Trim$(Mid$(vLines(li), posB + 2))
-If InStr(vTTo, "∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "∞") - 1)
+If InStr(vTTo, "¬∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "¬∞") - 1)
 End If
 End If
-If InStr(1, vLines(li), "Ã‡ÚÂË‡Î ÍÓÔÛÒ‡", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "Ã‡ÚÂË‡Î ÍÓÔÛÒ‡")
+If InStr(1, vLines(li), "–ú–∞—Ç–µ—Ä–∏–∞–ª –∫–æ—Ä–ø—É—Å–∞", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ú–∞—Ç–µ—Ä–∏–∞–ª –∫–æ—Ä–ø—É—Å–∞")
 vKorp = Trim$(Mid$(vLines(li), posA + 18))
 If InStr(vKorp, ".") > 0 Then vKorp = Left$(vKorp, InStr(vKorp, ".") - 1)
 End If
-If InStr(1, vLines(li), " ÎËÏ‡ÚË˜ÂÒÍÓÂ ËÒÔÓÎÌÂÌËÂ", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), " ÎËÏ‡ÚË˜ÂÒÍÓÂ ËÒÔÓÎÌÂÌËÂ")
+If InStr(1, vLines(li), "–ö–ª–∏–º–∞—Ç–∏—á–µ—Å–∫–æ–µ –∏—Å–ø–æ–ª–Ω–µ–Ω–∏–µ", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ö–ª–∏–º–∞—Ç–∏—á–µ—Å–∫–æ–µ –∏—Å–ø–æ–ª–Ω–µ–Ω–∏–µ")
 vKlim = Trim$(Mid$(vLines(li), posA + 24))
-If InStr(vKlim, " ÔÓ") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " ÔÓ") - 1)
+If InStr(vKlim, " –ø–æ") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " –ø–æ") - 1)
 End If
-If InStr(1, vLines(li), "–‡·Ó˜‡ˇ ÒÂ‰‡", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "–‡·Ó˜‡ˇ ÒÂ‰‡")
+If InStr(1, vLines(li), "–†–∞–±–æ—á–∞—è —Å—Ä–µ–¥–∞", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–†–∞–±–æ—á–∞—è —Å—Ä–µ–¥–∞")
 vSred = Trim$(Mid$(vLines(li), posA + 15))
 If InStr(vSred, ".") > 0 Then vSred = Left$(vSred, InStr(vSred, ".") - 1)
 End If
@@ -234,10 +233,10 @@ Next li
 params = vKl & "|" & vTFrom & "|" & vTTo & "|" & vKorp & "|" & vKlim & "|" & vSred & "|" & vJoin & "|" & vThread & "|" & vDir
 WriteValveM tgt, dMain, thk, vKl, vTFrom, vTTo, vKorp, vKlim, vSred, params
 RecognizeAndWrite = True
-' ===  –¿Õ ‘À¿Õ÷≈¬€… / «¿ƒ¬»∆ ¿ (ÏÌÓ„ÓÒÚÓ˜Ì˚Â, Ò ÍÓÏÔÎÂÍÚÓÏ) ===
-ElseIf InStr(1, sFull, " ‡Ì ¯‡Ó‚ÓÈ ÙÎ‡ÌˆÂ‚˚È", vbTextCompare) > 0 _
-Or InStr(1, sFull, "«‡‰‚ËÊÍ‡ ÍÎËÌÓ‚‡ˇ ÙÎ‡ÌˆÂ‚‡ˇ", vbTextCompare) > 0 Then
-If InStr(1, sFull, "«‡‰‚ËÊÍ‡", vbTextCompare) > 0 Then armCode = "GATE_VALVE_FL" Else armCode = "VALVE"
+' === –ö–†–ê–ù –§–õ–ê–ù–¶–ï–í–´–ô / –ó–ê–î–í–ò–ñ–ö–ê (–º–Ω–æ–≥–æ—Å—Ç—Ä–æ—á–Ω—ã–µ, —Å –∫–æ–º–ø–ª–µ–∫—Ç–æ–º) ===
+ElseIf InStr(1, sFull, "–ö—Ä–∞–Ω —à–∞—Ä–æ–≤–æ–π —Ñ–ª–∞–Ω—Ü–µ–≤—ã–π", vbTextCompare) > 0 _
+Or InStr(1, sFull, "–ó–∞–¥–≤–∏–∂–∫–∞ –∫–ª–∏–Ω–æ–≤–∞—è —Ñ–ª–∞–Ω—Ü–µ–≤–∞—è", vbTextCompare) > 0 Then
+If InStr(1, sFull, "–ó–∞–¥–≤–∏–∂–∫–∞", vbTextCompare) > 0 Then armCode = "GATE_VALVE_FL" Else armCode = "VALVE"
 vLines = Split(sFull, vbLf)
 line1 = vLines(0)
 posDN = InStr(line1, "DN")
@@ -265,41 +264,41 @@ End If
 Next i
 If Len(pnStr) = 0 Then Exit Function
 thk = CDbl(pnStr) * 10
-vKl = "A": vTFrom = "": vTTo = "": vKorp = "ÒÚ‡Î¸ 20": vKlim = "”1": vSred = "": vUpl = "B-B"
+vKl = "A": vTFrom = "": vTTo = "": vKorp = "—Å—Ç–∞–ª—å 20": vKlim = "–£1": vSred = "": vUpl = "B-B"
 For li = 0 To UBound(vLines)
-If InStr(1, vLines(li), " Î‡ÒÒ „ÂÏÂÚË˜ÌÓÒÚË", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), " Î‡ÒÒ „ÂÏÂÚË˜ÌÓÒÚË")
+If InStr(1, vLines(li), "–ö–ª–∞—Å—Å –≥–µ—Ä–º–µ—Ç–∏—á–Ω–æ—Å—Ç–∏", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ö–ª–∞—Å—Å –≥–µ—Ä–º–µ—Ç–∏—á–Ω–æ—Å—Ç–∏")
 vKl = Trim$(Mid$(vLines(li), posA + 19))
-If InStr(vKl, " ÔÓ") > 0 Then vKl = Left$(vKl, InStr(vKl, " ÔÓ") - 1)
+If InStr(vKl, " –ø–æ") > 0 Then vKl = Left$(vKl, InStr(vKl, " –ø–æ") - 1)
 End If
-If InStr(1, vLines(li), "“ÂÏÔÂ‡ÚÛ‡ ‡·Ó˜ÂÈ ÒÂ‰˚", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "ÓÚ")
-posB = InStr(vLines(li), "‰Ó")
+If InStr(1, vLines(li), "–¢–µ–º–ø–µ—Ä–∞—Ç—É—Ä–∞ —Ä–∞–±–æ—á–µ–π —Å—Ä–µ–¥—ã", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–æ—Ç")
+posB = InStr(vLines(li), "–¥–æ")
 If posA > 0 And posB > 0 Then
 vTFrom = Trim$(Mid$(vLines(li), posA + 2, posB - posA - 2))
 vTTo = Trim$(Mid$(vLines(li), posB + 2))
-If InStr(vTTo, "∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "∞") - 1)
+If InStr(vTTo, "¬∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "¬∞") - 1)
 ElseIf posB > 0 Then
 vTTo = Trim$(Mid$(vLines(li), posB + 2))
-If InStr(vTTo, "∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "∞") - 1)
+If InStr(vTTo, "¬∞") > 0 Then vTTo = Left$(vTTo, InStr(vTTo, "¬∞") - 1)
 End If
 End If
-If InStr(1, vLines(li), "Ã‡ÚÂË‡Î ÍÓÔÛÒ‡", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "Ã‡ÚÂË‡Î ÍÓÔÛÒ‡")
+If InStr(1, vLines(li), "–ú–∞—Ç–µ—Ä–∏–∞–ª –∫–æ—Ä–ø—É—Å–∞", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ú–∞—Ç–µ—Ä–∏–∞–ª –∫–æ—Ä–ø—É—Å–∞")
 vKorp = Trim$(Mid$(vLines(li), posA + 18))
 If InStr(vKorp, ".") > 0 Then vKorp = Left$(vKorp, InStr(vKorp, ".") - 1)
 End If
-If InStr(1, vLines(li), " ÎËÏ‡ÚË˜ÂÒÍÓÂ ËÒÔÓÎÌÂÌËÂ", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), " ÎËÏ‡ÚË˜ÂÒÍÓÂ ËÒÔÓÎÌÂÌËÂ")
+If InStr(1, vLines(li), "–ö–ª–∏–º–∞—Ç–∏—á–µ—Å–∫–æ–µ –∏—Å–ø–æ–ª–Ω–µ–Ω–∏–µ", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–ö–ª–∏–º–∞—Ç–∏—á–µ—Å–∫–æ–µ –∏—Å–ø–æ–ª–Ω–µ–Ω–∏–µ")
 vKlim = Trim$(Mid$(vLines(li), posA + 24))
-If InStr(vKlim, " ÔÓ") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " ÔÓ") - 1)
+If InStr(vKlim, " –ø–æ") > 0 Then vKlim = Left$(vKlim, InStr(vKlim, " –ø–æ") - 1)
 End If
-If InStr(1, vLines(li), "–‡·Ó˜‡ˇ ÒÂ‰‡", vbTextCompare) > 0 Then
-posA = InStr(vLines(li), "–‡·Ó˜‡ˇ ÒÂ‰‡")
+If InStr(1, vLines(li), "–†–∞–±–æ—á–∞—è —Å—Ä–µ–¥–∞", vbTextCompare) > 0 Then
+posA = InStr(vLines(li), "–†–∞–±–æ—á–∞—è —Å—Ä–µ–¥–∞")
 vSred = Trim$(Mid$(vLines(li), posA + 15))
 If InStr(vSred, ".") > 0 Then vSred = Left$(vSred, InStr(vSred, ".") - 1)
 End If
-If InStr(1, vLines(li), "”ÔÎÓÚÌËÚÂÎ¸Ì‡ˇ ÔÓ‚ÂıÌÓÒÚ¸", vbTextCompare) > 0 Then
+If InStr(1, vLines(li), "–£–ø–ª–æ—Ç–Ω–∏—Ç–µ–ª—å–Ω–∞—è –ø–æ–≤–µ—Ä—Ö–Ω–æ—Å—Ç—å", vbTextCompare) > 0 Then
 posA = InStr(vLines(li), " - ")
 If posA > 0 Then
 vUpl = Trim$(Mid$(vLines(li), posA + 3))
@@ -307,53 +306,53 @@ If InStr(vUpl, ".") > 0 Then vUpl = Left$(vUpl, InStr(vUpl, ".") - 1)
 End If
 End If
 Next li
-zpFlag = "0": zpExec = "œÓ‚ÓÓÚÌ‡ˇ Á‡„ÎÛ¯Í‡": zpSt = "20"
+zpFlag = "0": zpExec = "–ü–æ–≤–æ—Ä–æ—Ç–Ω–∞—è –∑–∞–≥–ª—É—à–∫–∞": zpSt = "20"
 zfFlag = "0": zfSt = "20"
 ofFlag = "0": ofTyp = "11"
-prFlag = "0": prTyp = "—Õœ"
+prFlag = "0": prTyp = "–°–ù–ü"
 shFlag = "0": gFlag = "0"
 On Error Resume Next
 For li = 0 To UBound(vLines)
 s = vLines(li)
-If InStr(1, s, "«‡„ÎÛ¯ÍÓÈ", vbTextCompare) > 0 And InStr(s, "71797") > 0 Then
+If InStr(1, s, "–ó–∞–≥–ª—É—à–∫–æ–π", vbTextCompare) > 0 And InStr(s, "71797") > 0 Then
 zpFlag = "1"
-If InStr(1, s, "ı‚ÓÒÚÓ‚ËÍÓÏ", vbTextCompare) > 0 Then
-zpExec = "«‡„ÎÛ¯Í‡ Ò ı‚ÓÒÚÓ‚ËÍÓÏ"
+If InStr(1, s, "—Ö–≤–æ—Å—Ç–æ–≤–∏–∫–æ–º", vbTextCompare) > 0 Then
+zpExec = "–ó–∞–≥–ª—É—à–∫–∞ —Å —Ö–≤–æ—Å—Ç–æ–≤–∏–∫–æ–º"
 Else
-zpExec = "œÓ‚ÓÓÚÌ‡ˇ Á‡„ÎÛ¯Í‡"
+zpExec = "–ü–æ–≤–æ—Ä–æ—Ç–Ω–∞—è –∑–∞–≥–ª—É—à–∫–∞"
 End If
-posA = InStr(1, s, "ËÁ ÒÚ‡ÎË", vbTextCompare)
+posA = InStr(1, s, "–∏–∑ —Å—Ç–∞–ª–∏", vbTextCompare)
 If posA > 0 Then
 zpSt = Trim$(Mid$(s, posA + 8))
 If InStr(zpSt, ".") > 0 Then zpSt = Left$(zpSt, InStr(zpSt, ".") - 1)
 If InStr(zpSt, ";") > 0 Then zpSt = Left$(zpSt, InStr(zpSt, ";") - 1)
 End If
 End If
-If InStr(1, s, "«‡„ÎÛ¯ÍÓÈ", vbTextCompare) > 0 And InStr(s, "34785") > 0 Then
+If InStr(1, s, "–ó–∞–≥–ª—É—à–∫–æ–π", vbTextCompare) > 0 And InStr(s, "34785") > 0 Then
 zfFlag = "1"
-posA = InStr(1, s, "ËÁ ÒÚ‡ÎË", vbTextCompare)
+posA = InStr(1, s, "–∏–∑ —Å—Ç–∞–ª–∏", vbTextCompare)
 If posA > 0 Then
 zfSt = Trim$(Mid$(s, posA + 8))
 If InStr(zfSt, ".") > 0 Then zfSt = Left$(zfSt, InStr(zfSt, ".") - 1)
 If InStr(zfSt, ";") > 0 Then zfSt = Left$(zfSt, InStr(zfSt, ";") - 1)
 End If
 End If
-If InStr(1, s, "ÙÎ‡Ìˆ", vbTextCompare) > 0 And InStr(s, "33259") > 0 Then
+If InStr(1, s, "—Ñ–ª–∞–Ω—Ü", vbTextCompare) > 0 And InStr(s, "33259") > 0 Then
 ofFlag = "1"
-posA = InStr(1, s, "ÚËÔ‡", vbTextCompare)
+posA = InStr(1, s, "—Ç–∏–ø–∞", vbTextCompare)
 If posA > 0 Then
 ofTyp = Trim$(Mid$(s, posA + 4))
 If InStr(ofTyp, " ") > 0 Then ofTyp = Left$(ofTyp, InStr(ofTyp, " ") - 1)
 End If
 End If
-If InStr(1, s, "œÓÍÎ‡‰Í‡ÏË", vbTextCompare) > 0 Then
+If InStr(1, s, "–ü—Ä–æ–∫–ª–∞–¥–∫–∞–º–∏", vbTextCompare) > 0 Then
 prFlag = "1"
-posA = InStr(1, s, "œÓÍÎ‡‰Í‡ÏË", vbTextCompare)
+posA = InStr(1, s, "–ü—Ä–æ–∫–ª–∞–¥–∫–∞–º–∏", vbTextCompare)
 prTyp = Trim$(Mid$(s, posA + 11))
 If InStr(prTyp, " ") > 0 Then prTyp = Left$(prTyp, InStr(prTyp, " ") - 1)
 End If
-If InStr(1, s, "ÿÔËÎ¸Í‡ÏË", vbTextCompare) > 0 Then shFlag = "1"
-If InStr(1, s, "√‡ÈÍ‡ÏË", vbTextCompare) > 0 Then gFlag = "1"
+If InStr(1, s, "–®–ø–∏–ª—å–∫–∞–º–∏", vbTextCompare) > 0 Then shFlag = "1"
+If InStr(1, s, "–ì–∞–π–∫–∞–º–∏", vbTextCompare) > 0 Then gFlag = "1"
 Next li
 On Error GoTo 0
 params = vKl & "|" & vTFrom & "|" & vTTo & "|" & vKorp & "|" & vKlim & "|" & vSred & "|" & vUpl & "|" & _
@@ -364,27 +363,27 @@ prFlag & "|" & prTyp & "|" & _
 shFlag & "|" & gFlag
 WriteValveEx tgt, armCode, dMain, thk, vKl, vTFrom, vTTo, vKorp, vKlim, vSred, vUpl, params
 RecognizeAndWrite = True
-' === ŒœŒ–¿ ===
-ElseIf Left$(sFull, 6) = "ŒÔÓ‡ " Then
-isFixed = (InStr(sFull, "(‚ ÍÓÏÔÎÂÍÚÂ Ò ÛÔÓÓÏ)") > 0)
-posB = InStr(sFull, "-Œ—“"): If posB = 0 Then Exit Function
+' === –û–ü–û–†–ê ===
+ElseIf Left$(sFull, 6) = "–û–ø–æ—Ä–∞ " Then
+isFixed = (InStr(sFull, "(–≤ –∫–æ–º–ø–ª–µ–∫—Ç–µ —Å —É–ø–æ—Ä–æ–º)") > 0)
+posB = InStr(sFull, "-–û–°–¢"): If posB = 0 Then Exit Function
 core = Mid$(sFull, 7, posB - 7)
 parts = Split(core, "-"): If UBound(parts) <> 3 Then Exit Function
 dMain = ToNum(parts(0)): typ = parts(1): exec = parts(2): stl = parts(3)
 Select Case typ
-Case "¬œ": supCode = "SUP_VP"
-Case "“Œ": supCode = "SUP_TO"
-Case "’¡": supCode = "SUP_HB"
-Case " œ": supCode = "SUP_KP"
-Case " ’": supCode = "SUP_KH"
+Case "–í–ü": supCode = "SUP_VP"
+Case "–¢–û": supCode = "SUP_TO"
+Case "–•–ë": supCode = "SUP_HB"
+Case "–ö–ü": supCode = "SUP_KP"
+Case "–ö–•": supCode = "SUP_KH"
 Case Else: Exit Function
 End Select
-isWaste = (Right$(exec, 1) = "‚")
+isWaste = (Right$(exec, 1) = "–≤")
 If isWaste Then exec = Left$(exec, Len(exec) - 1)
-isHole = (Right$(exec, 1) = "Œ")
+isHole = (Right$(exec, 1) = "–û")
 If isHole Then exec = Left$(exec, Len(exec) - 1)
-isWelded = (InStr(exec, "—") > 0)
-baseExec = Replace(exec, "—", "")
+isWelded = (InStr(exec, "–°") > 0)
+baseExec = Replace(exec, "–°", "")
 WriteSupport tgt, supCode, dMain, baseExec, stl, isWelded, isHole, isWaste, isFixed
 RecognizeAndWrite = True
 End If
@@ -398,7 +397,7 @@ Private Function ToNum(ByVal txtVal As String) As Double
 End Function
 
 Private Function SteelFromCore(ByVal coreTxt As String) As String
-    If Right$(coreTxt, 6) = "-09√2—" Then SteelFromCore = "09√2—" Else SteelFromCore = "20"
+    If Right$(coreTxt, 6) = "-09–ì2–°" Then SteelFromCore = "09–ì2–°" Else SteelFromCore = "20"
 End Function
 
 Private Function StripSteel(ByVal coreTxt As String, ByVal stl As String) As String
