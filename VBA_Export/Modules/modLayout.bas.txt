@@ -1,22 +1,21 @@
-Attribute VB_Name = "modLayout"
 Option Explicit
 
-Public Const sh As String = "Сводная"
+Public Const sh As String = "РЎРІРѕРґРЅР°СЏ"
 Public Const MARKCOL As Long = 9
 Public Const POS_ROWS As Long = 3
 Private mCols As Object
 
-' ==================== Служебные ====================
+' ==================== РЎР»СѓР¶РµР±РЅС‹Рµ ====================
 
 Public Function ShSv() As Worksheet
     Set ShSv = ThisWorkbook.Worksheets(sh)
 End Function
 
 Public Function SvcNames() As Variant
-    SvcNames = Array("Тип", "D", "S", "Угол", "D2", "S2", "DN", "PN", "ТипФ", _
-                     "УплПов", "Ряд", "Исполн", "ГрК", "Группа", "Сталь", "Сталь2", "ТипО", _
-                     "Высота", "КлючБазы", "КлючПозиции", "Площадь", "Объём", _
-                     "Длина", "ПарамАрм", "№ввода", "Статус", "DNсорт", "ПорядокГруппы", "Подк")
+    SvcNames = Array("РўРёРї", "D", "S", "РЈРіРѕР»", "D2", "S2", "DN", "PN", "РўРёРїР¤", _
+                     "РЈРїР»РџРѕРІ", "Р СЏРґ", "РСЃРїРѕР»РЅ", "Р“СЂРљ", "Р“СЂСѓРїРїР°", "РЎС‚Р°Р»СЊ", "РЎС‚Р°Р»СЊ2", "РўРёРїРћ", _
+                     "Р’С‹СЃРѕС‚Р°", "РљР»СЋС‡Р‘Р°Р·С‹", "РљР»СЋС‡РџРѕР·РёС†РёРё", "РџР»РѕС‰Р°РґСЊ", "РћР±СЉС‘Рј", _
+                     "Р”Р»РёРЅР°", "РџР°СЂР°РјРђСЂРј", "в„–РІРІРѕРґР°", "РЎС‚Р°С‚СѓСЃ", "DNСЃРѕСЂС‚", "РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹", "РџРѕРґРє")
 End Function
 
 Public Function LastUsedRow() As Long
@@ -33,7 +32,7 @@ Public Function FirstHdr() As Long
     Next r
 End Function
 
-Public Sub СброситьКэш()
+Public Sub РЎР±СЂРѕСЃРёС‚СЊРљСЌС€()
     Set mCols = Nothing
 End Sub
 
@@ -42,7 +41,7 @@ Public Function col(ByVal nm As String) As Long
     If mCols Is Nothing Then
         Set mCols = CreateObject("Scripting.Dictionary")
         h = FirstHdr()
-        If h = 0 Then Err.Raise vbObjectError + 20, , "На листе нет ни одного блока."
+        If h = 0 Then Err.Raise vbObjectError + 20, , "РќР° Р»РёСЃС‚Рµ РЅРµС‚ РЅРё РѕРґРЅРѕРіРѕ Р±Р»РѕРєР°."
         For i = 1 To 40
             If i <> MARKCOL Then
                 s = Trim$(CStr(ShSv().Cells(h, i).Value))
@@ -50,7 +49,7 @@ Public Function col(ByVal nm As String) As Long
             End If
         Next i
     End If
-    If Not mCols.exists(nm) Then Err.Raise vbObjectError + 21, , "Не найдена колонка «" & nm & "». Запустите ОбновитьСлужебныеЗаголовки."
+    If Not mCols.exists(nm) Then Err.Raise vbObjectError + 21, , "РќРµ РЅР°Р№РґРµРЅР° РєРѕР»РѕРЅРєР° В«" & nm & "В». Р—Р°РїСѓСЃС‚РёС‚Рµ РћР±РЅРѕРІРёС‚СЊРЎР»СѓР¶РµР±РЅС‹РµР—Р°РіРѕР»РѕРІРєРё."
     col = mCols(nm)
 End Function
 
@@ -101,19 +100,19 @@ Private Function RowIsBlank(ByVal r As Long) As Boolean
     RowIsBlank = True
 End Function
 
-' ==================== Позиции ====================
+' ==================== РџРѕР·РёС†РёРё ====================
 
 Public Sub SetPosFormula(ByVal r As Long)
     Dim cQ As String, cM As String
-    cQ = ShSv().Cells(r, col("Кол-во")).Address(False, False)
-    cM = ShSv().Cells(r, col("Масса 1 ед")).Address(False, False)
-    ShSv().Cells(r, col("Масса всего")).Formula = _
+    cQ = ShSv().Cells(r, col("РљРѕР»-РІРѕ")).Address(False, False)
+    cM = ShSv().Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).Address(False, False)
+    ShSv().Cells(r, col("РњР°СЃСЃР° РІСЃРµРіРѕ")).Formula = _
         "=IF(OR(" & cQ & "="""",NOT(ISNUMBER(" & cM & "))),""""," & cM & "*" & cQ & ")"
 End Sub
 
-Public Sub ПеренумероватьБлок(ByVal h As Long)
+Public Sub РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє(ByVal h As Long)
 Dim r As Long, n As Long, cB As Long, cA As Long
-cB = col("Наименование"): cA = col("№")
+cB = col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ"): cA = col("в„–")
 n = 0
 For r = h + 1 To BlockEnd(h)
 If Len(Trim$(CStr(ShSv().Cells(r, cB).Value))) > 0 Then
@@ -124,14 +123,14 @@ ShSv().Cells(r, cA).ClearContents
 End If
 Next r
 On Error Resume Next
-ПодсветитьДублиУчастка h, True
+РџРѕРґСЃРІРµС‚РёС‚СЊР”СѓР±Р»РёРЈС‡Р°СЃС‚РєР° h, True
 Err.Clear
 On Error GoTo 0
 End Sub
 
 Public Function NextInputNo() As Long
     Dim c As Range, mx As Double, last As Long, k As Long
-    k = col("№ввода"): last = LastUsedRow()
+    k = col("в„–РІРІРѕРґР°"): last = LastUsedRow()
     If last = 0 Then NextInputNo = 1: Exit Function
     For Each c In ShSv().Range(ShSv().Cells(1, k), ShSv().Cells(last, k))
         If IsNumeric(c.Value) And Not isEmpty(c.Value) Then
@@ -141,7 +140,7 @@ Public Function NextInputNo() As Long
     NextInputNo = CLng(mx) + 1
 End Function
 
-Public Sub ОбновитьСлужебныеЗаголовки()
+Public Sub РћР±РЅРѕРІРёС‚СЊРЎР»СѓР¶РµР±РЅС‹РµР—Р°РіРѕР»РѕРІРєРё()
     Dim r As Long, i As Long, nm As Variant, n As Long
     Dim ws As Worksheet, lastSvc As Long
     Set ws = ShSv()
@@ -157,11 +156,11 @@ Public Sub ОбновитьСлужебныеЗаголовки()
         End If
     Next r
     ws.Range(ws.Columns(MARKCOL), ws.Columns(lastSvc)).Hidden = True
-    СброситьКэш
-    MsgBox "Блоков обработано: " & n, vbInformation
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
+    MsgBox "Р‘Р»РѕРєРѕРІ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ: " & n, vbInformation
 End Sub
 
-' ==================== Границы (единственное место рисования) ====================
+' ==================== Р“СЂР°РЅРёС†С‹ (РµРґРёРЅСЃС‚РІРµРЅРЅРѕРµ РјРµСЃС‚Рѕ СЂРёСЃРѕРІР°РЅРёСЏ) ====================
 
 Public Sub SetBlockBorders(ByVal s As Long)
 Dim ws As Worksheet, g As Long, h As Long, lastR As Long, v As Variant
@@ -170,26 +169,26 @@ g = s - 1
 h = s + 4
 lastR = BlockEnd(h)
 If lastR < h Then lastR = h
-' GAP — служебная строка: без границ и без заливки
+' GAP вЂ” СЃР»СѓР¶РµР±РЅР°СЏ СЃС‚СЂРѕРєР°: Р±РµР· РіСЂР°РЅРёС† Рё Р±РµР· Р·Р°Р»РёРІРєРё
 If g >= 1 Then
 With ws.Range(ws.Cells(g, 1), ws.Cells(g, 8))
 .Borders.LineStyle = xlNone
 .Interior.Pattern = xlNone
 End With
 End If
-' Тонкая сетка всего блока: описание + заголовки + ВСЕ строки позиций
+' РўРѕРЅРєР°СЏ СЃРµС‚РєР° РІСЃРµРіРѕ Р±Р»РѕРєР°: РѕРїРёСЃР°РЅРёРµ + Р·Р°РіРѕР»РѕРІРєРё + Р’РЎР• СЃС‚СЂРѕРєРё РїРѕР·РёС†РёР№
 With ws.Range(ws.Cells(s, 1), ws.Cells(lastR, 8))
 .Borders.LineStyle = xlContinuous
 .Borders.weight = xlThin
 End With
-' Жирные вертикальные внутри описания: стыки B|C, D|E, G|H
+' Р–РёСЂРЅС‹Рµ РІРµСЂС‚РёРєР°Р»СЊРЅС‹Рµ РІРЅСѓС‚СЂРё РѕРїРёСЃР°РЅРёСЏ: СЃС‚С‹РєРё B|C, D|E, G|H
 For Each v In Array(2, 4, 7)
 With ws.Range(ws.Cells(s, v), ws.Cells(s + 3, v)).Borders(xlEdgeRight)
 .LineStyle = xlContinuous
 .weight = xlMedium
 End With
 Next v
-' Жирные горизонтальные внутри описания: под 1-й и 3-й строками
+' Р–РёСЂРЅС‹Рµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Рµ РІРЅСѓС‚СЂРё РѕРїРёСЃР°РЅРёСЏ: РїРѕРґ 1-Р№ Рё 3-Р№ СЃС‚СЂРѕРєР°РјРё
 For Each v In Array(s, s + 2)
 With ws.Range(ws.Cells(v, 1), ws.Cells(v, 2)).Borders(xlEdgeBottom)
 .LineStyle = xlContinuous
@@ -200,10 +199,10 @@ With ws.Cells(v, 8).Borders(xlEdgeBottom)
 .weight = xlMedium
 End With
 Next v
-' Периметр блока участка (4 строки описания) — жирный, в самую последнюю очередь
+' РџРµСЂРёРјРµС‚СЂ Р±Р»РѕРєР° СѓС‡Р°СЃС‚РєР° (4 СЃС‚СЂРѕРєРё РѕРїРёСЃР°РЅРёСЏ) вЂ” Р¶РёСЂРЅС‹Р№, РІ СЃР°РјСѓСЋ РїРѕСЃР»РµРґРЅСЋСЋ РѕС‡РµСЂРµРґСЊ
 ws.Range(ws.Cells(s, 1), ws.Cells(s + 3, 8)).BorderAround _
 LineStyle:=xlContinuous, weight:=xlMedium
-' Строка-разделитель сразу после блока — чистая, без границ и заливки
+' РЎС‚СЂРѕРєР°-СЂР°Р·РґРµР»РёС‚РµР»СЊ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ Р±Р»РѕРєР° вЂ” С‡РёСЃС‚Р°СЏ, Р±РµР· РіСЂР°РЅРёС† Рё Р·Р°Р»РёРІРєРё
 If CStr(ws.Cells(lastR + 1, MARKCOL).Value) = "GAP" Then
 With ws.Range(ws.Cells(lastR + 1, 1), ws.Cells(lastR + 1, 8))
 .Borders.LineStyle = xlNone
@@ -213,10 +212,10 @@ End If
 End Sub
 
 Public Sub ApplyBlockFormat(ByVal s As Long)
-    SetListDV ShSv().Cells(s, 8), "Состояние среды: ж,Состояние среды: г,Состояние среды: ГЖ"
-    SetListDV ShSv().Cells(s + 2, 5), "гидр.,пневм."
-    SetListDV ShSv().Cells(s + 2, 7), "пневм.,(не проводить)"
-    SetListDV ShSv().Cells(s + 3, 8), "Без изоляции,Изоляция,Изоляция с электрообогревом,Изоляция с парообогревом"
+    SetListDV ShSv().Cells(s, 8), "РЎРѕСЃС‚РѕСЏРЅРёРµ СЃСЂРµРґС‹: Р¶,РЎРѕСЃС‚РѕСЏРЅРёРµ СЃСЂРµРґС‹: Рі,РЎРѕСЃС‚РѕСЏРЅРёРµ СЃСЂРµРґС‹: Р“Р–"
+    SetListDV ShSv().Cells(s + 2, 5), "РіРёРґСЂ.,РїРЅРµРІРј."
+    SetListDV ShSv().Cells(s + 2, 7), "РїРЅРµРІРј.,(РЅРµ РїСЂРѕРІРѕРґРёС‚СЊ)"
+    SetListDV ShSv().Cells(s + 3, 8), "Р‘РµР· РёР·РѕР»СЏС†РёРё,РР·РѕР»СЏС†РёСЏ,РР·РѕР»СЏС†РёСЏ СЃ СЌР»РµРєС‚СЂРѕРѕР±РѕРіСЂРµРІРѕРј,РР·РѕР»СЏС†РёСЏ СЃ РїР°СЂРѕРѕР±РѕРіСЂРµРІРѕРј"
     With ShSv().Range(ShSv().Cells(s, 1), ShSv().Cells(s + 3, 8))
         .HorizontalAlignment = xlCenter
         .VerticalAlignment = xlCenter
@@ -240,7 +239,7 @@ Public Sub SetTestFormulas(ByVal s As Long)
     ShSv().Range(ShSv().Cells(s + 3, 5), ShSv().Cells(s + 3, 7)).NumberFormat = "0.00"
 End Sub
 
-Public Sub ПересчитатьИспытания()
+Public Sub РџРµСЂРµСЃС‡РёС‚Р°С‚СЊРСЃРїС‹С‚Р°РЅРёСЏ()
     Dim r As Long, n As Long, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
@@ -251,21 +250,21 @@ Public Sub ПересчитатьИспытания()
             n = n + 1
         End If
     Next r
-    MsgBox "Пересчитано блоков: " & n, vbInformation
+    MsgBox "РџРµСЂРµСЃС‡РёС‚Р°РЅРѕ Р±Р»РѕРєРѕРІ: " & n, vbInformation
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-' ==================== Структура листа ====================
+' ==================== РЎС‚СЂСѓРєС‚СѓСЂР° Р»РёСЃС‚Р° ====================
 
-Public Sub ДобавитьУчасток()
+Public Sub Р”РѕР±Р°РІРёС‚СЊРЈС‡Р°СЃС‚РѕРє()
     Dim ins As Long, hh As Long, cur As Long, firstSec As Long, lastEnd As Long
     Dim bSec As Long, bEnd As Long, found As Boolean, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     cur = ActiveCell.row
     For hh = 1 To LastUsedRow() + 1
         If CStr(ShSv().Cells(hh, MARKCOL).Value) = "HDR" Then
@@ -286,20 +285,20 @@ Public Sub ДобавитьУчасток()
             ins = lastEnd + 1
         End If
     End If
-    ВставитьБлок ins
+    Р’СЃС‚Р°РІРёС‚СЊР‘Р»РѕРє ins
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub ВставитьБлок(ByVal ins As Long)
+Public Sub Р’СЃС‚Р°РІРёС‚СЊР‘Р»РѕРє(ByVal ins As Long)
     Dim nRows As Long, g As Long, s As Long, h As Long
     Dim rFirst As Long, rLast As Long, r As Long, i As Long
     Dim nm As Variant, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     If ins < 1 Then ins = 1
     nRows = 6 + POS_ROWS
     ShSv().Rows(ins & ":" & ins + nRows - 1).Insert Shift:=xlDown
@@ -316,17 +315,17 @@ Public Sub ВставитьБлок(ByVal ins As Long)
     rLast = s + 4 + POS_ROWS
     ShSv().Cells(g, MARKCOL).Value = "GAP"
     ShSv().Cells(s, MARKCOL).Value = "SEC"
-    ShSv().Cells(s, 3).Value = "Рабочая температура, °C:"
-    ShSv().Cells(s + 1, 1).Value = "Начало"
-    ShSv().Cells(s + 1, 3).Value = "Расчетная температура, °C:"
-    ShSv().Cells(s + 1, 5).Value = "прочность"
-    ShSv().Cells(s + 1, 6).Value = "плотность"
-    ShSv().Cells(s + 1, 7).Value = "герметичность"
-    ShSv().Cells(s + 2, 1).Value = "Конец"
-    ShSv().Cells(s + 2, 3).Value = "Рабочее давление, МПа:"
-    ShSv().Cells(s + 3, 3).Value = "Расчетное давление, МПа:"
+    ShSv().Cells(s, 3).Value = "Р Р°Р±РѕС‡Р°СЏ С‚РµРјРїРµСЂР°С‚СѓСЂР°, В°C:"
+    ShSv().Cells(s + 1, 1).Value = "РќР°С‡Р°Р»Рѕ"
+    ShSv().Cells(s + 1, 3).Value = "Р Р°СЃС‡РµС‚РЅР°СЏ С‚РµРјРїРµСЂР°С‚СѓСЂР°, В°C:"
+    ShSv().Cells(s + 1, 5).Value = "РїСЂРѕС‡РЅРѕСЃС‚СЊ"
+    ShSv().Cells(s + 1, 6).Value = "РїР»РѕС‚РЅРѕСЃС‚СЊ"
+    ShSv().Cells(s + 1, 7).Value = "РіРµСЂРјРµС‚РёС‡РЅРѕСЃС‚СЊ"
+    ShSv().Cells(s + 2, 1).Value = "РљРѕРЅРµС†"
+    ShSv().Cells(s + 2, 3).Value = "Р Р°Р±РѕС‡РµРµ РґР°РІР»РµРЅРёРµ, РњРџР°:"
+    ShSv().Cells(s + 3, 3).Value = "Р Р°СЃС‡РµС‚РЅРѕРµ РґР°РІР»РµРЅРёРµ, РњРџР°:"
     ShSv().Range(ShSv().Cells(s, 5), ShSv().Cells(s, 7)).Merge
-    ShSv().Cells(s, 5).Value = "Давление испытаний, МПа:"
+    ShSv().Cells(s, 5).Value = "Р”Р°РІР»РµРЅРёРµ РёСЃРїС‹С‚Р°РЅРёР№, РњРџР°:"
     ShSv().Range(ShSv().Cells(s + 2, 5), ShSv().Cells(s + 2, 6)).Merge
     ShSv().Cells(s, 3).Interior.Color = RGB(217, 217, 217)
     ShSv().Range(ShSv().Cells(s, 5), ShSv().Cells(s, 7)).Interior.Color = RGB(217, 217, 217)
@@ -350,14 +349,14 @@ Public Sub ВставитьБлок(ByVal ins As Long)
     ShSv().Range(ShSv().Cells(s, 1), ShSv().Cells(s + 3, 8)).VerticalAlignment = xlCenter
     ShSv().Cells(s, 1).Font.Bold = True
     ShSv().Cells(h, MARKCOL).Value = "HDR"
-    ShSv().Cells(h, 1).Value = "№"
-    ShSv().Cells(h, 2).Value = "Наименование"
-    ShSv().Cells(h, 3).Value = "Опросной лист"
-    ShSv().Cells(h, 4).Value = "Ед.изм."
-    ShSv().Cells(h, 5).Value = "Кол-во"
-    ShSv().Cells(h, 6).Value = "Масса 1 ед"
-    ShSv().Cells(h, 7).Value = "Масса всего"
-    ShSv().Cells(h, 8).Value = "Примечание"
+    ShSv().Cells(h, 1).Value = "в„–"
+    ShSv().Cells(h, 2).Value = "РќР°РёРјРµРЅРѕРІР°РЅРёРµ"
+    ShSv().Cells(h, 3).Value = "РћРїСЂРѕСЃРЅРѕР№ Р»РёСЃС‚"
+    ShSv().Cells(h, 4).Value = "Р•Рґ.РёР·Рј."
+    ShSv().Cells(h, 5).Value = "РљРѕР»-РІРѕ"
+    ShSv().Cells(h, 6).Value = "РњР°СЃСЃР° 1 РµРґ"
+    ShSv().Cells(h, 7).Value = "РњР°СЃСЃР° РІСЃРµРіРѕ"
+    ShSv().Cells(h, 8).Value = "РџСЂРёРјРµС‡Р°РЅРёРµ"
     nm = SvcNames()
     For i = 0 To UBound(nm)
         ShSv().Cells(h, MARKCOL + 1 + i).Value = nm(i)
@@ -376,7 +375,7 @@ Public Sub ВставитьБлок(ByVal ins As Long)
     ShSv().Columns("F").ColumnWidth = 11
     ShSv().Columns("G").ColumnWidth = 12
     ShSv().Columns("H").ColumnWidth = 34
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     For r = rFirst To rLast
         SetPosFormula r
     Next r
@@ -386,20 +385,20 @@ Public Sub ВставитьБлок(ByVal ins As Long)
     ShSv().Cells(s, 1).Select
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub ДобавитьПозицию()
+Public Sub Р”РѕР±Р°РІРёС‚СЊРџРѕР·РёС†РёСЋ()
     Dim h As Long, e As Long, ins As Long, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     If CStr(ShSv().Cells(ActiveCell.row, MARKCOL).Value) = "GAP" Then
-        Err.Raise vbObjectError + 41, , "Курсор на служебной строке-разделителе."
+        Err.Raise vbObjectError + 41, , "РљСѓСЂСЃРѕСЂ РЅР° СЃР»СѓР¶РµР±РЅРѕР№ СЃС‚СЂРѕРєРµ-СЂР°Р·РґРµР»РёС‚РµР»Рµ."
     End If
     h = HdrOf(ActiveCell.row)
-    If h = 0 Then Err.Raise vbObjectError + 40, , "Курсор не внутри блока позиций."
+    If h = 0 Then Err.Raise vbObjectError + 40, , "РљСѓСЂСЃРѕСЂ РЅРµ РІРЅСѓС‚СЂРё Р±Р»РѕРєР° РїРѕР·РёС†РёР№."
     e = BlockEnd(h)
     ins = e + 1
     ShSv().Rows(ins).Insert Shift:=xlDown
@@ -412,11 +411,11 @@ Public Sub ДобавитьПозицию()
         .VerticalAlignment = xlCenter
     End With
     SetPosFormula ins
-    ПеренумероватьБлок h
-    ShSv().Cells(ins, col("Наименование")).Select
+    РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
+    ShSv().Cells(ins, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Select
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
 Private Sub CleanGapRow(ByVal r As Long)
@@ -429,19 +428,19 @@ Private Sub CleanGapRow(ByVal r As Long)
     ShSv().Cells(r, MARKCOL).Value = "GAP"
 End Sub
 
-Public Sub ДобавитьРазделители()
+Public Sub Р”РѕР±Р°РІРёС‚СЊР Р°Р·РґРµР»РёС‚РµР»Рё()
     Dim secs As Collection, i As Long, s As Long
     Dim ev As Boolean, n As Long
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     Set secs = New Collection
     For s = 1 To LastUsedRow()
         If CStr(ShSv().Cells(s, MARKCOL).Value) = "SEC" Then secs.Add s
     Next s
     If secs.Count = 0 Then
-        MsgBox "Блоков не найдено.", vbInformation
+        MsgBox "Р‘Р»РѕРєРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ.", vbInformation
         GoTo fin
     End If
     For i = secs.Count To 1 Step -1
@@ -463,93 +462,93 @@ Public Sub ДобавитьРазделители()
     For s = 1 To LastUsedRow()
         If CStr(ShSv().Cells(s, MARKCOL).Value) = "SEC" Then SetBlockBorders s
     Next s
-    СброситьКэш
-    MsgBox "Разделителей добавлено или помечено: " & n, vbInformation
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
+    MsgBox "Р Р°Р·РґРµР»РёС‚РµР»РµР№ РґРѕР±Р°РІР»РµРЅРѕ РёР»Рё РїРѕРјРµС‡РµРЅРѕ: " & n, vbInformation
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub ПоказатьБлоки()
+Public Sub РџРѕРєР°Р·Р°С‚СЊР‘Р»РѕРєРё()
     Dim hh As Long, msg As String, n As Long, e As Long
-    msg = "Активная ячейка: строка " & ActiveCell.row & vbCrLf & _
+    msg = "РђРєС‚РёРІРЅР°СЏ СЏС‡РµР№РєР°: СЃС‚СЂРѕРєР° " & ActiveCell.row & vbCrLf & _
           "LastUsedRow = " & LastUsedRow() & vbCrLf & vbCrLf
     For hh = 1 To LastUsedRow() + 1
         If CStr(ShSv().Cells(hh, MARKCOL).Value) = "HDR" Then
             n = n + 1
             e = BlockEnd(hh)
-            msg = msg & "Блок " & n & ": SEC=" & SecOfHdr(hh) & ", HDR=" & hh & _
-                  ", конец=" & e & ", разделитель=" & _
-                  IIf(CStr(ShSv().Cells(e + 1, MARKCOL).Value) = "GAP", "есть", "НЕТ") & vbCrLf
+            msg = msg & "Р‘Р»РѕРє " & n & ": SEC=" & SecOfHdr(hh) & ", HDR=" & hh & _
+                  ", РєРѕРЅРµС†=" & e & ", СЂР°Р·РґРµР»РёС‚РµР»СЊ=" & _
+                  IIf(CStr(ShSv().Cells(e + 1, MARKCOL).Value) = "GAP", "РµСЃС‚СЊ", "РќР•Рў") & vbCrLf
         End If
     Next hh
-    If n = 0 Then msg = msg & "Блоков не найдено."
-    MsgBox msg, vbInformation, "Карта блоков"
+    If n = 0 Then msg = msg & "Р‘Р»РѕРєРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ."
+    MsgBox msg, vbInformation, "РљР°СЂС‚Р° Р±Р»РѕРєРѕРІ"
 End Sub
 
-Public Sub ОбновитьСпискиУчастков()
+Public Sub РћР±РЅРѕРІРёС‚СЊРЎРїРёСЃРєРёРЈС‡Р°СЃС‚РєРѕРІ()
     Dim r As Long, n As Long, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
     For r = 1 To LastUsedRow()
         If CStr(ShSv().Cells(r, MARKCOL).Value) = "SEC" Then
-            SetListDV ShSv().Cells(r + 2, 7), "пневм.,(не проводить)"
+            SetListDV ShSv().Cells(r + 2, 7), "РїРЅРµРІРј.,(РЅРµ РїСЂРѕРІРѕРґРёС‚СЊ)"
             n = n + 1
         End If
     Next r
 fin:
     Application.EnableEvents = ev
     If Err.Number <> 0 Then
-        MsgBox "Ошибка: " & Err.Description, vbExclamation
+        MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
     Else
-        MsgBox "Списки испытаний обновлены в блоках: " & n, vbInformation
+        MsgBox "РЎРїРёСЃРєРё РёСЃРїС‹С‚Р°РЅРёР№ РѕР±РЅРѕРІР»РµРЅС‹ РІ Р±Р»РѕРєР°С…: " & n, vbInformation
     End If
 End Sub
 
-Public Sub ДиагностикаКолонок()
+Public Sub Р”РёР°РіРЅРѕСЃС‚РёРєР°РљРѕР»РѕРЅРѕРє()
     Dim h As Long, i As Long, s As String, msg As String
     Dim d As Object, dup As String, nm As Variant, v As Variant
     h = FirstHdr()
-    If h = 0 Then MsgBox "Нет блоков.", vbExclamation: Exit Sub
+    If h = 0 Then MsgBox "РќРµС‚ Р±Р»РѕРєРѕРІ.", vbExclamation: Exit Sub
     Set d = CreateObject("Scripting.Dictionary")
     For i = 1 To 40
         s = Trim$(CStr(ShSv().Cells(h, i).Value))
         If Len(s) > 0 Then
             If d.exists(s) Then
-                dup = dup & "«" & s & "» -> колонки " & d(s) & " и " & i & vbCrLf
+                dup = dup & "В«" & s & "В» -> РєРѕР»РѕРЅРєРё " & d(s) & " Рё " & i & vbCrLf
             Else
                 d.Add s, i
             End If
         End If
     Next i
-    msg = "HDR = строка " & h & vbCrLf & vbCrLf
+    msg = "HDR = СЃС‚СЂРѕРєР° " & h & vbCrLf & vbCrLf
     If Len(dup) > 0 Then
-        msg = msg & "ДУБЛИ ЗАГОЛОВКОВ:" & vbCrLf & dup & vbCrLf
+        msg = msg & "Р”РЈР‘Р›Р Р—РђР“РћР›РћР’РљРћР’:" & vbCrLf & dup & vbCrLf
     Else
-        msg = msg & "Дублей заголовков нет." & vbCrLf & vbCrLf
+        msg = msg & "Р”СѓР±Р»РµР№ Р·Р°РіРѕР»РѕРІРєРѕРІ РЅРµС‚." & vbCrLf & vbCrLf
     End If
-    nm = Array("Наименование", "Ед.изм.", "Кол-во", "Масса 1 ед", "Масса всего", _
-               "Тип", "УплПов", "№ввода", "Подк")
+    nm = Array("РќР°РёРјРµРЅРѕРІР°РЅРёРµ", "Р•Рґ.РёР·Рј.", "РљРѕР»-РІРѕ", "РњР°СЃСЃР° 1 РµРґ", "РњР°СЃСЃР° РІСЃРµРіРѕ", _
+               "РўРёРї", "РЈРїР»РџРѕРІ", "в„–РІРІРѕРґР°", "РџРѕРґРє")
     For Each v In nm
         If d.exists(CStr(v)) Then
             msg = msg & CStr(v) & " -> " & col(CStr(v)) & vbCrLf
         Else
-            msg = msg & CStr(v) & " -> НЕ НАЙДЕНА" & vbCrLf
+            msg = msg & CStr(v) & " -> РќР• РќРђР™Р”Р•РќРђ" & vbCrLf
         End If
     Next v
-    MsgBox msg, vbInformation, "Колонки блока"
+    MsgBox msg, vbInformation, "РљРѕР»РѕРЅРєРё Р±Р»РѕРєР°"
 End Sub
 
-Public Sub ВставитьСтрокуПозиции(ByVal r As Long, Optional ByVal above As Boolean = False, _
+Public Sub Р’СЃС‚Р°РІРёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё(ByVal r As Long, Optional ByVal above As Boolean = False, _
 Optional ByVal cnt As Long = 1)
 Dim h As Long, s As Long, ins As Long, ev As Boolean, i As Long
 ev = Application.EnableEvents
 On Error GoTo fin
 Application.EnableEvents = False
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 40, , "Курсор не внутри блока позиций."
+If h = 0 Then Err.Raise vbObjectError + 40, , "РљСѓСЂСЃРѕСЂ РЅРµ РІРЅСѓС‚СЂРё Р±Р»РѕРєР° РїРѕР·РёС†РёР№."
 If cnt < 1 Then cnt = 1
 If cnt > 100 Then cnt = 100
 If above Then ins = r Else ins = r + 1
@@ -568,79 +567,79 @@ End With
 For i = ins To ins + cnt - 1
 SetPosFormula i
 Next i
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 s = SecOfHdr(h)
 If s > 0 Then SetBlockBorders s
-ПеренумероватьБлок h
-ShSv().Cells(ins, col("Наименование")).Select
+РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
+ShSv().Cells(ins, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Select
 fin:
 Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub ОчиститьПозицию(ByVal r As Long)
+Public Sub РћС‡РёСЃС‚РёС‚СЊРџРѕР·РёС†РёСЋ(ByVal r As Long)
 Dim h As Long, ev As Boolean
 ev = Application.EnableEvents
 On Error GoTo fin
 Application.EnableEvents = False
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 40, , "Курсор не внутри блока позиций."
+If h = 0 Then Err.Raise vbObjectError + 40, , "РљСѓСЂСЃРѕСЂ РЅРµ РІРЅСѓС‚СЂРё Р±Р»РѕРєР° РїРѕР·РёС†РёР№."
 ClearPosRow r
-ПеренумероватьБлок h
+РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
 Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub УдалитьСтрокуПозиции(ByVal r As Long)
+Public Sub РЈРґР°Р»РёС‚СЊРЎС‚СЂРѕРєСѓРџРѕР·РёС†РёРё(ByVal r As Long)
 Dim h As Long, s As Long, ev As Boolean
 ev = Application.EnableEvents
 On Error GoTo fin
 Application.EnableEvents = False
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 h = HdrOf(r)
-If h = 0 Then Err.Raise vbObjectError + 40, , "Курсор не внутри блока позиций."
-If MsgBox("Удалить строку позиции " & r & "? Нумерация блока будет пересчитана.", _
-vbQuestion + vbYesNo, "Удаление строки") <> vbYes Then GoTo fin
+If h = 0 Then Err.Raise vbObjectError + 40, , "РљСѓСЂСЃРѕСЂ РЅРµ РІРЅСѓС‚СЂРё Р±Р»РѕРєР° РїРѕР·РёС†РёР№."
+If MsgBox("РЈРґР°Р»РёС‚СЊ СЃС‚СЂРѕРєСѓ РїРѕР·РёС†РёРё " & r & "? РќСѓРјРµСЂР°С†РёСЏ Р±Р»РѕРєР° Р±СѓРґРµС‚ РїРµСЂРµСЃС‡РёС‚Р°РЅР°.", _
+vbQuestion + vbYesNo, "РЈРґР°Р»РµРЅРёРµ СЃС‚СЂРѕРєРё") <> vbYes Then GoTo fin
 ShSv().Rows(r).Delete Shift:=xlUp
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 s = SecOfHdr(h)
 If s > 0 Then SetBlockBorders s
-ПеренумероватьБлок h
+РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 fin:
 Application.EnableEvents = ev
-If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-Public Sub УдалитьУчасток(ByVal s As Long)
+Public Sub РЈРґР°Р»РёС‚СЊРЈС‡Р°СЃС‚РѕРє(ByVal s As Long)
     Dim g As Long, e As Long, ev As Boolean
     ev = Application.EnableEvents
     On Error GoTo fin
     Application.EnableEvents = False
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
     g = s - 1
     e = BlockEnd(s + 4)
-    If MsgBox("Удалить участок «" & CStr(ShSv().Cells(s, 1).Value) & " / " & _
-              CStr(ShSv().Cells(s, 2).Value) & "» со всеми позициями (строки " & g & "–" & e & ")?", _
-              vbQuestion + vbYesNo + vbDefaultButton2, "Удаление участка") <> vbYes Then GoTo fin
+    If MsgBox("РЈРґР°Р»РёС‚СЊ СѓС‡Р°СЃС‚РѕРє В«" & CStr(ShSv().Cells(s, 1).Value) & " / " & _
+              CStr(ShSv().Cells(s, 2).Value) & "В» СЃРѕ РІСЃРµРјРё РїРѕР·РёС†РёСЏРјРё (СЃС‚СЂРѕРєРё " & g & "вЂ“" & e & ")?", _
+              vbQuestion + vbYesNo + vbDefaultButton2, "РЈРґР°Р»РµРЅРёРµ СѓС‡Р°СЃС‚РєР°") <> vbYes Then GoTo fin
     ShSv().Rows(g & ":" & e).Delete Shift:=xlUp
-    СброситьКэш
+    РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 fin:
     Application.EnableEvents = ev
-    If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+    If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
-'' ==================== СОРТИРОВКА ПОЗИЦИЙ ====================
+'' ==================== РЎРћР РўРР РћР’РљРђ РџРћР—РР¦РР™ ====================
 Private Function SortWeightOfRow(ByVal r As Long) As Double
 Dim ws As Worksheet, code As String, v As Variant
 Dim w As Double, got As Boolean
 Set ws = ShSv()
-If Len(Trim$(CStr(ws.Cells(r, col("Наименование")).Value))) = 0 Then
+If Len(Trim$(CStr(ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value))) = 0 Then
 SortWeightOfRow = 1000000000#
 Exit Function
 End If
-code = Trim$(CStr(ws.Cells(r, col("Тип")).Value))
+code = Trim$(CStr(ws.Cells(r, col("РўРёРї")).Value))
 If Len(code) > 0 Then
 Err.Clear
 On Error Resume Next
@@ -654,7 +653,7 @@ Err.Clear
 On Error GoTo 0
 End If
 If Not got Then
-v = ws.Cells(r, col("ПорядокГруппы")).Value
+v = ws.Cells(r, col("РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹")).Value
 If IsNumeric(v) And Not isEmpty(v) Then
 w = CDbl(v)
 Else
@@ -669,7 +668,7 @@ Dim ws As Worksheet, v As Variant
 Set ws = ShSv()
 v = ws.Cells(r, col("D")).Value
 If Not (IsNumeric(v) And Not isEmpty(v)) Then v = ws.Cells(r, col("DN")).Value
-If Not (IsNumeric(v) And Not isEmpty(v)) Then v = ws.Cells(r, col("DNсорт")).Value
+If Not (IsNumeric(v) And Not isEmpty(v)) Then v = ws.Cells(r, col("DNСЃРѕСЂС‚")).Value
 If IsNumeric(v) And Not isEmpty(v) Then SortDiaOfRow = CDbl(v) Else SortDiaOfRow = 0
 End Function
 
@@ -687,7 +686,7 @@ v = ws.Cells(r, col("PN")).Value
 If IsNumeric(v) And Not isEmpty(v) Then SortPnOfRow = CDbl(v) Else SortPnOfRow = 0
 End Function
 
-' Вес — по возрастанию; диаметр, толщина, PN — по убыванию; затем исходный порядок
+' Р’РµСЃ вЂ” РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ; РґРёР°РјРµС‚СЂ, С‚РѕР»С‰РёРЅР°, PN вЂ” РїРѕ СѓР±С‹РІР°РЅРёСЋ; Р·Р°С‚РµРј РёСЃС…РѕРґРЅС‹Р№ РїРѕСЂСЏРґРѕРє
 Private Function SortLess(ByRef w() As Double, ByRef d() As Double, _
 ByRef t() As Double, ByRef p() As Double, _
 ByVal i As Long, ByVal j As Long) As Boolean
@@ -698,7 +697,7 @@ If p(i) <> p(j) Then SortLess = (p(i) > p(j)): Exit Function
 SortLess = (i < j)
 End Function
 
-Public Sub СортироватьУчасток(ByVal h As Long, Optional ByVal silent As Boolean = False)
+Public Sub РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊРЈС‡Р°СЃС‚РѕРє(ByVal h As Long, Optional ByVal silent As Boolean = False)
 Dim ws As Worksheet, e As Long, n As Long, i As Long, j As Long, p As Long, q As Long
 Dim w() As Double, d() As Double, t() As Double, pn() As Double
 Dim ord() As Long, cur() As Long
@@ -708,11 +707,11 @@ ev = Application.EnableEvents
 scr = Application.ScreenUpdating
 On Error GoTo fin
 Set ws = ShSv()
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 e = BlockEnd(h)
 n = e - h
 If n < 2 Then
-If Not silent Then MsgBox "В этом участке нечего сортировать.", vbInformation
+If Not silent Then MsgBox "Р’ СЌС‚РѕРј СѓС‡Р°СЃС‚РєРµ РЅРµС‡РµРіРѕ СЃРѕСЂС‚РёСЂРѕРІР°С‚СЊ.", vbInformation
 GoTo fin
 End If
 ReDim w(1 To n): ReDim d(1 To n): ReDim t(1 To n): ReDim pn(1 To n)
@@ -754,8 +753,8 @@ End If
 End If
 Next p
 Application.CutCopyMode = False
-СброситьКэш
-ПеренумероватьБлок h
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
+РџРµСЂРµРЅСѓРјРµСЂРѕРІР°С‚СЊР‘Р»РѕРє h
 s = SecOfHdr(h)
 If s > 0 Then SetBlockBorders s
 fin:
@@ -763,41 +762,41 @@ Application.CutCopyMode = False
 Application.EnableEvents = ev
 Application.ScreenUpdating = scr
 If Err.Number <> 0 Then
-MsgBox "Ошибка сортировки: " & Err.Description, vbExclamation
+MsgBox "РћС€РёР±РєР° СЃРѕСЂС‚РёСЂРѕРІРєРё: " & Err.Description, vbExclamation
 ElseIf Not silent Then
-MsgBox "Участок отсортирован." & vbCrLf & _
-"Строк в блоке: " & n & ", перемещено: " & moved, vbInformation
+MsgBox "РЈС‡Р°СЃС‚РѕРє РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅ." & vbCrLf & _
+"РЎС‚СЂРѕРє РІ Р±Р»РѕРєРµ: " & n & ", РїРµСЂРµРјРµС‰РµРЅРѕ: " & moved, vbInformation
 End If
 End Sub
 
-Public Sub СортироватьВсеУчастки()
+Public Sub РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊР’СЃРµРЈС‡Р°СЃС‚РєРё()
 Dim ws As Worksheet, hs As Collection, r As Long, i As Long, n As Long
 Dim ev As Boolean, scr As Boolean
 ev = Application.EnableEvents
 scr = Application.ScreenUpdating
 On Error GoTo fin
 Set ws = ShSv()
-СброситьКэш
+РЎР±СЂРѕСЃРёС‚СЊРљСЌС€
 Set hs = New Collection
 For r = 1 To LastUsedRow()
 If CStr(ws.Cells(r, MARKCOL).Value) = "HDR" Then hs.Add r
 Next r
 If hs.Count = 0 Then
-MsgBox "На листе нет участков.", vbExclamation
+MsgBox "РќР° Р»РёСЃС‚Рµ РЅРµС‚ СѓС‡Р°СЃС‚РєРѕРІ.", vbExclamation
 GoTo fin
 End If
-If MsgBox("Отсортировать позиции ВО ВСЕХ участках?" & vbCrLf & vbCrLf & _
-"Участков: " & hs.Count & vbCrLf & _
-"Группы: по «ПорядокГруппы» (по возрастанию)." & vbCrLf & _
-"Внутри группы: диаметр, толщина стенки, PN — по убыванию." & vbCrLf & _
-"Пустые строки уйдут в конец каждого участка." & vbCrLf & vbCrLf & _
-"Отменить через Ctrl+Z не получится — лучше сохранить книгу." & vbCrLf & _
-"Продолжить?", vbQuestion + vbYesNo + vbDefaultButton2, _
-"Сортировка всех участков") <> vbYes Then GoTo fin
+If MsgBox("РћС‚СЃРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕР·РёС†РёРё Р’Рћ Р’РЎР•РҐ СѓС‡Р°СЃС‚РєР°С…?" & vbCrLf & vbCrLf & _
+"РЈС‡Р°СЃС‚РєРѕРІ: " & hs.Count & vbCrLf & _
+"Р“СЂСѓРїРїС‹: РїРѕ В«РџРѕСЂСЏРґРѕРєР“СЂСѓРїРїС‹В» (РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ)." & vbCrLf & _
+"Р’РЅСѓС‚СЂРё РіСЂСѓРїРїС‹: РґРёР°РјРµС‚СЂ, С‚РѕР»С‰РёРЅР° СЃС‚РµРЅРєРё, PN вЂ” РїРѕ СѓР±С‹РІР°РЅРёСЋ." & vbCrLf & _
+"РџСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё СѓР№РґСѓС‚ РІ РєРѕРЅРµС† РєР°Р¶РґРѕРіРѕ СѓС‡Р°СЃС‚РєР°." & vbCrLf & vbCrLf & _
+"РћС‚РјРµРЅРёС‚СЊ С‡РµСЂРµР· Ctrl+Z РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ вЂ” Р»СѓС‡С€Рµ СЃРѕС…СЂР°РЅРёС‚СЊ РєРЅРёРіСѓ." & vbCrLf & _
+"РџСЂРѕРґРѕР»Р¶РёС‚СЊ?", vbQuestion + vbYesNo + vbDefaultButton2, _
+"РЎРѕСЂС‚РёСЂРѕРІРєР° РІСЃРµС… СѓС‡Р°СЃС‚РєРѕРІ") <> vbYes Then GoTo fin
 Application.EnableEvents = False
 Application.ScreenUpdating = False
 For i = hs.Count To 1 Step -1
-СортироватьУчасток CLng(hs(i)), True
+РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊРЈС‡Р°СЃС‚РѕРє CLng(hs(i)), True
 n = n + 1
 Next i
 fin:
@@ -805,13 +804,13 @@ Application.CutCopyMode = False
 Application.EnableEvents = ev
 Application.ScreenUpdating = scr
 If Err.Number <> 0 Then
-MsgBox "Ошибка сортировки: " & Err.Description, vbExclamation
+MsgBox "РћС€РёР±РєР° СЃРѕСЂС‚РёСЂРѕРІРєРё: " & Err.Description, vbExclamation
 ElseIf n > 0 Then
-MsgBox "Отсортировано участков: " & n, vbInformation
+MsgBox "РћС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРѕ СѓС‡Р°СЃС‚РєРѕРІ: " & n, vbInformation
 End If
 End Sub
 
-' ==================== ПОДСВЕТКА: ДУБЛИ + ВНЕ БАЗЫ ====================
+' ==================== РџРћР”РЎР’Р•РўРљРђ: Р”РЈР‘Р›Р + Р’РќР• Р‘РђР—Р« ====================
 Private Function DupColor() As Long
 DupColor = RGB(255, 199, 206)
 End Function
@@ -859,168 +858,186 @@ End If
 ColArray = a
 End Function
 
-Public Function СостояниеВнеБазы(ByVal r As Long) As String
+Public Function РЎРѕСЃС‚РѕСЏРЅРёРµР’РЅРµР‘Р°Р·С‹(ByVal r As Long) As String
 Dim ws As Worksheet
 Dim nm As String
 Dim typ As String
 Dim stt As String
 Dim un As String
 Set ws = ShSv()
-nm = Trim$(CStr(ws.Cells(r, col("Наименование")).Value))
+nm = Trim$(CStr(ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).Value))
 If Len(nm) = 0 Then Exit Function
-typ = Trim$(CStr(ws.Cells(r, col("Тип")).Value))
-stt = UCase$(Trim$(CStr(ws.Cells(r, col("Статус")).Value)))
-If Len(typ) > 0 And stt <> "НЕТ В БАЗЕ" Then Exit Function
-un = Trim$(CStr(ws.Cells(r, col("Ед.изм.")).Value))
+typ = Trim$(CStr(ws.Cells(r, col("РўРёРї")).Value))
+stt = UCase$(Trim$(CStr(ws.Cells(r, col("РЎС‚Р°С‚СѓСЃ")).Value)))
+If Len(typ) > 0 And stt <> "РќР•Рў Р’ Р‘РђР—Р•" Then Exit Function
+un = Trim$(CStr(ws.Cells(r, col("Р•Рґ.РёР·Рј.")).Value))
 If modTemp.TempContains(nm, un) Then
-СостояниеВнеБазы = "SENT"
+РЎРѕСЃС‚РѕСЏРЅРёРµР’РЅРµР‘Р°Р·С‹ = "SENT"
 Else
-СостояниеВнеБазы = "NEW"
+РЎРѕСЃС‚РѕСЏРЅРёРµР’РЅРµР‘Р°Р·С‹ = "NEW"
 End If
 End Function
 
-Public Sub ПодсветитьДублиУчастка(ByVal h As Long, _
-Optional ByVal silent As Boolean = True)
-Dim ws As Worksheet
-Dim e As Long
-Dim n As Long
-Dim i As Long
-Dim r As Long
-Dim aName As Variant
-Dim aKey As Variant
-Dim aType As Variant
-Dim aStat As Variant
-Dim aUnit As Variant
-Dim kArr() As String
-Dim outb() As Boolean
-Dim sent() As Boolean
-Dim cnt As Object
-Dim k As String
-Dim nm As String
-Dim typ As String
-Dim stt As String
-Dim mk As String
-Dim v As Variant
-Dim nGrp As Long
-Dim nRows As Long
-Dim nOut As Long
-Dim anyOut As Boolean
-Dim wantRow As Long
-Dim wantA As Long
-Dim cB As Long
-Dim cK As Long
-Dim cT As Long
-Dim cs As Long
-Dim cU As Long
-Dim msg As String
-If h = 0 Then Exit Sub
-Set ws = ShSv()
-If CStr(ws.Cells(h, MARKCOL).Value) <> "HDR" Then Exit Sub
-e = BlockEnd(h)
-For i = h + 1 To e
-mk = CStr(ws.Cells(i, MARKCOL).Value)
-If mk = "SEC" Or mk = "GAP" Or mk = "HDR" Then
-e = i - 1
-Exit For
-End If
-Next i
-n = e - h
-If n < 1 Then Exit Sub
-cB = col("Наименование")
-cK = col("КлючПозиции")
-cT = col("Тип")
-cs = col("Статус")
-cU = col("Ед.изм.")
-aName = ColArray(ws, cB, h + 1, e)
-aKey = ColArray(ws, cK, h + 1, e)
-aType = ColArray(ws, cT, h + 1, e)
-aStat = ColArray(ws, cs, h + 1, e)
-aUnit = ColArray(ws, cU, h + 1, e)
-ReDim kArr(1 To n)
-ReDim outb(1 To n)
-ReDim sent(1 To n)
-Set cnt = CreateObject("Scripting.Dictionary")
-For i = 1 To n
-nm = Trim$(CStr(aName(i, 1)))
-If Len(nm) > 0 Then
-k = Trim$(CStr(aKey(i, 1)))
-If Len(k) > 0 Then
-k = "K|" & LCase$(k)
-Else
-k = "T|" & NormDupText(nm)
-End If
-kArr(i) = k
-If cnt.exists(k) Then
-cnt(k) = cnt(k) + 1
-Else
-cnt.Add k, 1
-End If
-typ = Trim$(CStr(aType(i, 1)))
-stt = UCase$(Trim$(CStr(aStat(i, 1))))
-If Len(typ) = 0 Or stt = "НЕТ В БАЗЕ" Then
-outb(i) = True
-anyOut = True
-End If
-End If
-Next i
-If anyOut Then
-For i = 1 To n
-If outb(i) Then
-nm = Trim$(CStr(aName(i, 1)))
-sent(i) = modTemp.TempContains(nm, Trim$(CStr(aUnit(i, 1))))
-nOut = nOut + 1
-End If
-Next i
-End If
-For i = 1 To n
-r = h + i
-wantRow = 0
-If Len(kArr(i)) > 0 Then
-If cnt(kArr(i)) > 1 Then
-wantRow = DupColor()
-nRows = nRows + 1
-End If
-End If
-If wantRow > 0 Then
-If ws.Cells(r, 2).Interior.Color <> wantRow Then
-ws.Range(ws.Cells(r, 2), ws.Cells(r, 8)).Interior.Color = wantRow
-End If
-Else
-If ws.Cells(r, 2).Interior.Pattern <> xlNone Then
-ws.Range(ws.Cells(r, 2), ws.Cells(r, 8)).Interior.Pattern = xlNone
-End If
-End If
-wantA = wantRow
-If outb(i) Then
-If sent(i) Then
-wantA = OutSentColor()
-Else
-wantA = OutPendingColor()
-End If
-End If
-If wantA > 0 Then
-If ws.Cells(r, 1).Interior.Color <> wantA Then
-ws.Cells(r, 1).Interior.Color = wantA
-End If
-Else
-If ws.Cells(r, 1).Interior.Pattern <> xlNone Then
-ws.Cells(r, 1).Interior.Pattern = xlNone
-End If
-End If
-Next i
-For Each v In cnt.keys
-If cnt(v) > 1 Then nGrp = nGrp + 1
-Next v
-If Not silent Then
-msg = "Блок HDR=" & h & ", строки " & (h + 1) & "-" & e & vbCrLf
-msg = msg & "Групп дублей: " & nGrp & vbCrLf
-msg = msg & "Строк-дублей: " & nRows & vbCrLf
-msg = msg & "Позиций вне базы: " & nOut
-MsgBox msg, vbInformation
-End If
+Public Sub РџРѕРґСЃРІРµС‚РёС‚СЊР”СѓР±Р»РёРЈС‡Р°СЃС‚РєР°(ByVal h As Long, _
+                                  Optional ByVal silent As Boolean = True)
+    Dim ws As Worksheet
+    Dim e As Long, n As Long, i As Long, r As Long
+    Dim aName As Variant, aQuiz As Variant, aUnit As Variant
+    Dim aMass As Variant, aNote As Variant
+    Dim aType As Variant, aStat As Variant
+    Dim kArr() As String, outb() As Boolean, sent() As Boolean
+    Dim cnt As Object
+    Dim k As String, nm As String, qz As String
+    Dim typ As String, stt As String, mk As String
+    Dim v As Variant
+    Dim nGrp As Long, nRows As Long, nOut As Long, anyOut As Boolean
+    Dim wantRow As Long, wantA As Long
+    Dim cB As Long, cQ As Long, cU As Long, cM As Long, cN As Long
+    Dim cT As Long, cS As Long
+    Dim msg As String
+
+    If h = 0 Then Exit Sub
+    Set ws = ShSv()
+    If CStr(ws.Cells(h, MARKCOL).Value) <> "HDR" Then Exit Sub
+
+    e = BlockEnd(h)
+    For i = h + 1 To e
+        mk = CStr(ws.Cells(i, MARKCOL).Value)
+        If mk = "SEC" Or mk = "GAP" Or mk = "HDR" Then
+            e = i - 1
+            Exit For
+        End If
+    Next i
+    n = e - h
+    If n < 1 Then Exit Sub
+
+    cB = col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")
+    cQ = ColSafe("РћРїСЂРѕСЃРЅРѕР№ Р»РёСЃС‚")
+    If cQ = 0 Then cQ = ColSafe("РћРїСЂРѕСЃРЅС‹Р№ Р»РёСЃС‚")
+    cU = col("Р•Рґ.РёР·Рј.")
+    cM = col("РњР°СЃСЃР° 1 РµРґ")
+    cN = col("РџСЂРёРјРµС‡Р°РЅРёРµ")
+    cT = col("РўРёРї")
+    cS = col("РЎС‚Р°С‚СѓСЃ")
+
+    aName = ColArray(ws, cB, h + 1, e)
+    aUnit = ColArray(ws, cU, h + 1, e)
+    aMass = ColArray(ws, cM, h + 1, e)
+    aNote = ColArray(ws, cN, h + 1, e)
+    aType = ColArray(ws, cT, h + 1, e)
+    aStat = ColArray(ws, cS, h + 1, e)
+    If cQ > 0 Then aQuiz = ColArray(ws, cQ, h + 1, e)
+
+    ReDim kArr(1 To n)
+    ReDim outb(1 To n)
+    ReDim sent(1 To n)
+    Set cnt = CreateObject("Scripting.Dictionary")
+    cnt.CompareMode = vbBinaryCompare
+
+    For i = 1 To n
+        nm = CStr(aName(i, 1))
+        If Len(nm) > 0 Then
+            If cQ > 0 Then qz = CStr(aQuiz(i, 1)) Else qz = ""
+            k = DupKeyExport(nm, qz, CStr(aUnit(i, 1)), _
+                             CStr(aMass(i, 1)), CStr(aNote(i, 1)))
+            kArr(i) = k
+            If cnt.exists(k) Then
+                cnt(k) = cnt(k) + 1
+            Else
+                cnt.Add k, 1
+            End If
+
+            typ = Trim$(CStr(aType(i, 1)))
+            stt = UCase$(Trim$(CStr(aStat(i, 1))))
+            If Len(typ) = 0 Or stt = "РќР•Рў Р’ Р‘РђР—Р•" Then
+                outb(i) = True
+                anyOut = True
+            End If
+        End If
+    Next i
+
+    If anyOut Then
+        For i = 1 To n
+            If outb(i) Then
+                nm = Trim$(CStr(aName(i, 1)))
+                sent(i) = modTemp.TempContains(nm, Trim$(CStr(aUnit(i, 1))))
+                nOut = nOut + 1
+            End If
+        Next i
+    End If
+
+    For i = 1 To n
+        r = h + i
+        wantRow = 0
+        If Len(kArr(i)) > 0 Then
+            If cnt(kArr(i)) > 1 Then
+                wantRow = DupColor()
+                nRows = nRows + 1
+            End If
+        End If
+
+        If wantRow > 0 Then
+            If ws.Cells(r, 2).Interior.Color <> wantRow Then
+                ws.Range(ws.Cells(r, 2), ws.Cells(r, 8)).Interior.Color = wantRow
+            End If
+        Else
+            If ws.Cells(r, 2).Interior.Pattern <> xlNone Then
+                ws.Range(ws.Cells(r, 2), ws.Cells(r, 8)).Interior.Pattern = xlNone
+            End If
+        End If
+
+        wantA = wantRow
+        If outb(i) Then
+            If sent(i) Then
+                wantA = OutSentColor()
+            Else
+                wantA = OutPendingColor()
+            End If
+        End If
+
+        If wantA > 0 Then
+            If ws.Cells(r, 1).Interior.Color <> wantA Then
+                ws.Cells(r, 1).Interior.Color = wantA
+            End If
+        Else
+            If ws.Cells(r, 1).Interior.Pattern <> xlNone Then
+                ws.Cells(r, 1).Interior.Pattern = xlNone
+            End If
+        End If
+    Next i
+
+    For Each v In cnt.keys
+        If cnt(v) > 1 Then nGrp = nGrp + 1
+    Next v
+
+    If Not silent Then
+        msg = "Р‘Р»РѕРє HDR=" & h & ", СЃС‚СЂРѕРєРё " & (h + 1) & "-" & e & vbCrLf
+        msg = msg & "РџСЂР°РІРёР»Рѕ: РІСЃРµ РїРѕР»СЏ РєСЂРѕРјРµ РєРѕР»РёС‡РµСЃС‚РІР° (РєР°Рє РІ СЌРєСЃРїРѕСЂС‚Рµ)" & vbCrLf & vbCrLf
+        msg = msg & "Р“СЂСѓРїРї РґСѓР±Р»РµР№: " & nGrp & vbCrLf
+        msg = msg & "РЎС‚СЂРѕРє-РґСѓР±Р»РµР№: " & nRows & vbCrLf
+        msg = msg & "РџРѕР·РёС†РёР№ РІРЅРµ Р±Р°Р·С‹: " & nOut
+        MsgBox msg, vbInformation
+    End If
 End Sub
 
-Public Sub СнятьПодсветкуДублей()
+Private Function ColSafe(ByVal nm As String) As Long
+    On Error Resume Next
+    ColSafe = col(nm)
+    If Err.Number <> 0 Then
+        Err.Clear
+        ColSafe = 0
+    End If
+    On Error GoTo 0
+End Function
+
+' РљР»СЋС‡ СЂРѕРІРЅРѕ РєР°Рє РІ СЌРєСЃРїРѕСЂС‚Рµ: РїСЏС‚СЊ РїРѕР»РµР№, РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµ СѓС‡Р°СЃС‚РІСѓРµС‚
+Private Function DupKeyExport(ByVal nm As String, ByVal qz As String, _
+                              ByVal un As String, ByVal m1 As String, _
+                              ByVal nt As String) As String
+    DupKeyExport = nm & Chr$(1) & qz & Chr$(1) & un & Chr$(1) & m1 & Chr$(1) & nt
+End Function
+
+Public Sub РЎРЅСЏС‚СЊРџРѕРґСЃРІРµС‚РєСѓР”СѓР±Р»РµР№()
 Dim ws As Worksheet
 Dim r As Long
 Dim last As Long
@@ -1039,30 +1056,30 @@ End If
 Next r
 fin:
 Application.ScreenUpdating = scr
-If Err.Number <> 0 Then MsgBox "Ошибка: " & Err.Description, vbExclamation
+If Err.Number <> 0 Then MsgBox "РћС€РёР±РєР°: " & Err.Description, vbExclamation
 End Sub
 
 Public Sub ClearPosRow(ByVal r As Long)
 Dim ws As Worksheet
 Set ws = ShSv()
-ws.Cells(r, col("Наименование")).MergeArea.ClearContents
+ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).MergeArea.ClearContents
 ClearPosParams r
-ws.Cells(r, col("Опросной лист")).MergeArea.ClearContents
-ws.Cells(r, col("Ед.изм.")).MergeArea.ClearContents
-ws.Cells(r, col("Кол-во")).MergeArea.ClearContents
-ws.Cells(r, col("Масса 1 ед")).MergeArea.ClearContents
-ws.Cells(r, col("Примечание")).MergeArea.ClearContents
-ws.Cells(r, col("№ввода")).MergeArea.ClearContents
-ws.Cells(r, col("УплПов")).MergeArea.ClearContents
-ws.Cells(r, col("№")).MergeArea.ClearContents
+ws.Cells(r, col("РћРїСЂРѕСЃРЅРѕР№ Р»РёСЃС‚")).MergeArea.ClearContents
+ws.Cells(r, col("Р•Рґ.РёР·Рј.")).MergeArea.ClearContents
+ws.Cells(r, col("РљРѕР»-РІРѕ")).MergeArea.ClearContents
+ws.Cells(r, col("РњР°СЃСЃР° 1 РµРґ")).MergeArea.ClearContents
+ws.Cells(r, col("РџСЂРёРјРµС‡Р°РЅРёРµ")).MergeArea.ClearContents
+ws.Cells(r, col("в„–РІРІРѕРґР°")).MergeArea.ClearContents
+ws.Cells(r, col("РЈРїР»РџРѕРІ")).MergeArea.ClearContents
+ws.Cells(r, col("в„–")).MergeArea.ClearContents
 SetPosFormula r
 On Error Resume Next
-ws.Cells(r, col("Наименование")).MergeArea.WrapText = False
+ws.Cells(r, col("РќР°РёРјРµРЅРѕРІР°РЅРёРµ")).MergeArea.WrapText = False
 ws.Rows(r).RowHeight = 15
 On Error GoTo 0
 End Sub
 
-' ==================== ФАСАД ДЛЯ modSpecExport ====================
+' ==================== Р¤РђРЎРђР” Р”Р›РЇ modSpecExport ====================
 Public Function GetSortWeight(ByVal r As Long) As Double
 GetSortWeight = SortWeightOfRow(r)
 End Function
@@ -1078,3 +1095,5 @@ End Function
 Public Function GetSortPn(ByVal r As Long) As Double
 GetSortPn = SortPnOfRow(r)
 End Function
+
+
