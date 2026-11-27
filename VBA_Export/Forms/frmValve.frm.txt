@@ -1,229 +1,344 @@
 Option Explicit
 Private mTarget As Range, mLoading As Boolean
 Private mCode As String
+Private mUpdating As Boolean
 
 Public Sub ShowFor(ByVal targetCell As Range, Optional ByVal code As String = "VALVE")
-Dim ws As Worksheet, r As Long, params As String, p() As String
-On Error GoTo fail
-Set mTarget = targetCell
-Set ws = targetCell.Worksheet
-r = targetCell.row
-mCode = code
-mLoading = True
-Me.Caption = TypeField(mCode, 2)
-Me.cboKorp.Clear
-Me.cboKorp.AddItem "сталь 20"
-Me.cboKorp.AddItem "сталь 20Л"
-Me.cboKorp.AddItem "сталь 09Г2С"
-Me.cboKorp.AddItem "нерж. сталь"
-Me.cboKlim.Clear
-Me.cboKlim.AddItem "У1"
-Me.cboKlim.AddItem "УХЛ"
-Me.cboKL.Clear
-Dim klasses As Variant, i As Long
-klasses = Array("A", "AA", "B", "C", "CC", "D", "E", "EE", "F", "G")
-For i = 0 To UBound(klasses)
-Me.cboKL.AddItem CStr(klasses(i))
-Next i
-Me.cboUpl.Clear
-Me.cboUpl.AddItem "B-B"
-Me.cboUpl.AddItem "E-F"
-Me.cboZPExec.Clear
-Me.cboZPExec.AddItem "Поворотная заглушка"
-Me.cboZPExec.AddItem "Заглушка с хвостовиком"
-Me.cboOFTyp.Clear
-Me.cboOFTyp.AddItem "11"
-Me.cboOFTyp.AddItem "01"
-Me.cboPRTyp.Clear
-Me.cboPRTyp.AddItem "СНП"
-Me.cboPRTyp.AddItem "ПОН"
-FillFromTable Me.cboZPSteel, "tSteels", 1
-FillFromTable Me.cboZFSteel, "tSteels", 1
-FillList Me.cboDN, BaseValues(mCode, 2, 0, Empty, 0, Empty)
-SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
-mLoading = False
-RefillPN
-SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
-params = CStr(ws.Cells(r, col("ПарамАрм")).Value)
-If Len(params) > 0 Then
-p = Split(params, "|")
-If UBound(p) >= 17 Then
-mLoading = True
-SelIf Me.cboKL, p(0)
-Me.txtTFrom.Value = p(1)
-Me.txtTTo.Value = p(2)
-SelIf Me.cboKorp, p(3)
-SelIf Me.cboKlim, p(4)
-Me.txtSred.Value = p(5)
-SelIf Me.cboUpl, p(6)
-Me.chkZP.Value = (p(7) = "1")
-SelIf Me.cboZPExec, p(8)
-SelIf Me.cboZPSteel, p(9)
-Me.chkZF.Value = (p(10) = "1")
-SelIf Me.cboZFSteel, p(11)
-Me.chkOF.Value = (p(12) = "1")
-SelIf Me.cboOFTyp, p(13)
-Me.chkPR.Value = (p(14) = "1")
-SelIf Me.cboPRTyp, p(15)
-Me.chkSH.Value = (p(16) = "1")
-Me.chkG.Value = (p(17) = "1")
-mLoading = False
-Else
-SetDefaults
-End If
-Else
-SetDefaults
-End If
-UpdateVisibility
-Me.show vbModal
-Exit Sub
+    Dim ws As Worksheet, r As Long, params As String, p() As String
+    On Error GoTo fail
+    Set mTarget = targetCell
+    Set ws = targetCell.Worksheet
+    r = targetCell.row
+    mCode = code
+    mLoading = True
+
+    Me.Caption = TypeField(mCode, 2)
+
+    Me.cboKorp.Clear
+    Me.cboKorp.AddItem "сталь 20"
+    Me.cboKorp.AddItem "сталь 20Л"
+    Me.cboKorp.AddItem "сталь 09Г2С"
+    Me.cboKorp.AddItem "нерж. сталь"
+
+    Me.cboKlim.Clear
+    Me.cboKlim.AddItem "У1"
+    Me.cboKlim.AddItem "УХЛ"
+
+    Me.cboKL.Clear
+    Dim klasses As Variant, i As Long
+    klasses = Array("A", "AA", "B", "C", "CC", "D", "E", "EE", "F", "G")
+    For i = 0 To UBound(klasses)
+        Me.cboKL.AddItem CStr(klasses(i))
+    Next i
+
+    Me.cboUpl.Clear
+    Me.cboUpl.AddItem "B-B"
+    Me.cboUpl.AddItem "E-F"
+
+    Me.cboZPExec.Clear
+    Me.cboZPExec.AddItem "Поворотная заглушка"
+    Me.cboZPExec.AddItem "Заглушка с хвостовиком"
+
+    Me.cboOFTyp.Clear
+    Me.cboOFTyp.AddItem "11"
+    Me.cboOFTyp.AddItem "01"
+
+    Me.cboPRTyp.Clear
+    Me.cboPRTyp.AddItem "СНП"
+    Me.cboPRTyp.AddItem "ПОН"
+
+    FillFromTable Me.cboZPSteel, "tSteels", 1
+    FillFromTable Me.cboZFSteel, "tSteels", 1
+
+    FillList Me.cboDN, BaseValues(mCode, 2, 0, Empty, 0, Empty)
+    SelIf Me.cboDN, NumTxt0(ws.Cells(r, col("DN")).Value)
+    mLoading = False
+    RefillPN
+    SelIf Me.cboPN, NumTxt0(ws.Cells(r, col("PN")).Value)
+
+    params = CStr(ws.Cells(r, col("ПарамАрм")).Value)
+    If Len(params) > 0 Then
+        p = Split(params, "|")
+        If UBound(p) >= 17 Then
+            mLoading = True
+            SelIf Me.cboKL, p(0)
+            Me.txtTFrom.Value = p(1)
+            Me.txtTTo.Value = p(2)
+            SelIf Me.cboKorp, p(3)
+            SelIf Me.cboKlim, p(4)
+            Me.txtSred.Value = p(5)
+            SelIf Me.cboUpl, p(6)
+            Me.chkZP.Value = (p(7) = "1")
+            SelIf Me.cboZPExec, p(8)
+            SelIf Me.cboZPSteel, p(9)
+            Me.chkZF.Value = (p(10) = "1")
+            SelIf Me.cboZFSteel, p(11)
+            Me.chkOF.Value = (p(12) = "1")
+            SelIf Me.cboOFTyp, p(13)
+            Me.chkPR.Value = (p(14) = "1")
+            SelIf Me.cboPRTyp, p(15)
+            Me.chkSH.Value = (p(16) = "1")
+            Me.chkG.Value = (p(17) = "1")
+            mLoading = False
+        Else
+            SetDefaults
+        End If
+    Else
+        SetDefaults
+    End If
+
+    UpdateVisibility
+    modValveMass.MassInit Me, mCode, params
+    Me.show vbModal
+    Exit Sub
 fail:
-MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
+    MsgBox "Не удалось открыть форму: " & Err.Description, vbExclamation
 End Sub
 
 Private Sub SetDefaults()
-mLoading = True
-If Me.cboKL.ListCount > 0 Then Me.cboKL.ListIndex = 0
-If Me.cboKorp.ListCount > 0 Then Me.cboKorp.ListIndex = 0
-If Me.cboKlim.ListCount > 0 Then Me.cboKlim.ListIndex = 0
-If Me.cboUpl.ListCount > 0 Then Me.cboUpl.ListIndex = 0
-If Me.cboZPExec.ListCount > 0 Then Me.cboZPExec.ListIndex = 0
-If Me.cboOFTyp.ListCount > 0 Then Me.cboOFTyp.ListIndex = 0
-If Me.cboPRTyp.ListCount > 0 Then Me.cboPRTyp.ListIndex = 0
-If Me.cboZPSteel.ListCount > 0 Then Me.cboZPSteel.ListIndex = 0
-If Me.cboZFSteel.ListCount > 0 Then Me.cboZFSteel.ListIndex = 0
-Me.chkZP.Value = False
-Me.chkZF.Value = False
-Me.chkOF.Value = True
-Me.chkPR.Value = True
-Me.chkSH.Value = True
-Me.chkG.Value = True
-Me.txtTFrom.Value = ""
-Me.txtTTo.Value = ""
-Me.txtSred.Value = ""
-mLoading = False
+    mLoading = True
+    If Me.cboKL.ListCount > 0 Then Me.cboKL.ListIndex = 0
+    If Me.cboKorp.ListCount > 0 Then Me.cboKorp.ListIndex = 0
+    If Me.cboKlim.ListCount > 0 Then Me.cboKlim.ListIndex = 0
+    If Me.cboUpl.ListCount > 0 Then Me.cboUpl.ListIndex = 0
+    If Me.cboZPExec.ListCount > 0 Then Me.cboZPExec.ListIndex = 0
+    If Me.cboOFTyp.ListCount > 0 Then Me.cboOFTyp.ListIndex = 0
+    If Me.cboPRTyp.ListCount > 0 Then Me.cboPRTyp.ListIndex = 0
+    If Me.cboZPSteel.ListCount > 0 Then Me.cboZPSteel.ListIndex = 0
+    If Me.cboZFSteel.ListCount > 0 Then Me.cboZFSteel.ListIndex = 0
+    Me.chkZP.Value = False
+    Me.chkZF.Value = False
+    Me.chkOF.Value = True
+    Me.chkPR.Value = True
+    Me.chkSH.Value = True
+    Me.chkG.Value = True
+    Me.txtTFrom.Value = ""
+    Me.txtTTo.Value = ""
+    Me.txtSred.Value = ""
+    mLoading = False
 End Sub
 
 Private Function NumTxt0(ByVal v As Variant) As String
-If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
+    If IsNumeric(v) And Not isEmpty(v) Then NumTxt0 = NumTxt(v)
 End Function
 
 Private Sub SelIf(ByVal cbo As Object, ByVal v As String)
-Dim i As Long
-If Len(v) = 0 Then cbo.ListIndex = -1: Exit Sub
-For i = 0 To cbo.ListCount - 1
-If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
-Next i
-cbo.ListIndex = -1
+    Dim i As Long
+    If Len(v) = 0 Then cbo.ListIndex = -1: Exit Sub
+    For i = 0 To cbo.ListCount - 1
+        If cbo.List(i) = v Then cbo.ListIndex = i: Exit Sub
+    Next i
+    cbo.ListIndex = -1
 End Sub
 
 Private Sub RefillPN()
-Dim cur As String
-cur = Me.cboPN.Value
-mLoading = True
-If Me.cboDN.ListIndex >= 0 Then
-FillList Me.cboPN, BaseValues(mCode, 3, 2, CDbl(Me.cboDN.Value), 0, Empty)
-Else
-Me.cboPN.Clear
-End If
-SelIf Me.cboPN, cur
-mLoading = False
+    Dim cur As String
+    cur = Me.cboPN.Value
+    mLoading = True
+    If Me.cboDN.ListIndex >= 0 Then
+        FillList Me.cboPN, BaseValues(mCode, 3, 2, CDbl(Me.cboDN.Value), 0, Empty)
+    Else
+        Me.cboPN.Clear
+    End If
+    SelIf Me.cboPN, cur
+    mLoading = False
 End Sub
 
 Private Sub UpdateVisibility()
-Dim dnVal As Double
-dnVal = 0
-If Me.cboDN.ListIndex >= 0 Then
-On Error Resume Next
-dnVal = CDbl(Me.cboDN.Value)
-On Error GoTo 0
-End If
-If dnVal > 600 Then
-Me.chkZP.Enabled = False
-Me.chkZP.Value = False
-Me.cboZPExec.Enabled = False
-Me.cboZPSteel.Enabled = False
-Else
-Me.chkZP.Enabled = True
-Me.cboZPExec.Enabled = Me.chkZP.Value
-Me.cboZPSteel.Enabled = Me.chkZP.Value
-End If
-Me.cboZFSteel.Enabled = Me.chkZF.Value
-Me.cboOFTyp.Enabled = Me.chkOF.Value
-Me.cboPRTyp.Enabled = Me.chkPR.Value
+    Dim dnVal As Double, pnVal As Double
+    Dim hasDN As Boolean, hasPN As Boolean, known As Boolean
+    Dim upl As String
+
+    If mUpdating Then Exit Sub
+    mUpdating = True
+    On Error GoTo fin
+
+    hasDN = (Me.cboDN.ListIndex >= 0)
+    hasPN = (Me.cboPN.ListIndex >= 0)
+    known = hasDN And hasPN
+    dnVal = 0: pnVal = 0
+    If hasDN Then dnVal = CDbl(Me.cboDN.Value)
+    If hasPN Then pnVal = CDbl(Me.cboPN.Value)
+    upl = IIf(Me.cboUpl.ListIndex >= 0, Me.cboUpl.Value, "B-B")
+
+    ' --- межфланцевая заглушка ---
+    If dnVal > 600 Then
+        Me.chkZP.Enabled = False
+        Me.chkZP.Value = False
+        Me.cboZPExec.Enabled = False
+        Me.cboZPSteel.Enabled = False
+    ElseIf known And Not ( _
+           modEngine.BlindIntExists(dnVal, pnVal, "Поворотная заглушка") Or _
+           modEngine.BlindIntExists(dnVal, pnVal, "Заглушка с хвостовиком")) Then
+        Me.chkZP.Enabled = False
+        Me.chkZP.Value = False
+        Me.cboZPExec.Enabled = False
+        Me.cboZPSteel.Enabled = False
+    Else
+        Me.chkZP.Enabled = True
+        Me.cboZPExec.Enabled = Me.chkZP.Value
+        Me.cboZPSteel.Enabled = Me.chkZP.Value
+    End If
+
+    ' --- фланцевая заглушка ---
+    If known Then
+        Me.chkZF.Enabled = modEngine.BlindFlExists(dnVal, pnVal)
+    Else
+        Me.chkZF.Enabled = True
+    End If
+    If Not Me.chkZF.Enabled Then Me.chkZF.Value = False
+    Me.cboZFSteel.Enabled = Me.chkZF.Value
+
+    ' --- ответные фланцы: тип 01 только где он есть в базе ---
+    Me.cboOFTyp.Enabled = Me.chkOF.Value
+    If Me.chkOF.Value Then RefillOFTyp dnVal, pnVal, upl, known
+
+    Me.cboPRTyp.Enabled = Me.chkPR.Value
+fin:
+    mUpdating = False
+End Sub
+
+Private Sub RefillOFTyp(ByVal dnVal As Double, ByVal pnVal As Double, _
+                        ByVal upl As String, ByVal known As Boolean)
+    Dim cur As String, i As Long, had As Boolean
+    cur = ""
+    If Me.cboOFTyp.ListIndex >= 0 Then cur = Me.cboOFTyp.Value
+
+    Me.cboOFTyp.Clear
+    Me.cboOFTyp.AddItem "11"
+    If Not known Or modEngine.FlangeExists(dnVal, pnVal, "01", upl) Then
+        Me.cboOFTyp.AddItem "01"
+    End If
+
+    had = False
+    For i = 0 To Me.cboOFTyp.ListCount - 1
+        If Me.cboOFTyp.List(i) = cur Then
+            Me.cboOFTyp.ListIndex = i
+            had = True
+            Exit For
+        End If
+    Next i
+    If Not had Then Me.cboOFTyp.ListIndex = 0
 End Sub
 
 Private Function BuildParams() As String
-Dim s As String
-s = IIf(Me.cboKL.ListIndex >= 0, Me.cboKL.Value, "A") & "|"
-s = s & Me.txtTFrom.Value & "|" & Me.txtTTo.Value & "|"
-s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "сталь 20") & "|"
-s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "У1") & "|"
-s = s & Me.txtSred.Value & "|"
-s = s & IIf(Me.cboUpl.ListIndex >= 0, Me.cboUpl.Value, "B-B") & "|"
-s = s & IIf(Me.chkZP.Value, "1", "0") & "|"
-s = s & IIf(Me.cboZPExec.ListIndex >= 0, Me.cboZPExec.Value, "Поворотная заглушка") & "|"
-s = s & IIf(Me.cboZPSteel.ListIndex >= 0, Me.cboZPSteel.Value, "20") & "|"
-s = s & IIf(Me.chkZF.Value, "1", "0") & "|"
-s = s & IIf(Me.cboZFSteel.ListIndex >= 0, Me.cboZFSteel.Value, "20") & "|"
-s = s & IIf(Me.chkOF.Value, "1", "0") & "|"
-s = s & IIf(Me.cboOFTyp.ListIndex >= 0, Me.cboOFTyp.Value, "11") & "|"
-s = s & IIf(Me.chkPR.Value, "1", "0") & "|"
-s = s & IIf(Me.cboPRTyp.ListIndex >= 0, Me.cboPRTyp.Value, "СНП") & "|"
-s = s & IIf(Me.chkSH.Value, "1", "0") & "|"
-s = s & IIf(Me.chkG.Value, "1", "0")
-BuildParams = s
+    Dim s As String
+    s = IIf(Me.cboKL.ListIndex >= 0, Me.cboKL.Value, "A") & "|"
+    s = s & Me.txtTFrom.Value & "|" & Me.txtTTo.Value & "|"
+    s = s & IIf(Me.cboKorp.ListIndex >= 0, Me.cboKorp.Value, "сталь 20") & "|"
+    s = s & IIf(Me.cboKlim.ListIndex >= 0, Me.cboKlim.Value, "У1") & "|"
+    s = s & Me.txtSred.Value & "|"
+    s = s & IIf(Me.cboUpl.ListIndex >= 0, Me.cboUpl.Value, "B-B") & "|"
+    s = s & IIf(Me.chkZP.Value, "1", "0") & "|"
+    s = s & IIf(Me.cboZPExec.ListIndex >= 0, Me.cboZPExec.Value, "Поворотная заглушка") & "|"
+    s = s & IIf(Me.cboZPSteel.ListIndex >= 0, Me.cboZPSteel.Value, "20") & "|"
+    s = s & IIf(Me.chkZF.Value, "1", "0") & "|"
+    s = s & IIf(Me.cboZFSteel.ListIndex >= 0, Me.cboZFSteel.Value, "20") & "|"
+    s = s & IIf(Me.chkOF.Value, "1", "0") & "|"
+    s = s & IIf(Me.cboOFTyp.ListIndex >= 0, Me.cboOFTyp.Value, "11") & "|"
+    s = s & IIf(Me.chkPR.Value, "1", "0") & "|"
+    s = s & IIf(Me.cboPRTyp.ListIndex >= 0, Me.cboPRTyp.Value, "СНП") & "|"
+    s = s & IIf(Me.chkSH.Value, "1", "0") & "|"
+    s = s & IIf(Me.chkG.Value, "1", "0")
+    BuildParams = s
 End Function
 
+' ==================== РАЗМЕРНЫЙ РЯД ====================
 Private Sub cboDN_Change()
-If Not mLoading Then
-RefillPN
-UpdateVisibility
-End If
+    If Not mLoading Then
+        RefillPN
+        UpdateVisibility
+        modValveMass.MassSizeChanged Me, mCode
+    End If
 End Sub
 
+Private Sub cboPN_Change()
+    If Not mLoading Then
+        UpdateVisibility
+        modValveMass.MassSizeChanged Me, mCode
+    End If
+End Sub
+
+' ==================== КОМПЛЕКТ ====================
 Private Sub chkZP_Click()
-If Not mLoading Then UpdateVisibility
+    If Not mLoading Then
+        UpdateVisibility
+        modValveMass.MassRefresh Me, mCode
+    End If
 End Sub
 
 Private Sub chkZF_Click()
-If Not mLoading Then UpdateVisibility
+    If Not mLoading Then
+        UpdateVisibility
+        modValveMass.MassRefresh Me, mCode
+    End If
 End Sub
 
 Private Sub chkOF_Click()
-If Not mLoading Then UpdateVisibility
+    If Not mLoading Then
+        UpdateVisibility
+        modValveMass.MassRefresh Me, mCode
+    End If
 End Sub
 
 Private Sub chkPR_Click()
-If Not mLoading Then UpdateVisibility
+    If Not mLoading Then UpdateVisibility
 End Sub
 
+Private Sub cboZPExec_Change()
+    If Not mLoading Then modValveMass.MassRefresh Me, mCode
+End Sub
+
+Private Sub cboOFTyp_Change()
+    If Not mLoading Then modValveMass.MassRefresh Me, mCode
+End Sub
+
+Private Sub cboUpl_Change()
+    If Not mLoading Then modValveMass.MassRefresh Me, mCode
+End Sub
+
+' ==================== МАССА ====================
+Private Sub btnMassCat_Click()
+    modValveMass.MassReset Me, mCode
+End Sub
+
+Private Sub txtBaseMass_Change()
+    modValveMass.MassRefresh Me, mCode
+End Sub
+
+' ==================== КНОПКИ ====================
 Private Sub btnOK_Click()
-If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Then
-MsgBox "Выберите DN и PN.", vbExclamation
-Exit Sub
-End If
-If Me.cboKL.ListIndex < 0 Then
-MsgBox "Выберите класс герметичности.", vbExclamation
-Exit Sub
-End If
-If Len(Trim$(Me.txtTTo.Value)) = 0 Then
-MsgBox "Укажите температуру «до».", vbExclamation
-Exit Sub
-End If
-If Me.cboKorp.ListIndex < 0 Or Me.cboKlim.ListIndex < 0 Or Me.cboUpl.ListIndex < 0 Then
-MsgBox "Заполните корпус, климат и уплотн. пов.", vbExclamation
-Exit Sub
-End If
-WriteValveEx mTarget, mCode, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
-Me.cboKL.Value, Me.txtTFrom.Value, Me.txtTTo.Value, _
-Me.cboKorp.Value, Me.cboKlim.Value, Me.txtSred.Value, _
-Me.cboUpl.Value, BuildParams()
-Unload Me
+    Dim mv As Variant
+
+    If Me.cboDN.ListIndex < 0 Or Me.cboPN.ListIndex < 0 Then
+        MsgBox "Выберите DN и PN.", vbExclamation
+        Exit Sub
+    End If
+    If Me.cboKL.ListIndex < 0 Then
+        MsgBox "Выберите класс герметичности.", vbExclamation
+        Exit Sub
+    End If
+    If Len(Trim$(Me.txtTTo.Value)) = 0 Then
+        MsgBox "Укажите температуру «до».", vbExclamation
+        Exit Sub
+    End If
+    If Me.cboKorp.ListIndex < 0 Or Me.cboKlim.ListIndex < 0 Or Me.cboUpl.ListIndex < 0 Then
+        MsgBox "Заполните корпус, климат и уплотн. пов.", vbExclamation
+        Exit Sub
+    End If
+
+    mv = modValveMass.MassAsk(Me, mCode)
+    If IsNull(mv) Then Exit Sub
+
+    WriteValveEx mTarget, mCode, CDbl(Me.cboDN.Value), CDbl(Me.cboPN.Value), _
+                 Me.cboKL.Value, Me.txtTFrom.Value, Me.txtTTo.Value, _
+                 Me.cboKorp.Value, Me.cboKlim.Value, Me.txtSred.Value, _
+                 Me.cboUpl.Value, BuildParams(), mv
+    Unload Me
 End Sub
 
 Private Sub btnCancel_Click()
-Unload Me
+    Unload Me
 End Sub
 
 Private Sub UserForm_Click()
