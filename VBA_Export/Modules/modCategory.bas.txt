@@ -1,0 +1,302 @@
+Option Explicit
+
+' --- колонки новой разметки ---
+Private Const C_LABEL As Long = 3      ' C: подписи параметров
+Private Const C_D As Long = 4          ' D: значения темп./давлений
+Private Const C_STATE As Long = 9      ' I(s): состояние среды
+Private Const C_CATG As Long = 9       ' I(s+1): категория ГОСТ (видимый результат)
+Private Const C_CATT As Long = 9       ' I(s+2): категория ТР ТС (видимый результат)
+Private Const C_CLASS As Long = 28     ' AB: служебное хранение классов (строки s+1, s+2)
+
+Private Const FLAG_NOT_CALC As Long = 13434879   ' RGB(255,242,204) - "не рассчитано"
+
+' ==================== ПУБЛИЧНЫЕ ТОЧКИ ====================
+
+' Вызывается из Лист1 при вводе в I(s+1): разбирает класс, хранит, пересчитывает
+Public Sub SetClassGOST(ByVal s As Long, ByVal rawInput As String)
+    modLayout.ShSv().Cells(s + 1, C_CLASS).Value = ParseClassGOST(rawInput)
+    RecalcCategories s
+End Sub
+
+' Вызывается из Лист1 при вводе в I(s+2)
+Public Sub SetClassTRTS(ByVal s As Long, ByVal rawInput As String)
+    modLayout.ShSv().Cells(s + 2, C_CLASS).Value = ParseClassTRTS(rawInput)
+    RecalcCategories s
+End Sub
+
+' Полный пересчёт обеих категорий + подписи/ограничения вакуума
+Public Sub RecalcCategories(ByVal s As Long)
+    Dim ws As Worksheet
+    Dim stateCode As String, klass As String, grp As String
+    Dim press As Double, temp As Double, diam As Double
+    Dim vac As Boolean, stateTRTS As String
+    Dim catG As String, catT As String
+    Dim okG As Boolean, okT As Boolean
+
+    Set ws = modLayout.ShSv()
+    ApplyVacuumMode s
+
+    stateCode = Trim$(CStr(ws.Cells(s, C_STATE).Value))
+    klass = Trim$(CStr(ws.Cells(s + 1, C_CLASS).Value))
+    grp = Trim$(CStr(ws.Cells(s + 2, C_CLASS).Value))
+    vac = (UCase$(stateCode) = "ВАКУУМ")
+    stateTRTS = MediumStateToTRTS(stateCode)
+
+    press = ToDbl(ws.Cells(s + 3, C_D).Value)   ' расчётное давление / разрежение
+    temp = ToDbl(ws.Cells(s + 1, C_D).Value)    ' расчётная температура
+    diam = MaxPipeDN(s)
+
+    ' --- ГОСТ ---
+    okG = False: catG = ""
+    If Len(klass) > 0 Then
+        If HasNum(ws, s + 3, C_D) And HasNum(ws, s + 1, C_D) Then
+            catG = CategoryGOST(klass, press, temp, vac)
+            okG = (Len(catG) > 0)
+        End If
+    End If
+    WriteResult ws, s + 1, C_CATG, klass, IIf(okG, klass & " " & catG, klass), okG, Len(klass) = 0
+
+    ' --- ТР ТС ---
+    okT = False: catT = ""
+    If Len(grp) > 0 Then
+        If vac Then
+            catT = "не кат.": okT = True          ' вакуум по ТР ТС не категорируется
+        ElseIf Len(stateTRTS) > 0 And HasNum(ws, s + 3, C_D) And diam > 0 Then
+            catT = CategoryTRTS(stateTRTS, grp, diam, press)
+            okT = (Len(catT) > 0)
+        End If
+    End If
+    WriteResult ws, s + 2, C_CATT, grp, IIf(okT, grp & "-" & catT, grp), okT, Len(grp) = 0
+End Sub
+
+' Подписи и ограничение ввода для вакуума (как в исходном макросе)
+Public Sub ApplyVacuumMode(ByVal s As Long)
+    Dim ws As Worksheet, vac As Boolean, r As Long
+    Set ws = modLayout.ShSv()
+    vac = (UCase$(Trim$(CStr(ws.Cells(s, C_STATE).Value))) = "ВАКУУМ")
+
+    If vac Then
+        ws.Cells(s + 2, C_LABEL).Value = "Рабочее разрежение, МПа:"
+        ws.Cells(s + 3, C_LABEL).Value = "Расчётное разрежение, МПа:"
+    Else
+        ws.Cells(s + 2, C_LABEL).Value = "Рабочее давление, МПа:"
+        ws.Cells(s + 3, C_LABEL).Value = "Расчётное давление, МПа:"
+    End If
+
+    For r = s + 2 To s + 3
+        On Error Resume Next
+        ws.Cells(r, C_D).Validation.Delete
+        With ws.Cells(r, C_D).Validation
+            If vac Then
+                .Add Type:=xlValidateDecimal, AlertStyle:=xlValidAlertStop, _
+                     Operator:=xlBetween, Formula1:="0.0001", Formula2:="0.9999"
+                .ErrorMessage = "При вакууме разрешены только дробные значения строго от 0 до 1 (например 0,5)."
+            Else
+                .Add Type:=xlValidateDecimal, AlertStyle:=xlValidAlertStop, _
+                     Operator:=xlGreaterEqual, Formula1:="0"
+                .ErrorMessage = "Давление не может быть отрицательным. Допустимо от 0 и выше."
+            End If
+            .IgnoreBlank = True
+            .ShowError = True
+            .ErrorTitle = "Недопустимое значение"
+        End With
+        On Error GoTo 0
+    Next r
+End Sub
+
+' Максимальный DN: сначала трубы (PIPE*), если труб нет - по остальным элементам
+Public Function MaxPipeDN(ByVal s As Long) As Double
+    Dim ws As Worksheet, r As Long, e As Long
+    Dim t As String, d As Double, pipeMax As Double, anyMax As Double
+    Set ws = modLayout.ShSv()
+    e = modLayout.BlockEnd(s)
+    For r = s + 1 To e
+        d = ToDbl(ws.Cells(r, modLayout.col("DN")).Value)
+        If d > 0 Then
+            If d > anyMax Then anyMax = d
+            t = UCase$(Trim$(CStr(ws.Cells(r, modLayout.col("Тип")).Value)))
+            If Left$(t, 4) = "PIPE" Then
+                If d > pipeMax Then pipeMax = d
+            End If
+        End If
+    Next r
+    If pipeMax > 0 Then MaxPipeDN = pipeMax Else MaxPipeDN = anyMax
+End Function
+
+' Состояние среды (код списка) -> состояние для ТР ТС
+Public Function MediumStateToTRTS(ByVal stateCode As String) As String
+    Select Case UCase$(Trim$(stateCode))
+        Case "Г": MediumStateToTRTS = "Газ/Пар"
+        Case "Ж": MediumStateToTRTS = "Жидкость"
+        Case "ГЖ": MediumStateToTRTS = "Газ/Пар"
+        Case "ВАКУУМ": MediumStateToTRTS = "Газ/Пар"   ' для ТР ТС вакуум handled отдельно
+        Case Else: MediumStateToTRTS = ""
+    End Select
+End Function
+
+' ==================== РАСЧЁТ (перенос логики один в один) ====================
+
+Public Function CategoryGOST(ByVal klass As String, ByVal press As Double, _
+                             ByVal temp As Double, ByVal vacuum As Boolean) As String
+    Dim g As String, vac As String, res As String
+    g = UCase$(Trim$(klass))
+    vac = IIf(vacuum, "Да", "Нет")
+    res = ""
+
+    If g = "А(А)" Then
+        res = "I"
+    ElseIf g = "А(Б)" Then
+        If (press > 2.5) Or (temp > 300) Or (temp < -40) Or (vac = "Да" And press < 0.08) Then res = "I" Else res = "II"
+    ElseIf g = "Б(А)" Then
+        If (press > 2.5) Or (temp > 300) Or (temp < -40) Or (vac = "Да" And press <= 0.08) Then res = "I" Else res = "II"
+    ElseIf g = "Б(Б)" Then
+        If (press > 2.5) Or (temp > 300) Or (temp < -40) Or (vac = "Да" And press <= 0.08) Then
+            res = "I"
+        ElseIf ((press > 1.6 And press <= 2.5) Or (temp >= 121 And temp <= 300)) Or (vac = "Да" And press > 0.08) Then
+            res = "II"
+        Else
+            res = "III"
+        End If
+    ElseIf g = "Б(В)" Then
+        If (press > 6.3) Or (temp > 350) Or (temp < -40) Or (vac = "Да" And press < 0.003) Then
+            res = "I"
+        ElseIf ((press > 2.5 And press <= 6.3) Or (vac = "Да" And (press >= 0.003 And press <= 0.08)) Or (temp >= 250 And temp <= 350)) Then
+            res = "II"
+        ElseIf ((press > 1.6 And press <= 2.5) And (temp >= 120 And temp < 250)) Or (vac = "Да" And press > 0.08 And temp >= -40 And temp < 250) Then
+            res = "III"
+        Else
+            res = "IV"
+        End If
+    ElseIf g = "В" Then
+        If (press > 6.3) Or (temp > 450) Or (temp < -60) Or (vac = "Да" And press < 0.003) Then
+            res = "I"
+        ElseIf (vac = "Да" And press >= 0.003 And press <= 0.08) Or (temp >= 350 And temp <= 450) Then
+            res = "II"
+        ElseIf (press > 2.5 And press <= 6.3) Or (temp >= 250 And temp < 350) Or _
+               (((press > 0 And press <= 1.6) Or (vac = "Да" And press > 0.08)) And (temp >= -60 And temp < -40)) Or _
+               (temp >= -60 And temp < -40) Then
+            res = "III"
+        ElseIf (press > 1.6 And press <= 2.5) Or (temp > 120 And temp < 250) Then
+            res = "IV"
+        ElseIf ((press > 0 And press <= 1.6) Or (vac = "Да" And press >= 0.08)) And (temp >= -40 And temp <= 120) Then
+            res = "V"
+        End If
+    End If
+    CategoryGOST = res
+End Function
+
+Public Function CategoryTRTS(ByVal stateTRTS As String, ByVal grp As String, _
+                             ByVal diam As Double, ByVal press As Double) As String
+    Dim prod As Double, res As String
+    prod = press * diam
+    res = ""
+
+    If stateTRTS = "Газ/Пар" Then
+        If grp = "1" Then
+            If (diam > 25 And diam <= 100) And (press > 0.05 And press <= 1) Then
+                res = "1"
+            ElseIf (diam > 25 And diam <= 100) And (prod <= 100) And (press > 1 And press <= 3.5) Then
+                res = "1"
+            ElseIf (diam > 100 And diam <= 350) And (press > 0.05 And press <= 1) Then
+                res = "2"
+            ElseIf (diam > 25 And diam <= 350) And (prod > 100 And prod <= 350) And (press > 1 And press <= 3.5) Then
+                res = "2"
+            ElseIf (diam > 25 And diam <= 100) And (press > 3.5) Then
+                res = "2"
+            ElseIf (diam > 350) And (press > 0.05 And press <= 1) Then
+                res = "3"
+            ElseIf (diam > 100 And diam <= 350) And (prod > 350) And (press > 1 And press <= 3.5) Then
+                res = "3"
+            ElseIf (diam > 100) And (press > 3.5) Then
+                res = "3"
+            Else
+                res = "не кат."
+            End If
+        ElseIf grp = "2" Then
+            If (diam > 32) And (prod > 100 And prod <= 350) And (press > 0.05 And press <= 3.2) Then
+                res = "1"
+            ElseIf (diam >= 32 And diam <= 100) And (press > 3.2) Then
+                res = "1"
+            ElseIf (diam > 100) And (prod > 350 And prod <= 500) And (press > 0.05 And press <= 3.2) Then
+                res = "2"
+            ElseIf (diam > 100 And diam <= 250) And (press > 3.2) Then
+                res = "2"
+            ElseIf (diam > 250) And (press > 3.2) Then
+                res = "3"
+            ElseIf (diam > 250) And (prod > 500) And (press > 0.05 And press <= 3.2) Then
+                res = "3"
+            Else
+                res = "не кат."
+            End If
+        End If
+    ElseIf stateTRTS = "Жидкость" Then
+        If grp = "1" Then
+            If diam <= 25 Then
+                res = "не кат."
+            ElseIf press >= 0.05 And press <= 1 And prod > 200 Then
+                res = "1"
+            ElseIf press > 1 And press <= 8 And prod > 200 Then
+                res = "2"
+            ElseIf press > 8 And press <= 50 And prod > 350 Then
+                res = "2"
+            ElseIf press > 50 Then
+                res = "3"
+            Else
+                res = "не кат."
+            End If
+        ElseIf grp = "2" Then
+            If diam <= 200 Then
+                res = "не кат."
+            ElseIf press > 1 And press <= 30 And prod > 300 Then
+                res = "1"
+            ElseIf press > 50 Then
+                res = "2"
+            Else
+                res = "не кат."
+            End If
+        End If
+    End If
+    CategoryTRTS = res
+End Function
+
+' ==================== СЛУЖЕБНЫЕ ====================
+
+Private Sub WriteResult(ws As Worksheet, ByVal r As Long, ByVal c As Long, _
+                        ByVal klass As String, ByVal shown As String, _
+                        ByVal ok As Boolean, ByVal isEmptyClass As Boolean)
+    If isEmptyClass Then
+        ws.Cells(r, c).ClearContents
+        ws.Cells(r, c).Interior.Pattern = xlNone
+        Exit Sub
+    End If
+    ws.Cells(r, c).Value = shown
+    If ok Then
+        ws.Cells(r, c).Interior.Pattern = xlNone
+    Else
+        ws.Cells(r, c).Interior.Color = FLAG_NOT_CALC
+    End If
+End Sub
+
+Public Function ParseClassGOST(ByVal s As String) As String
+    Dim p As Long
+    p = InStr(s, " ")
+    If p > 0 Then ParseClassGOST = Trim$(Left$(s, p - 1)) Else ParseClassGOST = Trim$(s)
+End Function
+
+Public Function ParseClassTRTS(ByVal s As String) As String
+    Dim p As Long
+    p = InStr(s, "-")
+    If p > 0 Then ParseClassTRTS = Trim$(Left$(s, p - 1)) Else ParseClassTRTS = Trim$(s)
+End Function
+
+Private Function HasNum(ws As Worksheet, ByVal r As Long, ByVal c As Long) As Boolean
+    Dim v As Variant
+    v = ws.Cells(r, c).Value
+    HasNum = (Not isEmpty(v)) And IsNumeric(v)
+End Function
+
+Private Function ToDbl(ByVal v As Variant) As Double
+    If isEmpty(v) Then Exit Function
+    If IsNumeric(v) Then ToDbl = CDbl(v) Else ToDbl = val(Replace(Trim$(CStr(v)), ",", "."))
+End Function
+
