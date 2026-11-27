@@ -1,13 +1,13 @@
-Attribute VB_Name = "modWordStamp"
 Option Explicit
 
 Private Const TEMPLATE_SUBFOLDER As String = "Шаблоны_конечных_файлов"
-Private Const TEMPLATE_NAME As String = "Шаблон.С.docx"
+Private Const TEMPLATE_NAME As String = "Шаблон.С.dotx"
+Private Const TEMPLATE_NAME_FALLBACK As String = "Шаблон.С.docx"
 
 #If VBA7 Then
     Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
 #Else
-    Private Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+    Private Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
 #End If
 
 Type SpecItem
@@ -25,152 +25,136 @@ Type SpecItem
     OrigIndex As Long
 End Type
 
-' ==================== ШТАМП В КОЛОНТИТУЛЕ WORD ====================
+' ==================== СОСТОЯНИЕ ====================
+Private mT As Double
+Private mLog As String
+Private mStep As String
+Private mScr As Boolean
+Private mSpell As Boolean, mGram As Boolean, mBg As Boolean
+Private mFldDoc As Long, mFldHF As Long, mFldShp As Long
+
+' ==================== ТОЧКИ ВХОДА ====================
+Public Sub ExportSpecToWord()
+    Dim n() As String, t() As String, c As Long
+    BuildStampPairs n, t, c
+    RunExport n, t, c, True
+End Sub
 
 Public Sub ExportStampOnlyToWord()
-    Dim tplPath As String, outPath As String, cipher As String
-    Dim wdApp As Object, wdDoc As Object
-    Dim namesArr() As String, tagsArr() As String, cnt As Long
-    Dim i As Long, valText As String, hasRange As Boolean
-
-    tplPath = GetTemplatePath()
-    If Len(Dir$(tplPath)) = 0 Then
-        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
-        Exit Sub
-    End If
-
-    ReDim namesArr(1 To 1)
-    ReDim tagsArr(1 To 1)
-    cnt = 0
-
-    ' При необходимости оставьте здесь свой точный список AddPair из рабочей версии
-    AddPair namesArr, tagsArr, cnt, "Штамп_Шифр", "[ШИФР]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_договор", "[Договор]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_объект", "[Объект]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_содержание", "[Содержание]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_стадия", "[Ст]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_организация", "[Организация]"
-
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб", "[Разработал]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров", "[Проверил]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец", "[Глав.спец.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд", "[Нач.отд.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр", "[Н.контр.]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип", "[ГИП]"
-
-    AddPair namesArr, tagsArr, cnt, "Штамп_разраб_ф", "[Разработал_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_пров_ф", "[Проверил_]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_глав_спец_ф", "[Глав.спец._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_нач_отд_ф", "[Нач.отд._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_н_контр_ф", "[Н.контр._]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_гип_ф", "[ГИП_]"
-
-    AddPair namesArr, tagsArr, cnt, "Штамп_д1", "[д1]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д2", "[д2]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д3", "[д3]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
-    AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
-
-    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
-    If Len(cipher) = 0 Then cipher = "Спецификация"
-    outPath = OutFolder() & SafeFileName(cipher) & ".docx"
-
-    On Error GoTo ErrStampHandler
-    Set wdApp = CreateWordWithRetry()
-    wdApp.DisplayAlerts = 0
-    wdApp.Visible = False
-
-    Set wdDoc = OpenDocWithRetry(wdApp, tplPath)
-
-    ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
-
-    SaveDocWithRetry wdDoc, outPath
-    wdApp.Visible = True
-    On Error Resume Next
-    wdDoc.Activate
-    Exit Sub
-
-ErrStampHandler:
-    If Err.Number <> 0 Then
-        MsgBox "Ошибка при переносе штампа (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
-    End If
-    On Error Resume Next
-    If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
-    If Not wdApp Is Nothing Then wdApp.Quit
-End Sub
-
-Private Sub ApplyStampTagsToWord(ByVal wdDoc As Object, ByRef namesArr() As String, _
-                               ByRef tagsArr() As String, ByVal cnt As Long)
-    Dim i As Long, valText As String, hasRange As Boolean
-    For i = 1 To cnt
-        If Len(tagsArr(i)) > 0 And Len(namesArr(i)) > 0 Then
-            hasRange = TryReadRangeText(namesArr(i), valText)
-            If hasRange Then
-                ReplaceTagInHeadersAndTables wdDoc, tagsArr(i), valText
-            End If
-        End If
-    Next i
-End Sub
-
-' ==================== ОСНОВНАЯ ТАБЛИЦА + ШТАМП ====================
-
-Public Sub ExportSpecToWord()
-    Dim tplPath As String, outPath As String, cipher As String
-    Dim wdApp As Object, wdDoc As Object, tbl As Object
-    Dim items() As SpecItem, itemCnt As Long
-    Dim namesArr() As String, tagsArr() As String, cnt As Long
-
-    tplPath = GetTemplatePath()
-    If Len(Dir$(tplPath)) = 0 Then
-        MsgBox "Не найден файл шаблона:" & vbCrLf & tplPath, vbExclamation
-        Exit Sub
-    End If
-
-    CollectAndAggregateSpec items, itemCnt
-    If itemCnt > 1 Then
-        SortSpecItems items, itemCnt
-    End If
-
-    BuildStampPairs namesArr, tagsArr, cnt
-    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, "[Шифр]")
-    If Len(cipher) = 0 Then cipher = "Спецификация"
-    outPath = OutFolder() & SafeFileName(cipher) & ".docx"
-
-    On Error GoTo ErrSpecHandler
-    Set wdApp = CreateWordWithRetry()
-    wdApp.DisplayAlerts = 0
-    wdApp.Visible = False
-
-    Set wdDoc = OpenDocWithRetry(wdApp, tplPath)
-    If wdDoc.Tables.Count = 0 Then
-        Err.Raise vbObjectError + 101, "ExportSpecToWord", "В документе шаблона не найдена таблица спецификации."
-    End If
-
-    ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
-
-    Set tbl = wdDoc.Tables(1)
-    FillWordSpecTable tbl, items, itemCnt
-
-    SaveDocWithRetry wdDoc, outPath
-    wdApp.Visible = True
-    On Error Resume Next
-    wdDoc.Activate
-    Exit Sub
-
-ErrSpecHandler:
-    If Err.Number <> 0 Then
-        MsgBox "Ошибка при формировании спецификации в Word (" & Err.Number & "):" & vbCrLf & Err.Description, vbExclamation
-    End If
-    On Error Resume Next
-    If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
-    If Not wdApp Is Nothing Then wdApp.Quit
+    Dim n() As String, t() As String, c As Long
+    BuildStampPairs n, t, c
+    RunExport n, t, c, False
 End Sub
 
 Public Sub ExportStampAndSpecToWord()
     ExportSpecToWord
 End Sub
 
+' ==================== ДВИЖОК ====================
+Private Sub RunExport(ByRef namesArr() As String, ByRef tagsArr() As String, _
+                      ByVal cnt As Long, ByVal withTable As Boolean)
+    Dim tplPath As String, outPath As String, cipher As String
+    Dim wdApp As Object, wdDoc As Object, tbl As Object
+    Dim items() As SpecItem, itemCnt As Long
+    Dim errNum As Long, errDesc As String
+    Dim tAll As Double
+
+    mLog = "": mT = Timer: tAll = Timer
+    mStep = "старт"
+
+    tplPath = GetTemplatePath()
+    If Len(tplPath) = 0 Then
+        MsgBox "Не найден шаблон:" & vbCrLf & _
+               ThisWorkbook.Path & "\" & TEMPLATE_SUBFOLDER & "\" & vbCrLf & _
+               TEMPLATE_NAME & "  или  " & TEMPLATE_NAME_FALLBACK, vbExclamation
+        Exit Sub
+    End If
+    Tick "проверка шаблона"
+
+    On Error GoTo eh
+
+    If withTable Then
+        mStep = "сбор позиций"
+        CollectAndAggregateSpec items, itemCnt
+        Tick "сбор + суммирование"
+        If itemCnt > 1 Then
+            mStep = "сортировка"
+            SortSpecItems items, itemCnt
+            Tick "сортировка"
+        End If
+    End If
+
+    mStep = "шифр / имя файла"
+    cipher = TryGetNamedRangeText(namesArr, tagsArr, cnt, tagsArr(1))
+    outPath = OutFolder() & SafeFileName(cipher) & ".docx"
+
+    mStep = "запуск Word"
+    Set wdApp = CreateWordWithRetry()
+    Tick "запуск Word"
+
+    WordSpeedOn wdApp
+    wdApp.Visible = False
+
+    mStep = "документ из шаблона"
+    Set wdDoc = NewDocFromTemplate(wdApp, tplPath)
+    Tick "открытие шаблона"
+
+    mStep = "переменные штампа + поля"
+    ApplyStampTagsToWord wdDoc, namesArr, tagsArr, cnt
+
+    If withTable Then
+        mStep = "поиск таблицы спецификации"
+        Set tbl = FindSpecTable(wdDoc)
+        If tbl Is Nothing Then
+            Err.Raise vbObjectError + 101, "RunExport", _
+                      "Не найдена таблица спецификации (9 колонок с заголовком «Наименование»)."
+        End If
+
+        mStep = "заполнение таблицы"
+        FillWordSpecTable tbl, items, itemCnt
+        Tick "таблица: строки + ячейки"
+
+        mStep = "оформление таблицы"
+        FormatSpecTable tbl, wdApp
+        Tick "таблица: оформление"
+
+        mStep = "финальное обновление полей"
+        UpdateFieldsEverywhere wdDoc
+        Tick "поля: финальное обновление"
+    End If
+
+    mStep = "возврат настроек Word"
+    WordSpeedOff wdApp
+
+    mStep = "сохранение"
+    SaveDocWithRetry wdDoc, outPath
+    Tick "сохранение"
+
+    mLog = mLog & "ИТОГО: " & Format$(Timer - tAll, "0.00") & " s" & vbCrLf & _
+           "Позиций: " & itemCnt
+    DumpTiming
+
+    wdApp.Visible = True
+    On Error Resume Next
+    wdDoc.Activate
+    On Error GoTo 0
+
+    MsgBox "Готово: " & outPath & vbCrLf & vbCrLf & mLog, vbInformation
+    Exit Sub
+
+eh:
+    errNum = Err.Number: errDesc = Err.Description
+    On Error Resume Next
+    WordSpeedOff wdApp
+    If Not wdDoc Is Nothing Then wdDoc.Close SaveChanges:=False
+    If Not wdApp Is Nothing Then wdApp.Quit
+    mLog = mLog & "СБОЙ НА ШАГЕ: " & mStep
+    DumpTiming
+    On Error GoTo 0
+    MsgBox "Ошибка " & errNum & vbCrLf & "ШАГ: " & mStep & vbCrLf & vbCrLf & errDesc, vbExclamation
+End Sub
+
+' ==================== ПАРЫ: ДИАПАЗОН -> МЕТКА ====================
 Private Sub BuildStampPairs(ByRef namesArr() As String, ByRef tagsArr() As String, ByRef cnt As Long)
     ReDim namesArr(1 To 1)
     ReDim tagsArr(1 To 1)
@@ -203,9 +187,325 @@ Private Sub BuildStampPairs(ByRef namesArr() As String, ByRef tagsArr() As Strin
     AddPair namesArr, tagsArr, cnt, "Штамп_д4", "[д4]"
     AddPair namesArr, tagsArr, cnt, "Штамп_д5", "[д5]"
     AddPair namesArr, tagsArr, cnt, "Штамп_д6", "[д6]"
-
 End Sub
 
+' ==================== ШТАМП: ПЕРЕМЕННЫЕ + ПОЛЯ ====================
+Private Sub ApplyStampTagsToWord(ByVal wdDoc As Object, ByRef namesArr() As String, _
+                                 ByRef tagsArr() As String, ByVal cnt As Long)
+    Dim i As Long, v As String, nSet As Long, nMiss As Long
+    Dim miss As String
+
+    For i = 1 To cnt
+        If Len(namesArr(i)) > 0 Then
+            If TryReadRangeText(namesArr(i), v) Then
+                SetDocVar wdDoc, namesArr(i), v
+                nSet = nSet + 1
+            Else
+                nMiss = nMiss + 1
+                miss = miss & namesArr(i) & " "
+            End If
+        End If
+    Next i
+
+    UpdateFieldsEverywhere wdDoc
+
+    Tick "штамп: переменных " & nSet & "; полей тело/колонтитулы/фигуры " & _
+         mFldDoc & "/" & mFldHF & "/" & mFldShp
+    If nMiss > 0 Then Tick "штамп: НЕТ диапазонов (" & nMiss & "): " & miss
+End Sub
+
+Private Sub SetDocVar(ByVal wdDoc As Object, ByVal nm As String, ByVal val As String)
+    On Error Resume Next
+    wdDoc.Variables.Add nm, val
+    If Err.Number <> 0 Then
+        Err.Clear
+        wdDoc.Variables(nm).Value = val
+    End If
+    Err.Clear
+End Sub
+
+Private Sub UpdateFieldsEverywhere(ByVal wdDoc As Object)
+    Dim sec As Object, shp As Object
+    mFldDoc = 0: mFldHF = 0: mFldShp = 0
+    On Error Resume Next
+    mFldDoc = wdDoc.Fields.Count
+    wdDoc.Fields.Update
+    For Each sec In wdDoc.Sections
+        UpdHF sec.Headers(2)
+        UpdHF sec.Headers(1)
+        UpdHF sec.Headers(3)
+        UpdHF sec.Footers(2)
+        UpdHF sec.Footers(1)
+        UpdHF sec.Footers(3)
+    Next sec
+    For Each shp In wdDoc.Shapes
+        UpdShape shp
+    Next shp
+End Sub
+
+Private Sub UpdHF(ByVal hf As Object)
+    Dim shp As Object
+    If hf Is Nothing Then Exit Sub
+    On Error Resume Next
+    If Not hf.exists Then Exit Sub
+    mFldHF = mFldHF + hf.Range.Fields.Count
+    hf.Range.Fields.Update
+    For Each shp In hf.Shapes
+        UpdShape shp
+    Next shp
+End Sub
+
+Private Sub UpdShape(ByVal shp As Object)
+    Dim subShp As Object, tr As Object
+    If shp Is Nothing Then Exit Sub
+    On Error Resume Next
+    If shp.Type = 6 Then
+        For Each subShp In shp.GroupItems
+            UpdShape subShp
+        Next subShp
+    Else
+        If shp.HasTextFrame Then
+            If shp.TextFrame.HasText Then
+                Set tr = shp.TextFrame.TextRange
+                mFldShp = mFldShp + tr.Fields.Count
+                tr.Fields.Update
+            End If
+        End If
+    End If
+End Sub
+
+' ==================== ЗАМЕРЫ ====================
+Private Sub Tick(ByVal label As String)
+    mLog = mLog & label & ": " & Format$(Timer - mT, "0.00") & " s" & vbCrLf
+    mT = Timer
+End Sub
+
+Private Sub DumpTiming()
+    Dim f As Integer
+    On Error Resume Next
+    f = FreeFile
+    Open OutFolder() & "_word_timing.txt" For Output As #f
+    Print #f, mLog
+    Close #f
+End Sub
+
+' ==================== УСКОРЕНИЕ WORD ====================
+Private Sub WordSpeedOn(ByVal wdApp As Object)
+    If wdApp Is Nothing Then Exit Sub
+    On Error Resume Next
+    With wdApp
+        mScr = .ScreenUpdating
+        .ScreenUpdating = False
+        .DisplayAlerts = 0
+        mSpell = .Options.CheckSpellingAsYouType
+        .Options.CheckSpellingAsYouType = False
+        mGram = .Options.CheckGrammarAsYouType
+        .Options.CheckGrammarAsYouType = False
+        mBg = .Options.BackgroundSave
+        .Options.BackgroundSave = False
+    End With
+    On Error GoTo 0
+End Sub
+
+Private Sub WordSpeedOff(ByVal wdApp As Object)
+    If wdApp Is Nothing Then Exit Sub
+    On Error Resume Next
+    With wdApp
+        .Options.CheckSpellingAsYouType = mSpell
+        .Options.CheckGrammarAsYouType = mGram
+        .Options.BackgroundSave = mBg
+        .ScreenUpdating = mScr
+    End With
+    On Error GoTo 0
+End Sub
+
+' ==================== ШАБЛОН / WORD ====================
+Private Function GetTemplatePath() As String
+    Dim base As String, p As String
+    base = ThisWorkbook.Path & "\" & TEMPLATE_SUBFOLDER & "\"
+    p = base & TEMPLATE_NAME
+    If Len(Dir$(p)) > 0 Then
+        GetTemplatePath = p
+        Exit Function
+    End If
+    p = base & TEMPLATE_NAME_FALLBACK
+    If Len(Dir$(p)) > 0 Then GetTemplatePath = p
+End Function
+
+Private Function NewDocFromTemplate(ByVal wdApp As Object, ByVal tplPath As String) As Object
+    Dim attempt As Long, docObj As Object
+    Dim isDotx As Boolean
+    isDotx = (LCase$(Right$(tplPath, 5)) = ".dotx")
+
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        If isDotx Then
+            Set docObj = wdApp.Documents.Add(Template:=tplPath, NewTemplate:=False, DocumentType:=0)
+        Else
+            Set docObj = wdApp.Documents.Open(fileName:=tplPath, ReadOnly:=True, AddToRecentFiles:=False)
+        End If
+        If Err.Number = 0 And Not docObj Is Nothing Then
+            On Error GoTo 0
+            Set NewDocFromTemplate = docObj
+            Exit Function
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 60
+    Next attempt
+    Err.Raise vbObjectError + 102, "NewDocFromTemplate", "Не удалось создать документ из шаблона."
+End Function
+
+Private Function CreateWordWithRetry() As Object
+    Dim attempt As Long, appObj As Object
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        Set appObj = CreateObject("Word.Application")
+        If Err.Number = 0 And Not appObj Is Nothing Then
+            On Error GoTo 0
+            Set CreateWordWithRetry = appObj
+            Exit Function
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 60
+    Next attempt
+    Err.Raise -2147418110, "CreateWordWithRetry", "Не удалось запустить Word."
+End Function
+
+Private Sub SaveDocWithRetry(ByVal wdDoc As Object, ByVal outPath As String)
+    Dim attempt As Long
+    For attempt = 1 To 10
+        Err.Clear
+        On Error Resume Next
+        wdDoc.SaveAs2 fileName:=outPath, FileFormat:=12, AddToRecentFiles:=False
+        If Err.Number = 0 Then
+            On Error GoTo 0
+            Exit Sub
+        End If
+        If Err.Number <> -2147418110 Then
+            On Error GoTo 0
+            Err.Raise Err.Number, Err.Source, Err.Description
+        End If
+        On Error GoTo 0
+        DoEvents
+        Sleep 60
+    Next attempt
+    Err.Raise -2147418110, "SaveDocWithRetry", "Не удалось сохранить документ Word."
+End Sub
+
+' ==================== ТАБЛИЦА СПЕЦИФИКАЦИИ ====================
+Private Function FindSpecTable(ByVal wdDoc As Object) As Object
+    Dim tbls As Object, tbl As Object, trng As Object
+    Dim n As Long, txt As String
+    On Error Resume Next
+    Set tbls = wdDoc.Tables
+    For Each tbl In tbls
+        n = 0
+        n = tbl.Columns.Count
+        Err.Clear
+        If n = 9 Then
+            Set trng = tbl.Range
+            txt = Left$(trng.Text, 300)
+            If InStr(1, txt, "Наименование", vbTextCompare) > 0 Then
+                Set FindSpecTable = tbl
+                Exit Function
+            End If
+        End If
+    Next tbl
+End Function
+
+Private Sub FillWordSpecTable(ByVal tbl As Object, ByRef items() As SpecItem, ByVal itemCnt As Long)
+    Const FIRST_DATA_ROW As Long = 2
+    Dim nRows As Long, keep As Long, i As Long, rowIdx As Long
+    Dim rng As Object
+
+    nRows = tbl.Rows.Count
+    keep = FIRST_DATA_ROW + itemCnt - 1
+    If keep < FIRST_DATA_ROW Then keep = FIRST_DATA_ROW
+
+    Do While nRows < keep
+        tbl.Rows.Add
+        nRows = nRows + 1
+    Loop
+
+    If nRows > keep Then
+        On Error Resume Next
+        Set rng = tbl.Rows(keep + 1).Range
+        rng.End = tbl.Range.End
+        rng.Rows.Delete
+        On Error GoTo 0
+
+        nRows = tbl.Rows.Count
+        Do While nRows > keep
+            tbl.Rows(nRows).Delete
+            nRows = nRows - 1
+        Loop
+    End If
+
+    For i = 1 To itemCnt
+        rowIdx = FIRST_DATA_ROW + i - 1
+        SetCell tbl, rowIdx, 2, items(i).NameText
+        SetCell tbl, rowIdx, 3, items(i).QuizSheet
+        SetCell tbl, rowIdx, 6, items(i).UnitText
+        If items(i).HasQty Then SetCell tbl, rowIdx, 7, FormatNumberClean(items(i).QtySum)
+        SetCell tbl, rowIdx, 8, items(i).UnitMassText
+        SetCell tbl, rowIdx, 9, items(i).NoteText
+    Next i
+End Sub
+
+Private Sub SetCell(ByVal tbl As Object, ByVal r As Long, ByVal c As Long, ByVal s As String)
+    Dim clRng As Object
+    If Len(s) = 0 Then Exit Sub
+    On Error Resume Next
+    Set clRng = tbl.cell(r, c).Range
+    If clRng Is Nothing Then Exit Sub
+    clRng.MoveEnd 1, -1
+    clRng.Text = s
+End Sub
+
+Private Sub FormatSpecTable(ByVal tbl As Object, ByVal wdApp As Object, _
+                            Optional ByVal applyAlign As Boolean = False)
+    On Error Resume Next
+    With tbl
+        .Rows.HeightRule = 1
+        .Rows.Height = wdApp.CentimetersToPoints(0.8)
+        .Rows.AllowBreakAcrossPages = False
+        .Rows(1).HeadingFormat = True
+    End With
+
+    If applyAlign Then
+        With tbl
+            .Range.ParagraphFormat.SpaceBefore = 0
+            .Range.ParagraphFormat.SpaceAfter = 0
+            .Range.ParagraphFormat.LineSpacingRule = 0
+            .Columns(2).Range.ParagraphFormat.Alignment = 0
+            .Columns(2).Cells.VerticalAlignment = 1
+            .Columns(3).Range.ParagraphFormat.Alignment = 0
+            .Columns(3).Cells.VerticalAlignment = 1
+            .Columns(6).Range.ParagraphFormat.Alignment = 1
+            .Columns(6).Cells.VerticalAlignment = 1
+            .Columns(7).Range.ParagraphFormat.Alignment = 1
+            .Columns(7).Cells.VerticalAlignment = 1
+            .Columns(8).Range.ParagraphFormat.Alignment = 2
+            .Columns(8).Cells.VerticalAlignment = 1
+            .Columns(9).Range.ParagraphFormat.Alignment = 0
+            .Columns(9).Cells.VerticalAlignment = 1
+        End With
+    End If
+End Sub
+
+' ==================== СБОР ПОЗИЦИЙ ====================
 Private Sub CollectAndAggregateSpec(ByRef items() As SpecItem, ByRef itemCnt As Long)
     Dim ws As Worksheet
     Dim r As Long, lastR As Long, h As Long, mk As String
@@ -213,10 +513,14 @@ Private Sub CollectAndAggregateSpec(ByRef items() As SpecItem, ByRef itemCnt As 
     Dim nm As String, qz As String, un As String, m1 As String, nt As String
     Dim qtyVal As Double, hasQ As Boolean
     Dim idx As Long, foundIdx As Long
+    Dim f As Range
 
     itemCnt = 0
     Set ws = ThisWorkbook.Worksheets("Сводная")
-    lastR = ws.Cells.Find(What:="*", LookIn:=xlFormulas, SearchOrder:=xlByRows, SearchDirection:=xlPrevious).row
+    Set f = ws.Cells.Find(What:="*", LookIn:=xlFormulas, _
+                          SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
+    If f Is Nothing Then Exit Sub
+    lastR = f.row
     If lastR < 1 Then Exit Sub
 
     For r = 1 To lastR
@@ -280,7 +584,7 @@ Private Sub FindSpecColumns(ByVal ws As Worksheet, ByVal hdrRow As Long, _
             Select Case hTxt
                 Case "Наименование": If cName = 0 Then cName = c
                 Case "Опросной лист", "Опросный лист": If cQuiz = 0 Then cQuiz = c
-                Case "Ед. изм.": If cUnit = 0 Then cUnit = c
+                Case "Ед. изм.", "Ед.изм.": If cUnit = 0 Then cUnit = c
                 Case "Кол-во": If cQty = 0 Then cQty = c
                 Case "Масса 1 ед": If cMass1 = 0 Then cMass1 = c
                 Case "Примечание": If cNote = 0 Then cNote = c
@@ -345,6 +649,7 @@ Private Function FindMatchingSpecItem(ByRef items() As SpecItem, ByVal itemCnt A
     FindMatchingSpecItem = 0
 End Function
 
+' ==================== СОРТИРОВКА ====================
 Private Function GetWeightSafe(ByVal r As Long) As Double
     GetWeightSafe = 999999#
     On Error Resume Next
@@ -410,148 +715,7 @@ Private Sub SortSpecItems(ByRef items() As SpecItem, ByVal itemCnt As Long)
     Next i
 End Sub
 
-Private Sub FillWordSpecTable(ByVal tbl As Object, ByRef items() As SpecItem, ByVal itemCnt As Long)
-    Dim dataStartRow As Long, neededRowCount As Long
-    Dim i As Long, rowIdx As Long
-    Dim qtyStr As String
-
-    dataStartRow = 2
-    If tbl.Rows.Count < dataStartRow Then
-        tbl.Rows.Add
-    End If
-
-    neededRowCount = dataStartRow + itemCnt - 1
-    If neededRowCount < dataStartRow Then neededRowCount = dataStartRow
-
-    Do While tbl.Rows.Count < neededRowCount
-        tbl.Rows.Add
-    Loop
-
-    Do While tbl.Rows.Count > neededRowCount And tbl.Rows.Count > dataStartRow
-        tbl.Rows(tbl.Rows.Count).Delete
-    Loop
-
-    For i = 1 To itemCnt
-        rowIdx = dataStartRow + i - 1
-        If items(i).HasQty Then
-            qtyStr = FormatNumberClean(items(i).QtySum)
-        Else
-            qtyStr = ""
-        End If
-
-        ' 1: Позиция — не заполняем
-        ' 2: Наименование, техническая характеристика
-        SetWordCellValueSafe tbl, rowIdx, 2, items(i).NameText
-        ' 3: Тип, марка, обозначение документа опросного листа
-        SetWordCellValueSafe tbl, rowIdx, 3, items(i).QuizSheet
-        ' 4: Код продукции — не заполняем
-        ' 5: Поставщик — не заполняем
-        ' 6: Единица измерения
-        SetWordCellValueSafe tbl, rowIdx, 6, items(i).UnitText
-        ' 7: Количество
-        SetWordCellValueSafe tbl, rowIdx, 7, qtyStr
-        ' 8: Масса одной единицы
-        SetWordCellValueSafe tbl, rowIdx, 8, items(i).UnitMassText
-        ' 9: Примечание
-        SetWordCellValueSafe tbl, rowIdx, 9, items(i).NoteText
-    Next i
-End Sub
-
-Private Sub SetWordCellValueSafe(ByVal tbl As Object, ByVal r As Long, ByVal c As Long, ByVal valStr As String)
-    Dim clRng As Object
-    On Error Resume Next
-    If c > tbl.Columns.Count Then Exit Sub
-    Set clRng = tbl.cell(r, c).Range
-    If clRng Is Nothing Then Exit Sub
-    If clRng.Characters.Count > 1 Then
-        clRng.MoveEnd unit:=1, Count:=-1
-    End If
-    clRng.Text = valStr
-    On Error GoTo 0
-End Sub
-
-' ==================== ЗАМЕНА МЕТОК В КОЛОНТИТУЛАХ WORD ====================
-
-Private Sub ReplaceTagInHeadersAndTables(ByVal wdDoc As Object, ByVal findText As String, ByVal replText As String)
-    Const wdHeaderFooterFirstPage As Long = 2
-    Const wdHeaderFooterPrimary As Long = 1
-
-    Dim sec As Object
-    On Error Resume Next
-    For Each sec In wdDoc.Sections
-        ProcessSingleHeader sec.Headers(wdHeaderFooterFirstPage), findText, replText
-        ProcessSingleHeader sec.Headers(wdHeaderFooterPrimary), findText, replText
-    Next sec
-    On Error GoTo 0
-End Sub
-
-Private Sub ProcessSingleHeader(ByVal hf As Object, ByVal findText As String, ByVal replText As String)
-    Dim shp As Object
-
-    If hf Is Nothing Then Exit Sub
-    On Error Resume Next
-    If Not hf.exists Then Exit Sub
-
-    For Each shp In hf.Shapes
-        If shp.HasTextFrame Then
-            If shp.TextFrame.HasText Then
-                ReplaceInStoryRange shp.TextFrame.TextRange, findText, replText
-            End If
-        End If
-    Next shp
-
-    ReplaceInStoryRange hf.Range, findText, replText
-    On Error GoTo 0
-End Sub
-
-Private Sub ReplaceInStoryRange(ByVal storyRng As Object, ByVal findText As String, ByVal replText As String)
-    Dim tbl As Object, rw As Object, cl As Object
-    Dim cellTxt As String
-
-    If storyRng Is Nothing Then Exit Sub
-    On Error Resume Next
-
-    For Each tbl In storyRng.Tables
-        For Each rw In tbl.Rows
-            For Each cl In rw.Cells
-                cellTxt = CleanWordCellText(cl.Range.Text)
-                If InStr(1, cellTxt, findText, vbBinaryCompare) > 0 Then
-                    cl.Range.Text = Replace(cellTxt, findText, replText, 1, -1, vbBinaryCompare)
-                End If
-            Next cl
-        Next rw
-    Next tbl
-
-    With storyRng.Find
-        .ClearFormatting
-        .Replacement.ClearFormatting
-        .Text = findText
-        .Replacement.Text = replText
-        .Forward = True
-        .Wrap = 1
-        .Format = False
-        .MatchCase = True
-        .MatchWholeWord = False
-        .Execute Replace:=2
-    End With
-    On Error GoTo 0
-End Sub
-
-Private Function CleanWordCellText(ByVal rawText As String) As String
-    Dim s As String
-    s = rawText
-    Do While Len(s) > 0 And (Right$(s, 1) = Chr$(7) Or Right$(s, 1) = vbCr Or Right$(s, 1) = vbLf)
-        s = Left$(s, Len(s) - 1)
-    Loop
-    CleanWordCellText = s
-End Function
-
-' ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-
-Private Function GetTemplatePath() As String
-    GetTemplatePath = ThisWorkbook.Path & "\" & TEMPLATE_SUBFOLDER & "\" & TEMPLATE_NAME
-End Function
-
+' ==================== ИМЕНОВАННЫЕ ДИАПАЗОНЫ ====================
 Private Sub AddPair(ByRef namesArr() As String, ByRef tagsArr() As String, _
                     ByRef cnt As Long, ByVal nmRange As String, ByVal tagWord As String)
     cnt = cnt + 1
@@ -570,12 +734,8 @@ Private Function TryReadRangeText(ByVal nmRange As String, ByRef outText As Stri
     outText = ""
     On Error Resume Next
     Set nm = ThisWorkbook.names(nmRange)
-    If Not nm Is Nothing Then
-        Set rng = nm.RefersToRange
-    End If
-    If rng Is Nothing Then
-        Set rng = ThisWorkbook.Range(nmRange)
-    End If
+    If Not nm Is Nothing Then Set rng = nm.RefersToRange
+    If rng Is Nothing Then Set rng = ThisWorkbook.Range(nmRange)
     If rng Is Nothing Then Exit Function
     outText = Trim$(CStr(rng.Cells(1, 1).Text))
     If Err.Number <> 0 Then
@@ -583,7 +743,6 @@ Private Function TryReadRangeText(ByVal nmRange As String, ByRef outText As Stri
         Exit Function
     End If
     On Error GoTo 0
-
     TryReadRangeText = True
 End Function
 
@@ -592,79 +751,13 @@ Private Function TryGetNamedRangeText(ByRef namesArr() As String, ByRef tagsArr(
     Dim i As Long, txt As String
     For i = 1 To cnt
         If UCase$(tagsArr(i)) = UCase$(targetTag) Then
-            If TryReadRangeText(namesArr(i), txt) Then
-                TryGetNamedRangeText = txt
-            End If
+            If TryReadRangeText(namesArr(i), txt) Then TryGetNamedRangeText = txt
             Exit Function
         End If
     Next i
 End Function
 
-Private Function CreateWordWithRetry() As Object
-    Dim attempt As Long, appObj As Object
-    For attempt = 1 To 10
-        Err.Clear
-        On Error Resume Next
-        Set appObj = CreateObject("Word.Application")
-        If Err.Number = 0 And Not appObj Is Nothing Then
-            On Error GoTo 0
-            Set CreateWordWithRetry = appObj
-            Exit Function
-        End If
-        If Err.Number <> -2147418110 Then
-            On Error GoTo 0
-            Err.Raise Err.Number, Err.Source, Err.Description
-        End If
-        On Error GoTo 0
-        DoEvents
-        Sleep 150
-    Next attempt
-    Err.Raise -2147418110, "CreateWordWithRetry", "Не удалось запустить Word."
-End Function
-
-Private Function OpenDocWithRetry(ByVal wdApp As Object, ByVal filePath As String) As Object
-    Dim attempt As Long, docObj As Object
-    For attempt = 1 To 10
-        Err.Clear
-        On Error Resume Next
-        Set docObj = wdApp.Documents.Open(fileName:=filePath, ReadOnly:=False)
-        If Err.Number = 0 And Not docObj Is Nothing Then
-            On Error GoTo 0
-            Set OpenDocWithRetry = docObj
-            Exit Function
-        End If
-        If Err.Number <> -2147418110 Then
-            On Error GoTo 0
-            Err.Raise Err.Number, Err.Source, Err.Description
-        End If
-        On Error GoTo 0
-        DoEvents
-        Sleep 150
-    Next attempt
-    Err.Raise -2147418110, "OpenDocWithRetry", "Не удалось открыть документ в Word."
-End Function
-
-Private Sub SaveDocWithRetry(ByVal wdDoc As Object, ByVal outPath As String)
-    Dim attempt As Long
-    For attempt = 1 To 10
-        Err.Clear
-        On Error Resume Next
-        wdDoc.SaveAs2 fileName:=outPath
-        If Err.Number = 0 Then
-            On Error GoTo 0
-            Exit Sub
-        End If
-        If Err.Number <> -2147418110 Then
-            On Error GoTo 0
-            Err.Raise Err.Number, Err.Source, Err.Description
-        End If
-        On Error GoTo 0
-        DoEvents
-        Sleep 150
-    Next attempt
-    Err.Raise -2147418110, "SaveDocWithRetry", "Не удалось сохранить документ Word."
-End Sub
-
+' ==================== ПРОЧЕЕ ====================
 Private Function FormatNumberClean(ByVal d As Double) As String
     If Abs(d - Round(d, 0)) < 0.00000001 Then
         FormatNumberClean = CStr(CLng(Round(d, 0)))
